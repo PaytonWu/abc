@@ -64,7 +64,7 @@ auto xabc_bytes::operator+=(xabc_bytes const & other)->xabc_bytes & {
 //    return *this;
 //}
 
-auto xabc_bytes::operator+(std::span<xbyte_t const> const & other) const -> xabc_bytes {
+auto xabc_bytes::operator+(std::span<xbyte_t const> const other) const -> xabc_bytes {
     internal_type data;
     data.reserve(size() + other.size());
 
@@ -74,7 +74,7 @@ auto xabc_bytes::operator+(std::span<xbyte_t const> const & other) const -> xabc
     return xabc_bytes{ std::move(data) };
 }
 
-auto xabc_bytes::operator+=(std::span<xbyte_t const> const & other) -> xabc_bytes & {
+auto xabc_bytes::operator+=(std::span<xbyte_t const> const other) -> xabc_bytes & {
     if (data_.capacity() >= size() + other.size()) {
         std::ranges::copy(other, std::back_inserter(data_));
     }
@@ -121,7 +121,7 @@ auto xabc_bytes::sub_bytes(size_t const offset, size_t const count) const -> xby
 
 namespace abc {
 
-auto operator+(std::span<xbyte_t const> const & lhs, xbytes_t const & rhs) -> xbytes_t {
+auto operator+(std::span<xbyte_t const> const lhs, xbytes_t const & rhs) -> xbytes_t {
     return xbytes_t{ lhs } + rhs;
 }
 
@@ -129,7 +129,7 @@ auto operator+(xbyte_t const lhs, xbytes_t const & rhs) -> xbytes_t {
     return xbytes_t{ static_cast<size_t>(1), lhs } + rhs;
 }
 
-auto operator+(xbyte_t const lhs, std::span<xbyte_t const> const & rhs) -> xbytes_t {
+auto operator+(xbyte_t const lhs, std::span<xbyte_t const> const rhs) -> xbytes_t {
     return xbytes_t{ static_cast<size_t>(1), lhs } + rhs;
 }
 

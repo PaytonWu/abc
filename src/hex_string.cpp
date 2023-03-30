@@ -57,7 +57,7 @@ auto to_hex_string_prefixed(T const & data) -> xcase_insensitive_string_t<char> 
     return to_hex_string(std::begin(data), std::end(data), hex_prefix);
 }
 
-auto to_hex_string(std::string_view const & data, std::error_code & ec) -> xcase_insensitive_string_t<char> {
+auto to_hex_string(std::string_view const data, std::error_code & ec) -> xcase_insensitive_string_t<char> {
     assert(!ec);
 
     if (string_has_hex_prefix(data)) {
@@ -88,18 +88,18 @@ auto to_hex_string(std::string_view const & data, std::error_code & ec) -> xcase
     return to_hex_string(std::begin(data), std::end(data), "");
 }
 
-auto to_hex_string(std::string_view const & data) {
+auto to_hex_string(std::string_view const data) {
     std::error_code ec;
     auto ret = to_hex_string(data, ec);
     error::throw_error(ec);
     return ret;
 }
 
-xabc_hex_string::xabc_hex_string(std::span<xbyte_t const> const & input) : value_{ to_hex_string(input) } {
+xabc_hex_string::xabc_hex_string(std::span<xbyte_t const> const input) : value_{ to_hex_string(input) } {
     assert((value_.size() & 1u) == 0);
 }
 
-xabc_hex_string::xabc_hex_string(std::string_view const & input) : value_{ to_hex_string(input) } {
+xabc_hex_string::xabc_hex_string(std::string_view const input) : value_{ to_hex_string(input) } {
     assert((value_.size() & 1u) == 0);
 }
 
@@ -135,11 +135,11 @@ auto xabc_hex_string::length(xhex_string_format_t const format) const noexcept -
     return size(format);
 }
 
-auto xabc_hex_string::from(std::span<xbyte_t const> const & input) -> xabc_hex_string {
+auto xabc_hex_string::from(std::span<xbyte_t const> const input) -> xabc_hex_string {
     return xabc_hex_string{ input };
 }
 
-auto xabc_hex_string::from(std::string_view const & input) -> xabc_hex_string {
+auto xabc_hex_string::from(std::string_view const input) -> xabc_hex_string {
     return xabc_hex_string{ input };
 }
 

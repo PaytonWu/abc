@@ -25,9 +25,9 @@ public:
     ~xabc_error() override = default;
 
     explicit xabc_error(std::error_code const & ec);
-    explicit xabc_error(std::error_code const & ec, std::string_view const & msg);
+    explicit xabc_error(std::error_code const & ec, std::string_view msg);
     explicit xabc_error(int ec, std::error_category const & category);
-    explicit xabc_error(int ec, std::error_category const & category, std::string_view const & msg);
+    explicit xabc_error(int ec, std::error_category const & category, std::string_view msg);
 
     [[nodiscard]] std::error_code const & code() const noexcept;
 };
@@ -46,7 +46,7 @@ auto make_error_code(xabc_enum_errc errc) noexcept -> std::error_code;
 auto make_error_condition(xabc_enum_errc errc) noexcept -> std::error_condition;
 
 void do_throw_error(std::error_code const & ec);
-void do_throw_error(std::error_code const & ec, std::string_view const & extra_msg);
+void do_throw_error(std::error_code const & ec, std::string_view extra_msg);
 
 } // namespace abc::error::details
 

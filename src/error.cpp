@@ -13,16 +13,16 @@ xabc_error::xabc_error(std::error_code const & ec)
     : std::runtime_error{ ec.message() }, ec_{ ec } {
 }
 
-xabc_error::xabc_error(std::error_code const & ec, std::string_view const & msg)
-    : std::runtime_error{ fmt::format("{} {}", std::string_view{reinterpret_cast<char const *>(msg.data()), msg.size()}, ec.message()) }, ec_{ ec } {
+xabc_error::xabc_error(std::error_code const & ec, std::string_view const msg)
+    : std::runtime_error{ fmt::format("{} {}", msg, ec.message()) }, ec_{ ec } {
 }
 
 xabc_error::xabc_error(int const ec, std::error_category const & category)
     : runtime_error{ std::error_code{ec, category}.message() }, ec_{ ec, category } {
 }
 
-xabc_error::xabc_error(int const ec, std::error_category const & category, std::string_view const & msg)
-    : runtime_error{ fmt::format("{} {}", std::string_view{reinterpret_cast<char const *>(msg.data()), msg.size()}, std::error_code{ec, category}.message()) }, ec_{ ec, category } {
+xabc_error::xabc_error(int const ec, std::error_category const & category, std::string_view const msg)
+    : runtime_error{ fmt::format("{} {}", msg, std::error_code{ec, category}.message()) }, ec_{ ec, category } {
 }
 
 std::error_code const & xabc_error::code() const noexcept {
@@ -92,7 +92,7 @@ void do_throw_error(std::error_code const & ec) {
     details::throw_exception(eh);
 }
 
-void do_throw_error(std::error_code const & ec, std::string_view const & extra_msg) {
+void do_throw_error(std::error_code const & ec, std::string_view const extra_msg) {
     assert(ec);
     xerror_t const eh{ ec, extra_msg };
     throw_exception(eh);

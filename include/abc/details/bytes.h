@@ -60,10 +60,10 @@ public:
     constexpr xabc_bytes(InputIt first, InputIt last) : data_{ first, last } {
     }
 
-    constexpr explicit xabc_bytes(std::span<xbyte_t const> const & span) : xabc_bytes{ std::begin(span), std::end(span) } {
+    constexpr explicit xabc_bytes(std::span<xbyte_t const> const span) : xabc_bytes{ std::begin(span), std::end(span) } {
     }
 
-    constexpr xabc_bytes(std::initializer_list<value_type> init) : data_{ init } {
+    constexpr xabc_bytes(std::initializer_list<value_type> const init) : data_{ init } {
     }
 
     constexpr void assign(size_type const count, xbyte_t const & value) {
@@ -75,7 +75,7 @@ public:
         data_.assign(first, last);
     }
 
-    constexpr void assign(std::initializer_list<value_type> ilist) {
+    constexpr void assign(std::initializer_list<value_type> const ilist) {
         data_.assign(ilist);
     }
 
@@ -218,8 +218,8 @@ public:
 
     [[nodiscard]] auto operator+(xabc_bytes const & other) const->xabc_bytes;
     auto operator+=(xabc_bytes const & other)->xabc_bytes &;
-    [[nodiscard]] auto operator+(std::span<xbyte_t const> const & other) const->xabc_bytes;
-    auto operator+=(std::span<xbyte_t const> const & other)->xabc_bytes &;
+    [[nodiscard]] auto operator+(std::span<xbyte_t const> other) const->xabc_bytes;
+    auto operator+=(std::span<xbyte_t const> other)->xabc_bytes &;
     [[nodiscard]] auto operator+(xbyte_t byte) const->xabc_bytes;
     auto operator+=(xbyte_t byte)->xabc_bytes &;
 

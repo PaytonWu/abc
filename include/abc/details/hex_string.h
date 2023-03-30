@@ -30,8 +30,8 @@ public:
     auto operator=(xabc_hex_string &&)->xabc_hex_string & = default;
     ~xabc_hex_string() = default;
 
-    [[nodiscard]] static auto from(std::string_view const & input) -> xabc_hex_string;
-    [[nodiscard]] static auto from(std::span<xbyte_t const>  const & input) -> xabc_hex_string;
+    [[nodiscard]] static auto from(std::string_view input) -> xabc_hex_string;
+    [[nodiscard]] static auto from(std::span<xbyte_t const> input) -> xabc_hex_string;
 
     [[nodiscard]] auto operator==(xabc_hex_string const &) const noexcept -> bool = default;
     [[nodiscard]] auto operator<=>(xabc_hex_string const &) const noexcept -> std::weak_ordering = default;
@@ -45,8 +45,8 @@ public:
     auto swap(xabc_hex_string & other) noexcept -> void;
 
 private:
-    explicit xabc_hex_string(std::span<xbyte_t const> const & input);
-    explicit xabc_hex_string(std::string_view const & input);
+    explicit xabc_hex_string(std::span<xbyte_t const> input);
+    explicit xabc_hex_string(std::string_view input);
 };
 
 }

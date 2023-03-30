@@ -18,7 +18,7 @@ using xerrc_t = details::xabc_enum_errc;
 auto abc_category() noexcept -> std::error_category const &;
 
 void throw_error(std::error_code const & ec);
-void throw_error(std::error_code const & ec, std::string_view const & extra_msg);
+void throw_error(std::error_code const & ec, std::string_view extra_msg);
 
 }
 

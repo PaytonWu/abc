@@ -47,9 +47,9 @@ using xbytes256_view_t = std::span<xbyte_t const, 256>;
     return lhs.raw_data() == rhs;
 }
 
-[[nodiscard]] auto operator+(std::span<xbyte_t const> const & lhs, xbytes_t const & rhs)->xbytes_t;
+[[nodiscard]] auto operator+(std::span<xbyte_t const> lhs, xbytes_t const & rhs)->xbytes_t;
 [[nodiscard]] auto operator+(xbyte_t lhs, xbytes_t const & rhs)->xbytes_t;
-[[nodiscard]] auto operator+(xbyte_t lhs, std::span<xbyte_t const> const & rhs)->xbytes_t;
+[[nodiscard]] auto operator+(xbyte_t lhs, std::span<xbyte_t const> rhs)->xbytes_t;
 
 constexpr void swap(xbytes_t & lhs, xbytes_t & rhs) noexcept {
     lhs.swap(rhs);

@@ -28,11 +28,11 @@ constexpr auto is_hex_binary(std::byte const byte) noexcept -> bool {
     return is_hex_binary(std::to_integer<xbyte_t>(byte));
 }
 
-auto hex_string_without_prefix(std::string_view const & string_slice) noexcept -> bool; // "0123456789abcdefABCDEF"
-auto hex_string_with_prefix(std::string_view const & string_slice) noexcept -> bool;    // "0x0123456789abcdefABCDEF" or "0X0123456789abcdefABCDEF"
-auto hex_string(std::string_view const & string_slice) noexcept -> bool;                // "0123456789abcdefABCDEF" or "0x0123456789abcdefABCDEF" or "0X0123456789abcdefABCDEF"
+auto hex_string_without_prefix(std::string_view string_slice) noexcept -> bool; // "0123456789abcdefABCDEF"
+auto hex_string_with_prefix(std::string_view string_slice) noexcept -> bool;    // "0x0123456789abcdefABCDEF" or "0X0123456789abcdefABCDEF"
+auto hex_string(std::string_view string_slice) noexcept -> bool;                // "0123456789abcdefABCDEF" or "0x0123456789abcdefABCDEF" or "0X0123456789abcdefABCDEF"
 
-auto string_has_hex_prefix(std::string_view const & string_slice) noexcept -> bool;
+auto string_has_hex_prefix(std::string_view string_slice) noexcept -> bool;
 
 }
 
