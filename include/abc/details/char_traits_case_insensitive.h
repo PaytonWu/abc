@@ -1,14 +1,13 @@
 // Copyright(c) 2020 - present, Payton Wu (payton.wu@outlook.com) & abc contributors.
 // Distributed under the MIT License (http://opensource.org/licenses/MIT)
 
-#if !defined(ABC_CASE_INSENSITIVE_STRING)
-#define ABC_CASE_INSENSITIVE_STRING
+#if !defined(ABC_DETAILS_CHAR_TRAITS_CASE_INSENSITIVE)
+#define ABC_DETAILS_CHAR_TRAITS_CASE_INSENSITIVE
 
 #pragma once
 
 #include <cctype>
 #include <string>
-#include <string_view>
 
 namespace abc::details {
 
@@ -56,16 +55,6 @@ public:
         return nullptr;
     }
 };
-
-}
-
-namespace abc {
-
-template <typename CharT>
-using xcase_insentive_string_t = std::basic_string<CharT, details::xabc_case_insensitive<CharT>>;
-
-template <typename CharT>
-using xcase_insentive_string_view_t = std::basic_string_view<CharT, details::xabc_case_insensitive<CharT>>;
 
 }
 

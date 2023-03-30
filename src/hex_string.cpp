@@ -31,14 +31,14 @@ static auto from_hex_char(char const ch) noexcept -> xbyte_t {
 }
 
 template <typename IteratorT>
-auto to_hex_string(IteratorT begin, IteratorT end, xcase_insentive_string_t<char> const & prefix) -> xcase_insentive_string_t<char> {
+auto to_hex_string(IteratorT begin, IteratorT end, xcase_insensitive_string_t<char> const & prefix) -> xcase_insensitive_string_t<char> {
     using iterator_traits = std::iterator_traits<IteratorT>;
     static_assert(sizeof(typename iterator_traits::value_type) == 1);
 
     constexpr char hex_digits[] = "0123456789abcdef";
 
     size_t off = prefix.size();
-    xcase_insentive_string_t<char> hex(std::distance(begin, end) * 2 + off, '0');
+    xcase_insensitive_string_t<char> hex(std::distance(begin, end) * 2 + off, '0');
     hex.replace(0, off, prefix);
     for (auto it = begin; it != end; ++it) {
         hex[off++] = hex_digits[(*it >> 4) & 0x0f];
@@ -48,21 +48,21 @@ auto to_hex_string(IteratorT begin, IteratorT end, xcase_insentive_string_t<char
 }
 
 template <typename T>
-auto to_hex_string(T const & data) -> xcase_insentive_string_t<char> {
+auto to_hex_string(T const & data) -> xcase_insensitive_string_t<char> {
     return to_hex_string(std::begin(data), std::end(data), "");
 }
 
 template <typename T>
-auto to_hex_string_prefixed(T const & data) -> xcase_insentive_string_t<char> {
+auto to_hex_string_prefixed(T const & data) -> xcase_insensitive_string_t<char> {
     return to_hex_string(std::begin(data), std::end(data), hex_prefix);
 }
 
-auto to_hex_string(std::string_view const & data, std::error_code & ec) -> xcase_insentive_string_t<char> {
+auto to_hex_string(std::string_view const & data, std::error_code & ec) -> xcase_insensitive_string_t<char> {
     assert(!ec);
 
     if (string_has_hex_prefix(data)) {
         if (auto const maybe_hex_string = data.substr(2); hex_string_without_prefix(maybe_hex_string)) {
-            xcase_insentive_string_t<char> r;
+            xcase_insensitive_string_t<char> r;
             r.reserve(maybe_hex_string.size() + 1);
 
             if (maybe_hex_string.size() & 1u) {
@@ -76,7 +76,7 @@ auto to_hex_string(std::string_view const & data, std::error_code & ec) -> xcase
     }
 
     if (hex_string_without_prefix(data)) {
-        xcase_insentive_string_t<char> r;
+        xcase_insensitive_string_t<char> r;
         r.reserve(data.size() + 1);
 
         if (data.size() & 1u) {

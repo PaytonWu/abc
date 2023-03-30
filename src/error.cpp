@@ -9,23 +9,23 @@
 
 namespace abc::error::details {
 
-xabc_abc_error::xabc_abc_error(std::error_code const & ec)
+xabc_error::xabc_error(std::error_code const & ec)
     : std::runtime_error{ ec.message() }, ec_{ ec } {
 }
 
-xabc_abc_error::xabc_abc_error(std::error_code const & ec, std::string_view const & msg)
+xabc_error::xabc_error(std::error_code const & ec, std::string_view const & msg)
     : std::runtime_error{ fmt::format("{} {}", std::string_view{reinterpret_cast<char const *>(msg.data()), msg.size()}, ec.message()) }, ec_{ ec } {
 }
 
-xabc_abc_error::xabc_abc_error(int const ec, std::error_category const & category)
+xabc_error::xabc_error(int const ec, std::error_category const & category)
     : runtime_error{ std::error_code{ec, category}.message() }, ec_{ ec, category } {
 }
 
-xabc_abc_error::xabc_abc_error(int const ec, std::error_category const & category, std::string_view const & msg)
+xabc_error::xabc_error(int const ec, std::error_category const & category, std::string_view const & msg)
     : runtime_error{ fmt::format("{} {}", std::string_view{reinterpret_cast<char const *>(msg.data()), msg.size()}, std::error_code{ec, category}.message()) }, ec_{ ec, category } {
 }
 
-std::error_code const & xabc_abc_error::code() const noexcept {
+std::error_code const & xabc_error::code() const noexcept {
     return ec_;
 }
 
@@ -54,6 +54,9 @@ static char const * errc_map(int const errc) noexcept {
     case xabc_enum_errc::invalid_hex_string:
         return "invalid hex string";
 
+    case xabc_enum_errc::xxhash_error:
+        return "xxhash error";
+
     default:  // NOLINT(clang-diagnostic-covered-switch-default)
         return "unknown error";
     }
@@ -69,6 +72,11 @@ class xabc_abc_category final : public std::error_category {
     }
 };
 
+template <typename ExceptionT>
+void throw_exception(ExceptionT const & eh) {
+    throw eh;
+}
+
 }
 
 namespace abc::error {
@@ -80,13 +88,13 @@ std::error_category const & abc_category() noexcept {
 
 void do_throw_error(std::error_code const & ec) {
     assert(ec);
-    xabc_error_t const eh{ ec };
-    throw_exception(eh);
+    xerror_t const eh{ ec };
+    details::throw_exception(eh);
 }
 
 void do_throw_error(std::error_code const & ec, std::string_view const & extra_msg) {
     assert(ec);
-    xabc_error_t const eh{ ec, extra_msg };
+    xerror_t const eh{ ec, extra_msg };
     throw_exception(eh);
 }
 
