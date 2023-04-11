@@ -1,4 +1,4 @@
-// Copyright(c) 2020 - present, Payton Wu (payton.wu@outlook.com) & abc contributors.
+// Copyright(c) 2023 - present, Payton Wu (payton.wu@outlook.com) & abc contributors.
 // Distributed under the MIT License (http://opensource.org/licenses/MIT)
 
 #if !defined(ABC_DETAILS_BYTES)
@@ -6,16 +6,17 @@
 
 #pragma once
 
-#include "byte.h"
+#include "abc/byte.h"
 
 #include <cassert>
+#include <compare>
 #include <span>
 #include <utility>
 #include <vector>
 
 namespace abc::details {
 
-class xabc_bytes {
+class [[nodiscard]] xabc_bytes {
 private:
     using internal_type = std::vector<xbyte_t>;
 
@@ -163,7 +164,7 @@ public:
         return data_.insert(std::move(pos), value);
     }
 
-    constexpr auto insert(const_iterator pos, size_type count, value_type const value) -> iterator {
+    constexpr auto insert(const_iterator pos, size_type const count, value_type const value) -> iterator {
         return data_.insert(std::move(pos), count, value);
     }
 
@@ -204,24 +205,20 @@ public:
         data_.swap(other.data_);
     }
 
-    [[nodiscard]] constexpr auto raw_data() const noexcept -> std::vector<xbyte_t> const & {
+    explicit operator std::vector<xbyte_t> const &() const noexcept {
         return data_;
     }
 
-    [[nodiscard]] constexpr auto raw_data() noexcept -> std::vector<xbyte_t> & {
+    explicit operator std::vector<xbyte_t> & () noexcept {
         return data_;
     }
 
-    explicit operator std::vector<xbyte_t>() const {
-        return data_;
-    }
-
-    [[nodiscard]] auto operator+(xabc_bytes const & other) const->xabc_bytes;
-    auto operator+=(xabc_bytes const & other)->xabc_bytes &;
-    [[nodiscard]] auto operator+(std::span<xbyte_t const> other) const->xabc_bytes;
-    auto operator+=(std::span<xbyte_t const> other)->xabc_bytes &;
-    [[nodiscard]] auto operator+(xbyte_t byte) const->xabc_bytes;
-    auto operator+=(xbyte_t byte)->xabc_bytes &;
+    auto operator+(xabc_bytes const & other) const -> xabc_bytes;
+    auto operator+=(xabc_bytes const & other) -> xabc_bytes &;
+    auto operator+(std::span<xbyte_t const> other) const -> xabc_bytes;
+    auto operator+=(std::span<xbyte_t const> other) -> xabc_bytes &;
+    auto operator+(xbyte_t byte) const -> xabc_bytes;
+    auto operator+=(xbyte_t byte) -> xabc_bytes &;
 
     [[nodiscard]] constexpr auto first(size_t const count) const noexcept -> std::span<xbyte_t const> {
         assert(count <= data_.size());
@@ -233,7 +230,11 @@ public:
         return std::span{ std::next(std::begin(data_), static_cast<std::ptrdiff_t>(size() - count)), count };
     }
 
-    [[nodiscard]] auto sub_bytes(size_t offset, size_t count = -1) const->xabc_bytes;
+    auto sub_bytes(size_t offset, size_t count = -1) const -> xabc_bytes;
+
+private:
+    friend [[nodiscard]] constexpr auto operator==(xabc_bytes const & lhs, xabc_bytes const & rhs) noexcept -> bool = default;
+    friend [[nodiscard]] constexpr auto operator<=>(xabc_bytes const & lhs, xabc_bytes const & rhs) noexcept -> std::strong_ordering = default;
 };
 
 } // namespace abc::details

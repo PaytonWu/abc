@@ -1,4 +1,4 @@
-// Copyright(c) 2020 - present, Payton Wu (payton.wu@outlook.com) & contributors.
+// Copyright(c) 2023 - present, Payton Wu (payton.wu@outlook.com) & abc contributors.
 // Distributed under the MIT License (http://opensource.org/licenses/MIT)
 
 #if !defined(ABC_BYTE)
@@ -6,11 +6,13 @@
 
 #pragma once
 
-#include "details/byte.h"
+#include "abc/details/config.h"
+
+#include <cstdint>
 
 namespace abc {
 
-using xbyte_t = details::xbyte_t;
+using xbyte_t = std::uint8_t;
 
 }
 

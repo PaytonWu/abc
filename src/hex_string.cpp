@@ -1,11 +1,11 @@
 // Copyright(c) 2020 - present, Payton Wu (payton.wu@outlook.com) & abc contributors.
 // Distributed under the MIT License (http://opensource.org/licenses/MIT)
 
-#include <abc/hex_string.h>
+#include "abc/hex_string.h"
 
-#include <abc/bytes.h>
-#include <abc/error.h>
-#include <abc/hex_utility.h>
+#include "abc/bytes.h"
+#include "abc/error.h"
+#include "abc/hex_utility.h"
 
 #include <fmt/format.h>
 
@@ -71,7 +71,7 @@ auto to_hex_string(std::string_view const data, std::error_code & ec) -> xcase_i
             return r.append(std::begin(maybe_hex_string), std::end(maybe_hex_string));
         }
 
-        ec = error::xerrc_t::invalid_hex_string;
+        ec = xerrc_t::invalid_hex_string;
         return {};
     }
 
@@ -91,7 +91,7 @@ auto to_hex_string(std::string_view const data, std::error_code & ec) -> xcase_i
 auto to_hex_string(std::string_view const data) {
     std::error_code ec;
     auto ret = to_hex_string(data, ec);
-    error::throw_error(ec);
+    throw_error(ec);
     return ret;
 }
 

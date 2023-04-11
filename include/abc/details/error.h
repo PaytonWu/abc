@@ -1,4 +1,4 @@
-// Copyright(c) 2020 - present, Payton Wu (payton.wu@outlook.com) & abc contributors.
+// Copyright(c) 2023 - present, Payton Wu (payton.wu@outlook.com) & abc contributors.
 // Distributed under the MIT License (http://opensource.org/licenses/MIT)
 
 #if !defined(ABC_DETAILS_ERROR)
@@ -6,12 +6,12 @@
 
 #pragma once
 
-#include "config.h"
+#include "abc/details/config.h"
 
 #include <stdexcept>
 #include <system_error>
 
-namespace abc::error::details {
+namespace abc::details {
 
 class xabc_error final : public std::runtime_error {
 private:
@@ -19,9 +19,9 @@ private:
 
 public:
     xabc_error(xabc_error const &) = default;
-    xabc_error & operator=(xabc_error const &) = default;
+    auto operator=(xabc_error const &) -> xabc_error & = default;
     xabc_error(xabc_error &&) = default;
-    xabc_error & operator=(xabc_error &&) = default;
+    auto operator=(xabc_error &&) -> xabc_error & = default;
     ~xabc_error() override = default;
 
     explicit xabc_error(std::error_code const & ec);
@@ -29,7 +29,7 @@ public:
     explicit xabc_error(int ec, std::error_category const & category);
     explicit xabc_error(int ec, std::error_category const & category, std::string_view msg);
 
-    [[nodiscard]] std::error_code const & code() const noexcept;
+    [[nodiscard]] auto code() const noexcept -> std::error_code const &;
 };
 
 enum class xabc_enum_errc {

@@ -1,7 +1,7 @@
 // Copyright(c) 2022 - present, Payton Wu (payton.wu@outlook.com) & abc contributors.
 // Distributed under the MIT License (http://opensource.org/licenses/MIT)
 
-#include <abc/hex_utility.h>
+#include "abc/hex_utility.h"
 
 #include <algorithm>
 

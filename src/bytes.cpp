@@ -1,9 +1,9 @@
-// Copyright(c) 2022 - present, Payton Wu (payton.wu@outlook.com) & abc contributors.
+// Copyright(c) 2023 - present, Payton Wu (payton.wu@outlook.com) & abc contributors.
 // Distributed under the MIT License (http://opensource.org/licenses/MIT)
 
-#include <abc/bytes.h>
+#include "abc/bytes.h"
 
-#include <abc/hex_string.h>
+#include "abc/hex_string.h"
 
 #include <algorithm>
 #include <iterator>
@@ -134,8 +134,8 @@ auto operator+(xbyte_t const lhs, std::span<xbyte_t const> const rhs) -> xbytes_
 }
 
 template <>
-auto to<xhex_string_t, xbytes_t>(xbytes_t const & from)->xhex_string_t {
-    return xhex_string_t::from(from.raw_data());
+auto to<xhex_string_t, xbytes_t>(xbytes_t const & from) -> xhex_string_t {
+    return xhex_string_t::from(from);
 }
 
 }

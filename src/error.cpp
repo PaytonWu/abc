@@ -1,13 +1,13 @@
 // Copyright(c) 2020 - present, Payton Wu (payton.wu@outlook.com) & abc contributors.
 // Distributed under the MIT License (http://opensource.org/licenses/MIT)
 
-#include <abc/error.h>
+#include "abc/error.h"
 
 #include <fmt/core.h>
 
 #include <cassert>
 
-namespace abc::error::details {
+namespace abc::details {
 
 xabc_error::xabc_error(std::error_code const & ec)
     : std::runtime_error{ ec.message() }, ec_{ ec } {

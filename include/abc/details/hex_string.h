@@ -1,4 +1,4 @@
-// Copyright(c) 2020 - present, Payton Wu (payton.wu@outlook.com) & abc contributors.
+// Copyright(c) 2023 - present, Payton Wu (payton.wu@outlook.com) & abc contributors.
 // Distributed under the MIT License (http://opensource.org/licenses/MIT)
 
 #if !defined(ABC_DETAILS_HEX_STRING)
@@ -6,8 +6,8 @@
 
 #pragma once
 
-#include "byte.h"
-#include "case_insensitive_string.h"
+#include "abc/byte.h"
+#include "abc/case_insensitive_string.h"
 
 #include <compare>
 #include <span>
