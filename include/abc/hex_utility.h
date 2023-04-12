@@ -8,31 +8,62 @@
 
 #include "abc/byte.h"
 
+#include <algorithm>
+#include <bitset>
 #include <cstddef>
+#include <concepts>
 #include <string_view>
 
 namespace abc {
 
 inline constexpr char const * hex_prefix{ "0x" };
 inline constexpr char const * hex_prefix_uppercase{ "0X" };
+inline constexpr std::bitset<256> hex_flag{
+    "00000000000000000000000000000000"
+    "00000000000000000000000000000000"
+    "00000000000000000000000000000000"
+    "00000000000000000000000000000000"
+    "00000000000000000000000001111110"
+    "00000000000000000000000001111110"
+    "00000011111111110000000000000000"
+    "00000000000000000000000000000000"
+};
 
-[[nodiscard]] constexpr auto is_hex_char(char const ch) noexcept -> bool {
-    return '0' <= ch && ch <= '9' || 'a' <= ch && ch <= 'f' || 'A' <= ch && ch <= 'F';
+[[nodiscard]] constexpr auto hex_char(unsigned char const ch) noexcept -> bool {
+    return hex_flag[static_cast<size_t>(ch)];
 }
 
-[[nodiscard]] constexpr auto is_hex_binary(xbyte_t const byte) noexcept -> bool {
-    return static_cast<xbyte_t>(0x00) <= byte && byte <= static_cast<xbyte_t>(0x0f);
+[[nodiscard]] constexpr auto hex_char(char const ch) noexcept -> bool {
+    return hex_char(static_cast<unsigned char>(ch));
 }
 
-[[nodiscard]] constexpr auto is_hex_binary(std::byte const byte) noexcept -> bool {
-    return is_hex_binary(std::to_integer<xbyte_t>(byte));
+template <std::unsigned_integral T>
+[[nodiscard]] constexpr auto hex_binary(T const value) noexcept -> bool {
+    return !(value & ~static_cast<T>(0x0f));
 }
 
-[[nodiscard]] auto hex_string_without_prefix(std::string_view string_slice) noexcept -> bool; // "0123456789abcdefABCDEF"
-[[nodiscard]] auto hex_string_with_prefix(std::string_view string_slice) noexcept -> bool;    // "0x0123456789abcdefABCDEF" or "0X0123456789abcdefABCDEF"
-[[nodiscard]] auto hex_string(std::string_view string_slice) noexcept -> bool;                // "0123456789abcdefABCDEF" or "0x0123456789abcdefABCDEF" or "0X0123456789abcdefABCDEF"
+[[nodiscard]] constexpr auto hex_string_without_prefix(std::string_view const string_slice) noexcept -> bool {   // "0123456789abcdefABCDEF"
+    return std::ranges::all_of(string_slice,
+        [](auto const ch) {
+            return hex_char(ch);
+        });
+}
 
-[[nodiscard]] auto string_has_hex_prefix(std::string_view string_slice) noexcept -> bool;
+[[nodiscard]] constexpr auto string_has_hex_prefix(std::string_view const string_slice) noexcept -> bool {
+    return string_slice.starts_with(hex_prefix) || string_slice.starts_with(hex_prefix_uppercase);
+}
+
+[[nodiscard]] constexpr auto hex_string_with_prefix(std::string_view const string_slice) noexcept -> bool { // "0x0123456789abcdefABCDEF" or "0X0123456789abcdefABCDEF"
+    if (!string_has_hex_prefix(string_slice)) {
+        return false;
+    }
+
+    return hex_string_without_prefix(string_slice.substr(2));
+}
+
+[[nodiscard]] constexpr auto hex_string(std::string_view const string_slice) noexcept -> bool { // "0123456789abcdefABCDEF" or "0x0123456789abcdefABCDEF" or "0X0123456789abcdefABCDEF"
+    return hex_string_with_prefix(string_slice) || hex_string_without_prefix(string_slice);
+}
 
 }
 
