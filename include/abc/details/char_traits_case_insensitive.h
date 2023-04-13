@@ -17,7 +17,7 @@ template <typename CharT>
 struct xabc_case_insensitive : std::char_traits<CharT> {
 private:
     [[nodiscard]] static auto to_lower(CharT const ch) -> int {
-        return std::tolower(static_cast<uint8_t>(ch));
+        return std::tolower(ch);
     }
 
 public:
@@ -44,8 +44,8 @@ public:
         return 0;
     }
 
-    [[nodiscard]] static auto find(CharT const * s, std::size_t n, CharT a) -> char const * {
-        auto const lower(to_lower(a));
+    [[nodiscard]] static auto find(CharT const * s, std::size_t n, CharT const a) -> char const * {
+        auto const lower{ to_lower(a) };
         while (n-- != 0) {
             if (to_lower(*s) == lower) {
                 return s;

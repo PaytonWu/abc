@@ -51,14 +51,14 @@ public:
         return *this;
     }
 
-    constexpr xabc_bytes(size_type const count, xbyte_t const value) : data_(count, value) {
-    }
+    //constexpr xabc_bytes(size_type const count, xbyte_t const value) : data_(count, value) {
+    //}
 
-    constexpr explicit xabc_bytes(size_type const count) : data_(count) {
-    }
+    //constexpr explicit xabc_bytes(size_type const count) : data_(count) {
+    //}
 
-    template <typename InputIt>
-    constexpr xabc_bytes(InputIt first, InputIt last) : data_{ first, last } {
+    template <std::input_iterator Iterator>
+    constexpr xabc_bytes(Iterator first, Iterator last) : data_{ first, last } {
     }
 
     constexpr explicit xabc_bytes(std::span<xbyte_t const> const span) : xabc_bytes{ std::begin(span), std::end(span) } {
@@ -71,13 +71,13 @@ public:
         data_.assign(count, value);
     }
 
-    template <typename InputIt>
-    constexpr void assign(InputIt first, InputIt last) {
+    template <std::input_iterator Iterator>
+    constexpr void assign(Iterator first, Iterator last) {
         data_.assign(first, last);
     }
 
-    constexpr void assign(std::initializer_list<value_type> const ilist) {
-        data_.assign(ilist);
+    constexpr void assign(std::initializer_list<value_type> const init_list) {
+        data_.assign(init_list);
     }
 
     constexpr auto at(size_type const pos) -> reference {
@@ -168,13 +168,13 @@ public:
         return data_.insert(std::move(pos), count, value);
     }
 
-    template <typename InputIt>
-    constexpr auto insert(const_iterator pos, InputIt first, InputIt last) -> iterator {
+    template <std::input_iterator Iterator>
+    constexpr auto insert(const_iterator pos, Iterator first, Iterator last) -> iterator {
         return data_.insert(std::move(pos), first, last);
     }
 
-    constexpr auto insert(const_iterator pos, std::initializer_list<value_type> ilist) -> iterator {
-        return data_.insert(std::move(pos), ilist);
+    constexpr auto insert(const_iterator pos, std::initializer_list<value_type> init_list) -> iterator {
+        return data_.insert(std::move(pos), init_list);
     }
 
     constexpr auto erase(const_iterator pos) -> iterator {
