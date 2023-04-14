@@ -48,6 +48,6 @@ auto make_error_condition(xabc_enum_errc errc) noexcept -> std::error_condition;
 void do_throw_error(std::error_code const & ec);
 void do_throw_error(std::error_code const & ec, std::string_view extra_msg);
 
-} // namespace abc::error::details
+} // namespace abc::details
 
 #endif

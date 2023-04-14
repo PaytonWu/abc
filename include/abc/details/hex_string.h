@@ -70,6 +70,9 @@ constexpr auto to_hex_string_prefixed(T const & data) -> xcase_insensitive_strin
     return to_hex_string(std::begin(data), std::end(data), hex_prefix);
 }
 
+auto to_hex_string(std::string_view const data, std::error_code & ec) -> xcase_insensitive_string_t<char>;
+auto to_hex_string(std::string_view input) -> xcase_insensitive_string_t<char>;
+
 class [[nodiscard]] xabc_hex_string {
     xcase_insensitive_string_t<char> value_;
 
@@ -81,9 +84,7 @@ public:
     auto operator=(xabc_hex_string &&) -> xabc_hex_string & = default;
     ~xabc_hex_string() = default;
 
-    constexpr static auto from(std::string_view const input) -> xabc_hex_string {
-        return xabc_hex_string{ input };
-    }
+    static auto from(std::string_view input) -> xabc_hex_string;
 
     static auto from(std::span<xbyte_t const> const input) -> xabc_hex_string {
         return xabc_hex_string{ input };
@@ -129,9 +130,7 @@ private:
         assert((value_.size() & 1u) == 0);
     }
 
-    constexpr explicit xabc_hex_string(std::string_view input) : value_{ to_hex_string(input) } {
-        assert((value_.size() & 1u) == 0);
-    }
+    explicit xabc_hex_string(std::string_view input);
 };
 
 }

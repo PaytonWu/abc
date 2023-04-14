@@ -25,19 +25,19 @@ xabc_error::xabc_error(int const ec, std::error_category const & category, std::
     : runtime_error{ fmt::format("{} {}", msg, std::error_code{ec, category}.message()) }, ec_{ ec, category } {
 }
 
-std::error_code const & xabc_error::code() const noexcept {
+auto xabc_error::code() const noexcept -> std::error_code const & {
     return ec_;
 }
 
-std::error_code make_error_code(xabc_enum_errc errc) noexcept {
+auto make_error_code(xabc_enum_errc errc) noexcept -> std::error_code {
     return std::error_code{ static_cast<int>(errc), abc_category() };
 }
 
-std::error_condition make_error_condition(xabc_enum_errc errc) noexcept {
+auto make_error_condition(xabc_enum_errc errc) noexcept -> std::error_condition {
     return std::error_condition{ static_cast<int>(errc), abc_category() };
 }
 
-static char const * errc_map(int const errc) noexcept {
+static constexpr auto errc_map(int const errc) noexcept -> char const * {
     switch (static_cast<xabc_enum_errc>(errc)) {
     case xabc_enum_errc::success:
         return "success";
@@ -62,40 +62,45 @@ static char const * errc_map(int const errc) noexcept {
     }
 }
 
-class xabc_abc_category final : public std::error_category {
-    [[nodiscard]] char const * name() const noexcept override {
-        return "abc";
-    }
-
-    [[nodiscard]] std::string message(int const errc) const override {
-        return std::string{ errc_map(errc) };
-    }
-};
-
 template <typename ExceptionT>
 void throw_exception(ExceptionT const & eh) {
     throw eh;
 }
 
-}
-
-namespace abc::error {
-
-std::error_category const & abc_category() noexcept {
-    static details::xabc_abc_category abc_category;  // NOLINT(clang-diagnostic-exit-time-destructors)
-    return abc_category;
-}
-
 void do_throw_error(std::error_code const & ec) {
     assert(ec);
-    xerror_t const eh{ ec };
-    details::throw_exception(eh);
+    xabc_error const eh{ ec };
+    throw_exception(eh);
 }
 
 void do_throw_error(std::error_code const & ec, std::string_view const extra_msg) {
     assert(ec);
-    xerror_t const eh{ ec, extra_msg };
+    xabc_error const eh{ ec, extra_msg };
     throw_exception(eh);
+}
+
+}
+
+namespace abc {
+
+auto abc_category() noexcept -> std::error_category const & {
+    static struct : std::error_category {
+        [[nodiscard]] auto name() const noexcept -> char const * override {
+            return "abc";
+        }
+
+        [[nodiscard]] auto message(int const errc) const -> std::string override {
+            return details::errc_map(errc);
+        }
+    } category;
+    return category;
+}
+
+void throw_error(std::error_code const & ec) {
+    if (ec) { details::do_throw_error(ec); }
+}
+void throw_error(std::error_code const & ec, std::string_view extra_msg) {
+    if (ec) { details::do_throw_error(ec, extra_msg); }
 }
 
 }
