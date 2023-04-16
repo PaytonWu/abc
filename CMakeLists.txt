@@ -1,7 +1,7 @@
 ﻿# CMakeList.txt : Top-level CMake project file, do global configuration
 # and include sub-projects here.
 #
-cmake_minimum_required (VERSION 3.22)
+cmake_minimum_required(VERSION 3.22)
 
 if (NOT DEFINED ENV{VCPKG_HOME})
     message(FATAL_ERROR "VCPKG_HOME enviornment variable not defined")
@@ -31,7 +31,6 @@ set(ABC_LIBRARY abc)
 
 if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang" OR "${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU")
     # set common options for Clang or GNUCXX
-
     add_compile_options(
         $<$<STREQUAL:$<TARGET_PROPERTY:LINKER_LANGUAGE>,CXX>:-fexceptions>
         $<$<STREQUAL:$<TARGET_PROPERTY:LINKER_LANGUAGE>,CXX>:-frtti>
@@ -61,15 +60,17 @@ if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang" OR "${CMAKE_CXX_COMPILER_ID}" MAT
     endif()
 
     # options for Debug
-    set_property(DIRECTORY APPEND PROPERTY COMPILE_OPTIONS $<$<CONFIG:Debug>:-g3 -ggdb -O0 -fno-omit-frame-pointer>)
+    add_compile_options($<$<CONFIG:Debug>:-fno-omit-frame-pointer>)
 
     # options for Release
-    add_compile_options($<$<CONFIG:Release>:-g0 -ffunction-sections -fdata-sections>)
+    add_compile_options($<$<CONFIG:Release>:-ffunction-sections>)
+    add_compile_options($<$<CONFIG:Release>:-fdata-sections>)
 
     # options for RelWithDebInfo
-    add_compile_options($<$<CONFIG:RelWithDebInfo>:-g1 -ggdb -ffunction-sections -fdata-sections>)
+    add_compile_options($<$<CONFIG:Release>:-ffunction-sections>)
+    add_compile_options($<$<CONFIG:Release>:-fdata-sections>)
 
-elseif("${CMAKE_CXX_COMPILER_ID}" MATCHES "MSVC")
+elseif ("${CMAKE_CXX_COMPILER_ID}" MATCHES "MSVC")
     # common compile options
     add_compile_options(
         /Zc:__cplusplus       # https://docs.microsoft.com/en-us/cpp/build/reference/zc-cplusplus
@@ -106,7 +107,7 @@ elseif("${CMAKE_CXX_COMPILER_ID}" MATCHES "MSVC")
         -D_SCL_SECURE_NO_WARNINGS
         -D_CRT_SECURE_NO_WARNINGS
         -DNOMINMAX
-        -D_WIN32_WINNT=0x0600   # Vista and above
+        -D_WIN32_WINNT=0x0600 # Vista and above
         -D_WINDOWS
         -D_UNICODE
         -DUNICODE

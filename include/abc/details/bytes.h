@@ -233,8 +233,8 @@ public:
     auto sub_bytes(size_t offset, size_t count = -1) const -> xabc_bytes;
 
 private:
-    friend [[nodiscard]] constexpr auto operator==(xabc_bytes const & lhs, xabc_bytes const & rhs) noexcept -> bool = default;
-    friend [[nodiscard]] constexpr auto operator<=>(xabc_bytes const & lhs, xabc_bytes const & rhs) noexcept -> std::strong_ordering = default;
+    friend constexpr auto operator==(xabc_bytes const & lhs, xabc_bytes const & rhs) noexcept -> bool = default;
+    friend constexpr auto operator<=>(xabc_bytes const & lhs, xabc_bytes const & rhs) noexcept -> std::strong_ordering = default;
 };
 
 } // namespace abc::details

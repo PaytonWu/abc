@@ -34,3 +34,7 @@
 # VS
 .vs
 out
+
+# VS Code
+.vscode
+build
