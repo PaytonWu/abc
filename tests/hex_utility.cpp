@@ -105,7 +105,7 @@ TEST(hex_utility, hex_binary) {
 
 TEST(hex_utility, hex_char) {
     for (int i = 0; i < 256; ++i) {
-        if (auto const ch = static_cast<char>(i); '0' <= ch && ch <= '9' || 'a' <= ch && ch <= 'f' || 'A' <= ch && ch <= 'F') {
+        if (auto const ch = static_cast<char>(i); ('0' <= ch && ch <= '9') || ('a' <= ch && ch <= 'f') || ('A' <= ch && ch <= 'F')) {
             EXPECT_TRUE(abc::hex_char(ch));
         } else {
             EXPECT_FALSE(abc::hex_char(ch));

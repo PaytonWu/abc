@@ -108,21 +108,10 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" MATCHES "MSVC")
         -D_CRT_SECURE_NO_WARNINGS
         -DNOMINMAX
         -D_WIN32_WINNT=0x0600 # Vista and above
-        -D_WINDOWS
-        -D_UNICODE
-        -DUNICODE
         -DWIN32_LEAN_AND_MEAN)
-
-    # options for Release & RelWithDebInfo
-    # /O2 equivalent to /Og /Oi /Ot /Oy /Ob2 /Gs /GF /Gy
-    # https://docs.microsoft.com/en-us/cpp/build/reference/o1-o2-minimize-size-maximize-speed
-    add_compile_options($<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>>:/O2>)
 else()
     message(FATAL_ERROR "Not supported C++ Compiler: " ${CMAKE_CXX_COMPILER_ID})
 endif()
-
-set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS $<$<CONFIG:Debug>:DEBUG _DEBUG>)
-set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS $<$<CONFIG:Release>:NDEBUG>)
 
 find_package(Threads REQUIRED)
 find_package(Boost REQUIRED)
