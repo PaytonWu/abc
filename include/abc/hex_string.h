@@ -9,8 +9,9 @@
 #include "abc/details/hex_string.h"
 
 namespace abc {
-using xhex_string_format_t = details::xabc_hex_string_format;
+
 using xhex_string_t = details::xabc_hex_string;
+
 }
 
 #include "abc/bytes.h"

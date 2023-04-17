@@ -18,6 +18,35 @@ auto xabc_hex_string::from(std::string_view const input) -> xabc_hex_string {
     return xabc_hex_string{ input };
 }
 
+auto xabc_hex_string::to_string(format const fmt) const -> std::string {
+    if (empty()) {
+        return {};
+    }
+
+    std::string tmp;
+    switch (fmt) {
+    case lower_case_with_prefix:
+        std::ranges::transform(value_, std::back_inserter(tmp), [](auto const ch) -> char { return static_cast<char>(std::tolower(ch)); });
+        return fmt::format("{}{}", hex_prefix, tmp);
+    case lower_case_without_prefix:
+        std::ranges::transform(value_, std::back_inserter(tmp), [](auto const ch) -> char { return static_cast<char>(std::tolower(ch)); });
+        return fmt::format("{}", tmp);
+    case upper_case_with_prefix:
+        std::ranges::transform(value_, std::back_inserter(tmp), [](auto const ch) -> char { return static_cast<char>(std::toupper(ch)); });
+        return fmt::format("{}{}", hex_prefix_uppercase, tmp);
+    case upper_case_without_prefix:
+        std::ranges::transform(value_, std::back_inserter(tmp), [](auto const ch) -> char { return static_cast<char>(std::toupper(ch)); });
+        return fmt::format("{}", tmp);
+    case mixed_case_with_prefix:
+        return fmt::format("{}{}", hex_prefix, value_);
+    case mixed_case_without_prefix:
+        return fmt::format("{}", value_);
+    default:  // NOLINT(clang-diagnostic-covered-switch-default)
+        assert(false);
+        return fmt::format("{}", value_);
+    }
+}
+
 auto to_hex_string(std::string_view const data, std::error_code & ec) -> xcase_insensitive_string_t<char> {
     assert(!ec);
 
