@@ -6,7 +6,6 @@
 
 #pragma once
 
-#include "abc/byte.h"
 #include "abc/details/bytes.h"
 
 #include <array>
@@ -38,9 +37,13 @@ using xbytes256_view_t = std::span<xbyte_t const, 256>;
     return static_cast<std::vector<xbyte_t>>(lhs) == rhs;
 }
 
-auto operator+(std::span<xbyte_t const> lhs, xbytes_t const & rhs) -> xbytes_t;
-auto operator+(xbyte_t lhs, xbytes_t const & rhs) -> xbytes_t;
-auto operator+(xbyte_t lhs, std::span<xbyte_t const> rhs) -> xbytes_t;
+//constexpr auto operator+(std::span<xbyte_t const> const lhs, xbytes_t const& rhs) -> xbytes_t {
+//    return xbytes_t{ lhs } + rhs;
+//}
+//
+//constexpr auto operator+(xbyte_t const lhs, std::span<xbyte_t const> const rhs) -> xbytes_t {
+//    return xbytes_t{ lhs } + rhs;
+//}
 
 constexpr void swap(xbytes_t & lhs, xbytes_t & rhs) noexcept {
     lhs.swap(rhs);
@@ -54,16 +57,6 @@ template <typename Predictor>
 constexpr auto erase_if(xbytes_t & c, Predictor predictor) -> xbytes_t::size_type {
     return std::erase_if(static_cast<std::vector<xbyte_t> &>(c), std::move(predictor));
 }
-
-}
-
-#include "abc/hex_string.h"
-#include "abc/simple_converter.h"
-
-namespace abc {
-
-template <>
-auto to<xhex_string_t, xbytes_t>(xbytes_t const & from) -> xhex_string_t;
 
 }
 

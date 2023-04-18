@@ -10,6 +10,7 @@
 
 #include <cassert>
 #include <compare>
+#include <iterator>
 #include <span>
 #include <utility>
 #include <vector>
@@ -37,25 +38,19 @@ public:
     using const_reverse_iterator = internal_type::const_reverse_iterator;
 
     xabc_bytes() = default;
-    constexpr xabc_bytes(xabc_bytes const &) = default;
+    xabc_bytes(xabc_bytes const &) = default;
     auto operator=(xabc_bytes const &)->xabc_bytes & = default;
-    constexpr xabc_bytes(xabc_bytes &&) = default;
+    xabc_bytes(xabc_bytes &&) = default;
     auto operator=(xabc_bytes &&)->xabc_bytes & = default;
     ~xabc_bytes() = default;
 
     constexpr explicit xabc_bytes(std::vector<xbyte_t> raw) noexcept : data_{ std::move(raw) } {
     }
 
-    auto operator=(std::vector<xbyte_t> raw) noexcept -> xabc_bytes & {
+    constexpr auto operator=(std::vector<xbyte_t> raw) noexcept -> xabc_bytes & {
         data_ = std::move(raw);
         return *this;
     }
-
-    //constexpr xabc_bytes(size_type const count, xbyte_t const value) : data_(count, value) {
-    //}
-
-    //constexpr explicit xabc_bytes(size_type const count) : data_(count) {
-    //}
 
     template <std::input_iterator Iterator>
     constexpr xabc_bytes(Iterator first, Iterator last) : data_{ first, last } {
@@ -160,29 +155,29 @@ public:
         data_.clear();
     }
 
-    constexpr auto insert(const_iterator pos, value_type const value) -> iterator {
-        return data_.insert(std::move(pos), value);
+    constexpr auto insert(const const_iterator pos, value_type const value) -> iterator {
+        return data_.insert(pos, value);
     }
 
-    constexpr auto insert(const_iterator pos, size_type const count, value_type const value) -> iterator {
-        return data_.insert(std::move(pos), count, value);
+    constexpr auto insert(const const_iterator pos, size_type const count, value_type const value) -> iterator {
+        return data_.insert(pos, count, value);
     }
 
     template <std::input_iterator Iterator>
     constexpr auto insert(const_iterator pos, Iterator first, Iterator last) -> iterator {
-        return data_.insert(std::move(pos), first, last);
+        return data_.insert(pos, first, last);
     }
 
-    constexpr auto insert(const_iterator pos, std::initializer_list<value_type> init_list) -> iterator {
-        return data_.insert(std::move(pos), init_list);
+    constexpr auto insert(const const_iterator pos, const std::initializer_list<value_type> init_list) -> iterator {
+        return data_.insert(pos, init_list);
     }
 
-    constexpr auto erase(const_iterator pos) -> iterator {
-        return data_.erase(std::move(pos));
+    constexpr auto erase(const const_iterator pos) -> iterator {
+        return data_.erase(pos);
     }
 
-    constexpr auto erase(const_iterator first, const_iterator last) -> iterator {
-        return data_.erase(std::move(first), std::move(last));
+    constexpr auto erase(const const_iterator first, const const_iterator last) -> iterator {
+        return data_.erase(first, last);
     }
 
     constexpr void push_back(value_type const value) {
@@ -205,20 +200,51 @@ public:
         data_.swap(other.data_);
     }
 
-    explicit operator std::vector<xbyte_t> const &() const noexcept {
+    constexpr explicit operator std::vector<xbyte_t> const &() const noexcept {
         return data_;
     }
 
-    explicit operator std::vector<xbyte_t> & () noexcept {
+    constexpr explicit operator std::vector<xbyte_t> & () noexcept {
         return data_;
     }
 
-    auto operator+(xabc_bytes const & other) const -> xabc_bytes;
-    auto operator+=(xabc_bytes const & other) -> xabc_bytes &;
-    auto operator+(std::span<xbyte_t const> other) const -> xabc_bytes;
-    auto operator+=(std::span<xbyte_t const> other) -> xabc_bytes &;
-    auto operator+(xbyte_t byte) const -> xabc_bytes;
-    auto operator+=(xbyte_t byte) -> xabc_bytes &;
+    //constexpr auto operator+(xabc_bytes const & other) const -> xabc_bytes {
+    //    internal_type data;
+    //    data.reserve(size() + other.size());
+
+    //    std::ranges::copy(*this, std::back_inserter(data));
+    //    std::ranges::copy(other, std::back_inserter(data));
+
+    //    return xabc_bytes{ std::move(data) };
+    //}
+
+    //constexpr auto operator+=(xabc_bytes const & other) -> xabc_bytes & {
+    //    data_.reserve(size() + other.size());
+    //    std::ranges::copy(other, std::back_inserter(data_));
+    //    return *this;
+    //}
+
+    constexpr auto operator+(std::span<xbyte_t const> const other) const -> xabc_bytes {
+        auto data = *this;
+        return data += other;
+    }
+
+    constexpr auto operator+=(std::span<xbyte_t const> const other) -> xabc_bytes & {
+        data_.reserve(size() + other.size());
+        std::ranges::copy(other, std::back_inserter(data_));
+        return *this;
+    }
+
+    constexpr auto operator+(xbyte_t const byte) const -> xabc_bytes {
+        auto bytes = *this;
+        bytes += byte;
+        return bytes;
+    }
+
+    constexpr auto operator+=(xbyte_t const byte) -> xabc_bytes & {
+        data_.push_back(byte);
+        return *this;
+    }
 
     [[nodiscard]] constexpr auto first(size_t const count) const noexcept -> std::span<xbyte_t const> {
         assert(count <= data_.size());
@@ -230,7 +256,13 @@ public:
         return std::span{ std::next(std::begin(data_), static_cast<std::ptrdiff_t>(size() - count)), count };
     }
 
-    auto sub_bytes(size_t offset, size_t count = -1) const -> xabc_bytes;
+    constexpr auto sub_bytes(size_t const offset, size_t const count = -1) const -> xabc_bytes {
+        if (offset >= data_.size()) {
+            return {};
+        }
+
+        return xabc_bytes{ std::span{ data_.data() + offset, count } };
+    }
 
 private:
     friend constexpr auto operator==(xabc_bytes const & lhs, xabc_bytes const & rhs) noexcept -> bool = default;

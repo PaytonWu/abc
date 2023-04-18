@@ -13,23 +13,11 @@ namespace abc {
 using xhex_string_format_t = details::xabc_hex_string_format;
 
 constexpr bool lower_case(xhex_string_format_t const format) noexcept {
-    return !(static_cast<uint8_t>(format) >> 4);
+    return !(static_cast<uint8_t>(format) & 0b00000010);
 }
 
 constexpr bool upper_case(xhex_string_format_t const format) noexcept {
-    return static_cast<bool>((static_cast<uint8_t>(format) >> 4) & 0b0001);
-}
-
-constexpr bool mixed_case(xhex_string_format_t const format) noexcept {
-    return static_cast<bool>((static_cast<uint8_t>(format) >> 4) & 0b0010);
-}
-
-constexpr bool with_prefix(xhex_string_format_t const format) noexcept {
-    return static_cast<bool>((static_cast<uint8_t>(format) & 0b00000001u));
-}
-
-constexpr bool without_prefix(xhex_string_format_t const format) noexcept {
-    return !with_prefix(format);
+    return !lower_case(format);
 }
 
 }
