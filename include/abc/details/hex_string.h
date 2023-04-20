@@ -20,16 +20,6 @@
 
 namespace abc::details {
 
-class [[nodiscard]] xabc_hex_string;
-
-constexpr auto to_binary(std::string_view input) -> xbytes_t {
-    if (hex_string(input)) {
-        return hex_string_to_binary(input);
-    }
-
-    return xbytes_t{ input.begin(), input.end() };
-}
-
 class [[nodiscard]] xabc_hex_string {
     xbytes_t binary_data_;
 
@@ -62,12 +52,13 @@ public:
         }
 
         r.reserve((binary_data_.size() + 1) * 2);
+        std::array<char, 3> hex{ 0, 0, 0 };
         if (lower_case(fmt)) {
             r.append(hex_prefix);
-            std::ranges::for_each(binary_data_ | std::views::transform([](auto const byte) { return fmt::format("{:02x}", byte); }), [&r](auto str) { r.append(std::move(str)); });
+            std::ranges::for_each(binary_data_ | std::views::transform([&hex](auto const byte) mutable { assert(hex[2] == 0); hex[0] = lower_case_hex_digits[byte >> 4], hex[1] = lower_case_hex_digits[byte & 0x0f]; return hex.data(); }), [&r](auto const* c_str) { r.append(c_str); });
         } else if (upper_case(fmt)) {
             r.append(hex_prefix_uppercase);
-            std::ranges::for_each(binary_data_ | std::views::transform([](auto const byte) { return fmt::format("{:02X}", byte); }), [&r](auto str) { r.append(std::move(str)); });
+            std::ranges::for_each(binary_data_ | std::views::transform([&hex](auto const byte) mutable { assert(hex[2] == 0); hex[0] = upper_case_hex_digits[byte >> 4], hex[1] = upper_case_hex_digits[byte & 0x0f]; return hex.data(); }), [&r](auto const* c_str) { r.append(c_str); });
         } else {
             assert(false);
         }

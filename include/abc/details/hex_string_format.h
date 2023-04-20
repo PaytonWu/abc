@@ -11,7 +11,7 @@ namespace abc::details {
 enum class [[nodiscard]] xabc_hex_string_format : uint8_t {
     default_format = 0b00000000u,
     lower_case = 0b00000000u,
-    upper_case = 0b00000010u,
+    upper_case = 0b00000001u,
 };
 
 }

@@ -14,7 +14,6 @@
 #include <cstddef>
 #include <concepts>
 #include <string_view>
-#include <system_error>
 
 namespace abc {
 
@@ -22,7 +21,8 @@ constexpr inline char const * hex_prefix{ "0x" };
 constexpr inline char const * hex_prefix_uppercase{ "0X" };
 constexpr inline std::string_view hex_prefix_view{ hex_prefix };
 constexpr inline std::string_view hex_prefix_uppercase_view{ hex_prefix_uppercase };
-// constexpr inline char hex_digits[] = "0123456789abcdef";
+constexpr inline char lower_case_hex_digits[] = "0123456789abcdef";
+constexpr inline char upper_case_hex_digits[] = "0123456789ABCDEF";
 constexpr inline std::bitset<256> hex_flag{
     "00000000000000000000000000000000"
     "00000000000000000000000000000000"
@@ -70,7 +70,7 @@ template <std::unsigned_integral T>
     return hex_string_with_prefix(string_slice) || hex_string_without_prefix(string_slice);
 }
 
-constexpr auto hex_char_to_binary(char const ch) noexcept -> xbyte_t {
+[[nodiscard]] constexpr auto hex_char_to_binary(char const ch) noexcept -> xbyte_t {
     if ('0' <= ch && ch <= '9') {
         return static_cast<xbyte_t>(ch - '0');
     }
@@ -105,6 +105,14 @@ constexpr auto hex_string_to_binary(std::string_view string_slice) -> xbytes_t {
     }
 
     return binary_data;
+}
+
+constexpr auto to_binary(std::string_view input) -> xbytes_t {
+    if (hex_string(input)) {
+        return hex_string_to_binary(input);
+    }
+
+    return xbytes_t{ input.begin(), input.end() };
 }
 
 }
