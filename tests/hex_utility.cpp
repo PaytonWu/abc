@@ -1,9 +1,13 @@
 // Copyright(c) 2023 - present, Payton Wu (payton.wu@outlook.com) & abc contributors.
 // Distributed under the MIT License (http://opensource.org/licenses/MIT)
 
+#include "abc/bytes.h"
+#include "abc/hex_string.h"
 #include "abc/hex_utility.h"
 
 #include <gtest/gtest.h>
+
+#include <random>
 
 TEST(hex_utility, hex_string_without_prefix) {
     EXPECT_TRUE(abc::hex_string_without_prefix("0"));
@@ -111,4 +115,19 @@ TEST(hex_utility, hex_char) {
             EXPECT_FALSE(abc::hex_char(ch));
         }
     }
+}
+
+TEST(hex_utility, hex_string_to_binary) {
+    std::random_device rd;
+    std::uniform_int_distribution distribution{ 0, 255 };
+    abc::xbytes_t bytes;
+
+    bytes.resize(std::uniform_int_distribution<size_t>{0u, 5000u}(rd));
+    for (auto & byte : bytes) {
+        byte = static_cast<abc::xbyte_t>(distribution(rd));
+    }
+
+    auto const hex_string = abc::xhex_string_t::from(bytes);
+    EXPECT_EQ(abc::hex_string_to_binary(hex_string.to_string()), bytes);
+    EXPECT_EQ(abc::hex_string_to_binary(hex_string.to_string().substr(2)), bytes);
 }
