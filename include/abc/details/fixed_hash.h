@@ -40,8 +40,8 @@ public:
         data_.fill(static_cast<xbyte_t>(0));
     }
 
-    constexpr xabc_fixed_hash(xabc_fixed_hash const &) = default;
-    constexpr xabc_fixed_hash(xabc_fixed_hash &&) = default;
+    xabc_fixed_hash(xabc_fixed_hash const &) = default;
+    xabc_fixed_hash(xabc_fixed_hash &&) = default;
     auto operator=(xabc_fixed_hash const &)->xabc_fixed_hash & = default;
     auto operator=(xabc_fixed_hash &&)->xabc_fixed_hash & = default;
     ~xabc_fixed_hash() = default;

@@ -27,13 +27,14 @@ using xint160_t = boost::multiprecision::number<boost::multiprecision::cpp_int_b
 
 using xbigint_t = boost::multiprecision::number<boost::multiprecision::cpp_int_backend<>>;
 
-template <typename InputT, typename OutputT> requires std::same_as<InputT, xbigint_t> ||
-std::same_as<InputT, xuint128_t> ||
-std::same_as<InputT, xuint256_t> ||
-std::same_as<InputT, xuint512_t> ||
-std::same_as<InputT, xuint160_t> ||
-std::unsigned_integral<InputT>
-auto to_big_endian(InputT input, OutputT & output) -> void {
+template <typename InputT, typename OutputT>
+        requires (std::same_as<InputT, xbigint_t> ||
+                 std::same_as<InputT, xuint128_t> ||
+                 std::same_as<InputT, xuint256_t> ||
+                 std::same_as<InputT, xuint512_t> ||
+                 std::same_as<InputT, xuint160_t> ||
+                 std::unsigned_integral<InputT>)
+void to_big_endian(InputT input, OutputT & output) {
     for (auto i = output.size(); i != 0; input >>= 8, --i) {
         InputT v = input & static_cast<InputT>(0xff);
         output[i - 1] = static_cast<typename OutputT::value_type>(static_cast<uint8_t>(v));
