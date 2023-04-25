@@ -34,6 +34,10 @@
 #if defined (ABC_OS_WINDOWS)
 #   if defined (_MSC_VER)
 #       define ABC_COMPILER_MSVC
+#   elif defined (__clang__)
+#       define ABC_COMPILER_CLANG
+#   elif defined (__GNUC__)
+#       define ABC_COMPILER_GCC
 #   else
 #       error not supported compiler on Windows
 #   endif
@@ -54,7 +58,7 @@
 #endif
 
 #if (defined (ABC_OS_LINUX) || defined (ABC_OS_APPLE))
-#   if !defined _GNU_SOURCE
+#   if !defined(_GNU_SOURCE)
 #       define _GNU_SOURCE
 #   endif
 #endif

@@ -17,18 +17,6 @@ namespace abc {
 
 using xbytes_t = details::xabc_bytes;
 
-using xbytes32_t = std::array<xbyte_t, 32>;
-using xbytes16_t = std::array<xbyte_t, 16>;
-using xbytes8_t = std::array<xbyte_t, 8>;
-using xbytes1_t = std::array<xbyte_t, 1>;
-using xbytes256_t = std::array<xbyte_t, 256>;
-
-using xbytes_view_t = std::span<xbyte_t const>;
-using xbytes32_view_t = std::span<xbyte_t const, 32>;
-using xbytes16_view_t = std::span<xbyte_t const, 16>;
-using xbytes8_view_t = std::span<xbyte_t const, 8>;
-using xbytes256_view_t = std::span<xbyte_t const, 256>;
-
 [[nodiscard]] constexpr auto operator<=>(xbytes_t const & lhs, std::vector<xbyte_t> const & rhs) -> std::strong_ordering {
     return static_cast<std::vector<xbyte_t>>(lhs) <=> rhs;
 }

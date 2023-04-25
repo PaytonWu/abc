@@ -5,9 +5,9 @@
 
 #include <gtest/gtest.h>
 
-TEST(hex_string, from_string_view) {
-    using namespace abc;
+using namespace abc;
 
+TEST(hex_string, from_string_view) {
     auto const hex_string1 = xhex_string_t::from("0x0123456789abcdefABCDEF");
     ASSERT_FALSE(hex_string1.empty());
     ASSERT_EQ(hex_string1.to_string(), "0x0123456789abcdefabcdef");
@@ -33,8 +33,6 @@ TEST(hex_string, from_string_view) {
 }
 
 TEST(hex_string, from_bytes) {
-    using namespace abc;
-
     xbytes_t const bytes{ 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10 };
     auto const hex_string4 = xhex_string_t::from(bytes);
     ASSERT_FALSE(hex_string4.empty());
@@ -48,8 +46,6 @@ TEST(hex_string, from_bytes) {
 }
 
 TEST(hex_string, from_bytes_zero) {
-    using namespace abc;
-
     xbytes_t const bytes{ 0x00, 0x00 };
     auto const hex_string4 = xhex_string_t::from(bytes);
     ASSERT_FALSE(hex_string4.empty());
@@ -63,8 +59,6 @@ TEST(hex_string, from_bytes_zero) {
 }
 
 TEST(hex_string, from_empty) {
-    using namespace abc;
-
     xbytes_t const bytes{};
     auto const hex_string4 = xhex_string_t::from(bytes);
     ASSERT_TRUE(hex_string4.empty());
