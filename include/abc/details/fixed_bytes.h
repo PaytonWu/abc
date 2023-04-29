@@ -50,19 +50,9 @@ public:
         data_.fill(0);
     }
 
-    constexpr xabc_fixed_bytes(std::initializer_list<std::byte> const list) : xabc_fixed_bytes{} {
+    constexpr xabc_fixed_bytes(std::initializer_list<xbyte_t> const list) : xabc_fixed_bytes{} {
         assert(list.size() <= Size);
-        std::ranges::copy(list | std::views::transform([](auto const byte) { return std::to_integer<xbyte_t>(byte); }), data_.begin());
-    }
-
-    constexpr explicit xabc_fixed_bytes(std::unsigned_integral auto const value) : xabc_fixed_bytes{} {
-        if constexpr (Endian == std::endian::little) {
-            to_little_endian(value, data_);
-        }
-
-        if constexpr (Endian == std::endian::big) {
-            to_big_endian(value, data_);
-        }
+        std::ranges::copy(list, data_.begin());
     }
 
     constexpr explicit xabc_fixed_bytes(internal_type const & data) : data_{ data } {
@@ -76,6 +66,17 @@ public:
     template <size_t SizeU>
     constexpr explicit xabc_fixed_bytes(std::array<std::byte, SizeU> const & data) : xabc_fixed_bytes{} {
         std::ranges::copy(data | std::views::transform([](auto const byte) { return std::to_integer<xbyte_t>(byte); }), data_.begin());
+    }
+
+    constexpr static xabc_fixed_bytes from(std::unsigned_integral auto const value) {
+        xabc_fixed_bytes result{};
+        if constexpr (Endian == std::endian::little) {
+            to_little_endian(value, result.data_);
+        }
+        if constexpr (Endian == std::endian::big) {
+            to_big_endian(value, result.data_);
+        }
+        return result;
     }
 
     friend auto operator==(xabc_fixed_bytes const & lhs, xabc_fixed_bytes const & rhs) noexcept -> bool = default;
@@ -163,28 +164,18 @@ public:
 
 private:
     template <std::unsigned_integral T>
-    constexpr static void to_little_endian(T const value, internal_type & data) {
-        auto const bytes = std::bit_cast<std::array<xbyte_t, sizeof(T)>>(value);
-        if constexpr (std::endian::native == std::endian::little) {
-            std::ranges::copy_n(bytes.begin(), std::min(bytes.size(), Size), data.begin());
-        }
-
-        if constexpr (std::endian::native == std::endian::big) {
-            std::ranges::copy_n(bytes | std::views::reverse, std::min(bytes.size(), Size), data.begin());
+    constexpr static void to_little_endian(T value, internal_type & data) {
+        for (auto i = 0u; i < std::min(sizeof(T), data.size()); value >>= 8, ++i) {
+            T v = value & static_cast<T>(0xff);
+            data[i] = static_cast<uint8_t>(v);
         }
     }
 
     template <std::unsigned_integral T>
-    constexpr static void to_big_endian(T const value, internal_type & data) {
-        auto bytes = std::bit_cast<std::array<xbyte_t, sizeof(T)>>(value);
-        if constexpr (std::endian::native == std::endian::little) {
-            // std::ranges::copy_n(bytes | std::views::reverse, std::min(bytes.size(), Size), data.begin());
-            std::ranges::reverse(bytes);
-            std::ranges::copy_n(bytes.begin(), std::min(bytes.size(), Size), data.begin());
-        }
-
-        if constexpr (std::endian::native == std::endian::big) {
-            std::ranges::copy_n(bytes, std::min(bytes.size(), Size), data.begin());
+    constexpr static void to_big_endian(T value, internal_type & data) {
+        for (auto i = data.size(); i != 0; value >>= 8, --i) {
+            T v = value & static_cast<T>(0xff);
+            data[i - 1] = static_cast<uint8_t>(v);
         }
     }
 };
