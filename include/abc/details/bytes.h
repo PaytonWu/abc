@@ -8,7 +8,10 @@
 
 #include "abc/byte.h"
 
+#include <algorithm>
+#include <bit>
 #include <cassert>
+#include <concepts>
 #include <compare>
 #include <iterator>
 #include <ranges>
@@ -232,7 +235,11 @@ public:
 
     constexpr auto operator+=(std::span<xbyte_t const> const other) -> xabc_bytes & {
         data_.reserve(size() + other.size());
+#if defined(__cpp_lib_ranges) && __cpp_lib_ranges >= 201911L
         std::ranges::copy(other, std::back_inserter(data_));
+#else
+        std::copy(std::begin(other), std::end(other), std::back_inserter(data_));
+#endif
         return *this;
     }
 

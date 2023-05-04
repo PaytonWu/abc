@@ -11,17 +11,19 @@
 #include "abc/hex_utility.h"
 
 #include <fmt/format.h>
+#include <range/v3/range/conversion.hpp>
+#include <range/v3/view/reverse.hpp>
 
+#include <bit>
 #include <cassert>
 #include <compare>
 #include <ranges>
 #include <span>
 
-
 namespace abc::details {
 
 class [[nodiscard]] xabc_hex_string {
-    xbytes_t binary_data_;
+    xbytes_t binary_data_;  // force big endian
 
 public:
     xabc_hex_string() = default;
@@ -37,8 +39,8 @@ public:
         return xabc_hex_string{ input };
     }
 
-    constexpr static auto from(std::span<xbyte_t const> const input) -> xabc_hex_string {
-        return xabc_hex_string{ input };
+    constexpr static auto from(std::span<xbyte_t const> const input, std::endian const endian) -> xabc_hex_string {
+        return xabc_hex_string{ input, endian };
     }
 
     [[nodiscard]] auto operator==(xabc_hex_string const&) const noexcept -> bool = default;
@@ -70,11 +72,7 @@ public:
         return binary_data_.empty();
     }
 
-    [[nodiscard]] constexpr auto binary_data() const noexcept -> xbytes_t const & {
-        return binary_data_;
-    }
-
-    [[nodiscard]] constexpr auto binary_size() const noexcept -> size_t {
+    [[nodiscard]] constexpr auto bytes_size() const noexcept -> size_t {
         return binary_data_.size();
     }
 
@@ -90,8 +88,23 @@ public:
         binary_data_.swap(other.binary_data_);
     }
 
+    template <std::endian Endian, std::enable_if_t<Endian == std::endian::little> * = nullptr>
+    constexpr auto to_bytes() const -> xbytes_t {
+        if (Endian == std::endian::little) {
+            return binary_data_ | std::views::reverse | ranges::to<xbytes_t>();
+        }
+    }
+
+    template<std::endian Endian, std::enable_if_t<Endian == std::endian::big> * = nullptr>
+    constexpr auto to_bytes() const -> xbytes_t const & {
+        return binary_data_;
+    }
+
 private:
-    constexpr explicit xabc_hex_string(std::span<xbyte_t const> const input) : binary_data_{ std::begin(input), std::end(input) } {
+    constexpr explicit xabc_hex_string(std::span<xbyte_t const> const input, std::endian const endian) : binary_data_{ std::begin(input), std::end(input) } {
+        if (endian == std::endian::little) {
+            std::ranges::reverse(binary_data_);
+        }
     }
 
     constexpr explicit xabc_hex_string(std::string_view const input) : binary_data_{ to_binary(input) } {

@@ -6,6 +6,14 @@
 
 #pragma once
 
+#if !defined(__cplusplus)
+#   error abc requires a C++ compiler, please use a C++ compiler to compile abc
+#endif
+
+#if __cplusplus >= 202002L
+#   define ABC_CPP20
+#endif
+
 // ABC_OS_XXXX define OS platform
 #if defined (_WIN32)
 #   define ABC_OS_WINDOWS

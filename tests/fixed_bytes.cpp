@@ -35,7 +35,7 @@ TEST(fixed_bytes, move_constructor) {
 }
 
 TEST(fixed_bytes, initializer_list_constructor) {
-    xbytes16_t bytes{ 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f };
+    xbytes16_t bytes{ std::array<xbyte_t, 16>{ 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f } };
     EXPECT_EQ(bytes.size(), 16);
     EXPECT_EQ(bytes[0], 0);
     EXPECT_EQ(bytes[7], 7);
@@ -50,7 +50,7 @@ TEST(fixed_bytes, array_constructor) {
 }
 
 TEST(fixed_bytes, from) {
-    xbytes16_t bytes = xbytes16_t::from(0x0102030405060708U);
+    xbytes16_t bytes{ 0x0102030405060708U };
     EXPECT_EQ(bytes.size(), 16);
     EXPECT_EQ(bytes[0], 0);
     EXPECT_EQ(bytes[7], 0);
@@ -59,27 +59,43 @@ TEST(fixed_bytes, from) {
 }
 
 TEST(fixed_bytes_le, from) {
-    xbytes16_le_t bytes = xbytes16_le_t::from(0x0102030405060708U);
+    xbytes16_le_t bytes{ 0x0102030405060708U };
     EXPECT_EQ(bytes.size(), 16);
     EXPECT_EQ(bytes[0], 8);
     EXPECT_EQ(bytes[7], 1);
 
-    xbytes4_le_t bytes2 = xbytes4_le_t::from(0x0102030405060708U);
+    xbytes4_le_t bytes2{ 0x0102030405060708U };
     EXPECT_EQ(bytes2.size(), 4);
     EXPECT_EQ(bytes2[0], 8);
     EXPECT_EQ(bytes2[3], 5);
 }
 
 TEST(fixed_bytes_be, from) {
-    xbytes16_be_t bytes = xbytes16_be_t::from(0x0102030405060708U);
+    xbytes16_be_t bytes{ 0x0102030405060708U };
     EXPECT_EQ(bytes.size(), 16);
     EXPECT_EQ(bytes[0], 0);
     EXPECT_EQ(bytes[7], 0);
     EXPECT_EQ(bytes[8], 1);
     EXPECT_EQ(bytes[15], 8);
 
-    xbytes4_be_t bytes2 = xbytes4_be_t::from(0x0102030405060708U);
+    xbytes4_be_t bytes2{ 0x0102030405060708U };
     EXPECT_EQ(bytes2.size(), 4);
     EXPECT_EQ(bytes2[0], 5);
     EXPECT_EQ(bytes2[3], 8);
+}
+
+TEST(fixed_bytes_le, to) {
+    xbytes16_le_t bytes{ std::array<xbyte_t, 16>{ 8, 7, 6, 5, 4, 3, 2, 1 } };
+    EXPECT_EQ(bytes.to<uint64_t>(), 0x0102030405060708U);
+    EXPECT_EQ(bytes.to<uint32_t>(), 0x05060708U);
+    EXPECT_EQ(bytes.to<uint16_t>(), 0x0708U);
+    EXPECT_EQ(bytes.to<uint8_t>(), 0x08U);
+}
+
+TEST(fixed_bytes_be, to) {
+    xbytes16_be_t bytes{ std::array<xbyte_t, 16>{ 1, 2, 3, 4, 5, 6, 7, 8 } };  // 0x01020304050607080000000000000000
+    EXPECT_EQ(bytes.to<uint64_t>(), 0x00);
+    EXPECT_EQ(bytes.to<uint32_t>(), 0x00);
+    EXPECT_EQ(bytes.to<uint16_t>(), 0x00);
+    EXPECT_EQ(bytes.to<uint8_t>(), 0x00);
 }

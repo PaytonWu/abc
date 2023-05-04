@@ -7,6 +7,7 @@
 #pragma once
 
 #include "abc/byte.h"
+#include "abc/hex_string.h"
 
 #include <algorithm>
 #include <array>
@@ -18,14 +19,14 @@
 
 namespace abc::details {
 
-template <size_t Size, std::endian Endian>
+template <size_t N, std::endian Endian>
 class [[nodiscard]] xabc_fixed_bytes {
-    static_assert(Size > 0);
+    static_assert(N > 0);
     static_assert(Endian == std::endian::little || Endian == std::endian::big);
 
 private:
-    using internal_type = std::array<xbyte_t, Size>;
-    internal_type data_{};
+    using internal_type = std::array<xbyte_t, N>;
+    internal_type data_;
 
 public:
     using value_type = typename internal_type::value_type;
@@ -50,9 +51,21 @@ public:
         data_.fill(0);
     }
 
-    constexpr xabc_fixed_bytes(std::initializer_list<xbyte_t> const list) : xabc_fixed_bytes{} {
-        assert(list.size() <= Size);
-        std::ranges::copy(list, data_.begin());
+    constexpr xabc_fixed_bytes(xhex_string_t const &hex_string) : xabc_fixed_bytes{} {
+        auto const &bytes = hex_string.to_bytes<Endian>();
+        size_t const size = std::min(N, bytes.size());
+
+        std::memcpy(&data_[N - size], &bytes[bytes.size() - size], size);
+    }
+
+    constexpr xabc_fixed_bytes(std::unsigned_integral auto const value) : xabc_fixed_bytes{} {
+        if constexpr (Endian == std::endian::little) {
+            to_little_endian(value, data_);
+        }
+
+        if constexpr (Endian == std::endian::big) {
+            to_big_endian(value, data_);
+        }
     }
 
     constexpr explicit xabc_fixed_bytes(internal_type const & data) : data_{ data } {
@@ -66,17 +79,6 @@ public:
     template <size_t SizeU>
     constexpr explicit xabc_fixed_bytes(std::array<std::byte, SizeU> const & data) : xabc_fixed_bytes{} {
         std::ranges::copy(data | std::views::transform([](auto const byte) { return std::to_integer<xbyte_t>(byte); }), data_.begin());
-    }
-
-    constexpr static xabc_fixed_bytes from(std::unsigned_integral auto const value) {
-        xabc_fixed_bytes result{};
-        if constexpr (Endian == std::endian::little) {
-            to_little_endian(value, result.data_);
-        }
-        if constexpr (Endian == std::endian::big) {
-            to_big_endian(value, result.data_);
-        }
-        return result;
     }
 
     friend auto operator==(xabc_fixed_bytes const & lhs, xabc_fixed_bytes const & rhs) noexcept -> bool = default;
@@ -162,6 +164,22 @@ public:
         return Endian;
     }
 
+    template <std::unsigned_integral T>
+    [[nodiscard]] constexpr auto to() const noexcept -> T {
+        T result{};
+        if constexpr (Endian == std::endian::little) {
+            for (auto i = 0u; i < std::min(sizeof(T), data_.size()); ++i) {
+                result |= static_cast<T>(data_[i]) << (i * 8);
+            }
+        }
+        if constexpr (Endian == std::endian::big) {
+            for (auto i = 0u; i < std::min(sizeof(T), data_.size()); ++i) {
+                result |= static_cast<T>(data_[data_.size() - i - 1]) << (i * 8);
+            }
+        }
+        return result;
+    }
+
 private:
     template <std::unsigned_integral T>
     constexpr static void to_little_endian(T value, internal_type & data) {
@@ -181,6 +199,5 @@ private:
 };
 
 }
-
 
 #endif // !defined(ABC_DETAILS_FIXED_BYTES)

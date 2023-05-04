@@ -3,11 +3,11 @@
 #
 cmake_minimum_required(VERSION 3.22)
 
-if (NOT DEFINED ENV{VCPKG_HOME})
-    message(FATAL_ERROR "VCPKG_HOME enviornment variable not defined")
-endif()
+# if (NOT DEFINED ENV{VCPKG_HOME})
+#     message(FATAL_ERROR "VCPKG_HOME enviornment variable not defined")
+# endif()
 
-set(CMAKE_TOOLCHAIN_FILE "$ENV{VCPKG_HOME}/scripts/buildsystems/vcpkg.cmake")
+# set(CMAKE_TOOLCHAIN_FILE "$ENV{VCPKG_HOME}/scripts/buildsystems/vcpkg.cmake")
 
 project(
     ABC
@@ -116,8 +116,8 @@ endif()
 find_package(Threads REQUIRED)
 find_package(Boost REQUIRED)
 find_package(fmt CONFIG REQUIRED)
-find_package(msgpack CONFIG REQUIRED)
-find_package(Microsoft.GSL CONFIG REQUIRED)
+# find_package(msgpackc CONFIG REQUIRED)
+# find_package(Microsoft.GSL CONFIG REQUIRED)
 
 find_package(xxHash CONFIG REQUIRED)
 
