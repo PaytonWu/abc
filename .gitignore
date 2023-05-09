@@ -33,8 +33,16 @@
 
 # VS
 .vs
-out
 
 # VS Code
 .vscode
-build
+
+# idea
+.idea
+
+# Build folders
+build*
+out
+
+# CMakeUserPresets.json
+CMakeUserPresets.json
