@@ -81,8 +81,8 @@ public:
         std::ranges::copy(data | std::views::transform([](auto const byte) { return std::to_integer<xbyte_t>(byte); }), data_.begin());
     }
 
-    friend auto operator==(xabc_fixed_bytes const & lhs, xabc_fixed_bytes const & rhs) noexcept -> bool = default;
-    friend auto operator<=>(xabc_fixed_bytes const & lhs, xabc_fixed_bytes const & rhs) noexcept -> std::strong_ordering = default;
+    friend auto operator==(xabc_fixed_bytes const &, xabc_fixed_bytes const &) noexcept -> bool = default;
+    friend auto operator<=>(xabc_fixed_bytes const &, xabc_fixed_bytes const &) noexcept -> std::strong_ordering = default;
 
     constexpr auto operator[](size_t const index) const noexcept -> xbyte_t {
         return data_[index];
@@ -178,6 +178,85 @@ public:
             }
         }
         return result;
+    }
+
+    [[nodiscard]] constexpr auto zero() const noexcept -> bool {
+        return std::ranges::all_of(data_, [](auto const byte) { return byte == 0; });
+    }
+
+    constexpr auto operator^=(xabc_fixed_bytes const & other) -> xabc_fixed_bytes & {
+        for (auto i = 0u; i < N; ++i) {
+            data_[i] ^= other.data_[i];
+        }
+        return *this;
+    }
+
+    constexpr auto operator^(xabc_fixed_bytes const & other) const -> xabc_fixed_bytes {
+        return xabc_fixed_bytes{ *this } ^= other;
+    }
+
+    constexpr auto operator|=(xabc_fixed_bytes const & other) -> xabc_fixed_bytes & {
+        for (auto i = 0u; i < N; ++i) {
+            data_[i] |= other.data_[i];
+        }
+        return *this;
+    }
+
+    constexpr auto operator|(xabc_fixed_bytes const & other) const -> xabc_fixed_bytes {
+        return xabc_fixed_bytes{ *this } |= other;
+    }
+
+    constexpr auto operator&=(xabc_fixed_bytes const & other) -> xabc_fixed_bytes & {
+        for (auto i = 0u; i < N; ++i) {
+            data_[i] &= other.data_[i];
+        }
+        return *this;
+    }
+
+    constexpr auto operator&(xabc_fixed_bytes const & other) const -> xabc_fixed_bytes {
+        return xabc_fixed_bytes{ *this } &= other;
+    }
+
+    constexpr auto operator~() const -> xabc_fixed_bytes {
+        xabc_fixed_bytes ret;
+        for (auto i = 0u; i < N; ++i) {
+            ret[i] = ~data_[i];
+        }
+        return ret;
+    }
+
+    constexpr auto operator++() -> xabc_fixed_bytes & {
+        if constexpr (Endian == std::endian::big) {
+            for (auto i = N; i > 0 && !++data_[--i];) {}
+            return *this;
+        }
+
+        if constexpr (Endian == std::endian::little) {
+            for (auto i = 0u; i < N && !++data_[i++];) {}
+            return *this;
+        }
+    }
+
+//    constexpr auto operator++(int) -> xabc_fixed_bytes {
+//        xabc_fixed_bytes ret{*this};
+//
+//        if constexpr (Endian == std::endian::big) {
+//            for (auto i = N; i > 0 && !++data_[--i];) {}
+//            return ret;
+//        }
+//
+//        if constexpr (Endian == std::endian::little) {
+//            for (auto i = 0u; i < N && !++data_[i++];) {}
+//            return ret;
+//        }
+//    }
+
+    constexpr auto clear() -> void {
+        data_.fill(0);
+    }
+
+    constexpr auto hex_string() const -> xhex_string_t {
+        return xhex_string_t::from(data_, Endian);
     }
 
 private:

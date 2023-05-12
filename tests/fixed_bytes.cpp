@@ -99,3 +99,41 @@ TEST(fixed_bytes_be, to) {
     EXPECT_EQ(bytes.to<uint16_t>(), 0x00);
     EXPECT_EQ(bytes.to<uint8_t>(), 0x00);
 }
+
+TEST(fixed_bytes_be, zero) {
+    xbytes32_be_t bytes;
+    EXPECT_TRUE(bytes.zero());
+
+    bytes[0] = 1;
+    EXPECT_FALSE(bytes.zero());
+}
+
+TEST(fixed_bytes_le, zero) {
+    xbytes32_le_t bytes;
+    EXPECT_TRUE(bytes.zero());
+
+    bytes[0] = 1;
+    EXPECT_FALSE(bytes.zero());
+}
+
+TEST(fixed_bytes_le, prefix_plusplus) {
+    xfixed_bytes_t<2, std::endian::little> bytes;
+    for (uint16_t i : std::views::iota(0u, std::numeric_limits<uint16_t>::max())) {
+        ASSERT_EQ(i, bytes.to<uint16_t>());
+        ++bytes;
+    }
+}
+
+TEST(fixed_bytes_be, prefix_plusplus) {
+    xfixed_bytes_t<2, std::endian::big> bytes;
+    for (uint16_t i : std::views::iota(0u, std::numeric_limits<uint16_t>::max())) {
+        ASSERT_EQ(i, bytes.to<uint16_t>());
+        ++bytes;
+    }
+}
+
+TEST(fixed_bytes_be, hex_string) {
+    auto bytes = xbytes16_be_t{0x0123456789abcdefu};
+    auto const & hex_str = bytes.hex_string();
+    EXPECT_EQ("0x00000000000000000123456789abcdef", hex_str.to_string());
+}
