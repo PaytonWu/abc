@@ -7,6 +7,7 @@
 #pragma once
 
 #include "abc/bytes.h"
+#include "abc/error.h"
 
 #include <algorithm>
 #include <bitset>
@@ -78,7 +79,7 @@ template <std::unsigned_integral T>
     return hex_string_with_prefix(string_slice) || hex_string_without_prefix(string_slice);
 }
 
-[[nodiscard]] constexpr auto hex_char_to_binary(char const ch) noexcept -> std::expected<xbyte_t, std::errc> {
+[[nodiscard]] constexpr auto hex_char_to_binary(char const ch) noexcept -> std::expected<xbyte_t, xerrc_t> {
     if ('0' <= ch && ch <= '9') {
         return static_cast<xbyte_t>(ch - '0');
     }
@@ -91,17 +92,17 @@ template <std::unsigned_integral T>
         return static_cast<xbyte_t>(ch - 'A' + 10);
     }
 
-    return std::unexpected{ std::errc::invalid_argument };
+    return std::unexpected{ xerrc_t::invalid_hex_char };
 }
 
 template <std::endian Endian>
-constexpr auto hex_string_to_binary(std::string_view string_slice) -> std::expected<xbytes_t, std::errc> {
+constexpr auto hex_string_to_binary(std::string_view string_slice) -> std::expected<xbytes_t, xerrc_t> {
     if (has_hex_prefix(string_slice)) {
         string_slice.remove_prefix(2);
     }
 
     if (!hex_string_without_prefix(string_slice)) {
-        return std::unexpected{ std::errc::invalid_argument };
+        return std::unexpected{ xerrc_t::invalid_hex_char };
     }
 
     xbytes_t binary_data;
@@ -115,8 +116,8 @@ constexpr auto hex_string_to_binary(std::string_view string_slice) -> std::expec
         auto const & chunks = string_slice | std::views::chunk(2);
         std::ranges::for_each(chunks, [&binary_data](std::ranges::viewable_range auto && compound_byte) mutable {
             xbyte_t byte{};
-            for (int i{1}; auto const nibble_byte : compound_byte) {
-                byte |= hex_char_to_binary(nibble_byte).value() << (4 * i--);
+            for (auto const [i, nibble_byte] : compound_byte | std::views::reverse | std::views::enumerate) {
+                byte |= hex_char_to_binary(nibble_byte).value() << (4 * i);
             }
             binary_data.push_back(byte);
         });
@@ -133,8 +134,8 @@ constexpr auto hex_string_to_binary(std::string_view string_slice) -> std::expec
         auto const & chunks = string_slice | std::views::reverse | std::views::chunk(2);
         std::ranges::for_each(chunks, [&binary_data](std::ranges::viewable_range auto && compound_byte) mutable {
             xbyte_t byte{};
-            for (int i{}; auto const nibble_byte : compound_byte) {
-                byte |= hex_char_to_binary(nibble_byte).value() << (4 * i++);
+            for (auto const [i, nibble_byte] : compound_byte | std::views::enumerate) {
+                byte |= hex_char_to_binary(nibble_byte).value() << (4 * i);
             }
             binary_data.push_back(byte);
         });
@@ -143,7 +144,7 @@ constexpr auto hex_string_to_binary(std::string_view string_slice) -> std::expec
 }
 
 constexpr auto to_binary(std::string_view input) -> xbytes_t {
-    return hex_string_to_binary<std::endian::big>(input).or_else([&input](auto const) { return std::expected<xbytes_t, std::errc>{ xbytes_t{ std::begin(input), std::end(input) } }; }).value();
+    return hex_string_to_binary<std::endian::big>(input).or_else([&input](auto const) { return std::expected<xbytes_t, xerrc_t>{ std::in_place, std::begin(input), std::end(input) }; }).value();
 }
 
 }
