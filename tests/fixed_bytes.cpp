@@ -5,6 +5,8 @@
 
 #include <gtest/gtest.h>
 
+#include <ranges>
+
 using namespace abc;
 
 TEST(fixed_bytes, default_constructor) {
@@ -42,11 +44,12 @@ TEST(fixed_bytes, initializer_list_constructor) {
 }
 
 TEST(fixed_bytes, array_constructor) {
-    std::array<xbyte_t, 8> const arr{ 1, 2, 3, 4, 5, 6, 7, 8 };
+    std::array<xbyte_t, 16> const arr{ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 };
     xbytes16_t bytes{ arr };
     EXPECT_EQ(bytes.size(), 16);
-    EXPECT_EQ(bytes[0], 1);
-    EXPECT_EQ(bytes[7], 8);
+    for (auto i : std::views::iota(1u, 16u)) {
+        ASSERT_EQ(bytes[i - 1], i);
+    }
 }
 
 TEST(fixed_bytes, from) {

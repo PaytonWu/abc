@@ -51,7 +51,7 @@ public:
         data_.fill(0);
     }
 
-    constexpr xabc_fixed_bytes(xhex_string_t const &hex_string) : xabc_fixed_bytes{} {
+    constexpr xabc_fixed_bytes(xhex_string_t const & hex_string) : xabc_fixed_bytes{} {
         auto const &bytes = hex_string.to_bytes<Endian>();
         size_t const size = std::min(N, bytes.size());
 
@@ -71,13 +71,7 @@ public:
     constexpr explicit xabc_fixed_bytes(internal_type const & data) : data_{ data } {
     }
 
-    template <size_t SizeU>
-    constexpr explicit xabc_fixed_bytes(std::array<xbyte_t, SizeU> const & data) : xabc_fixed_bytes{} {
-        std::copy(data.begin(), data.end(), data_.begin());
-    }
-
-    template <size_t SizeU>
-    constexpr explicit xabc_fixed_bytes(std::array<std::byte, SizeU> const & data) : xabc_fixed_bytes{} {
+    constexpr explicit xabc_fixed_bytes(std::array<std::byte, N> const & data) : xabc_fixed_bytes{} {
         std::ranges::copy(data | std::views::transform([](auto const byte) { return std::to_integer<xbyte_t>(byte); }), data_.begin());
     }
 

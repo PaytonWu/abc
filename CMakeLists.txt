@@ -102,23 +102,17 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" MATCHES "MSVC")
     else()
         add_compile_options(/W4)
     endif()
-
-    add_definitions(
-        -D_SCL_SECURE_NO_WARNINGS
-        -D_CRT_SECURE_NO_WARNINGS
-        -DNOMINMAX
-        -D_WIN32_WINNT=0x0600 # Vista and above
-        -DWIN32_LEAN_AND_MEAN)
 else()
     message(FATAL_ERROR "Not supported C++ Compiler: " ${CMAKE_CXX_COMPILER_ID})
 endif()
 
+if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+    add_definitions(-D_SCL_SECURE_NO_WARNINGS -D_CRT_SECURE_NO_WARNINGS -DNOMINMAX -D_WIN32_WINNT=0x0600 -DWIN32_LEAN_AND_MEAN)
+endif ()
+
 find_package(Threads REQUIRED)
 find_package(Boost REQUIRED)
 find_package(fmt CONFIG REQUIRED)
-# find_package(msgpackc CONFIG REQUIRED)
-# find_package(Microsoft.GSL CONFIG REQUIRED)
-
 find_package(xxHash CONFIG REQUIRED)
 
 include_directories(include)
