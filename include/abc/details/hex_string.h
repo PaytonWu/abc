@@ -33,7 +33,10 @@ public:
     auto operator=(xabc_hex_string&&)->xabc_hex_string & = default;
     ~xabc_hex_string() = default;
 
-    using format = xhex_string_format_t;
+    using format = xabc_hex_string_format;
+    constexpr inline static auto default_format = xabc_hex_string_format::default_format;
+    constexpr inline static auto upper_case = xabc_hex_string_format::upper_case;
+    constexpr inline static auto no_leading_zero = xabc_hex_string_format::no_leading_zero;
 
     constexpr static auto from(std::string_view const input) -> xabc_hex_string {
         return xabc_hex_string{ input };
@@ -46,23 +49,34 @@ public:
     [[nodiscard]] auto operator==(xabc_hex_string const&) const noexcept -> bool = default;
     [[nodiscard]] auto operator<=>(xabc_hex_string const&) const noexcept -> std::strong_ordering = default;
 
-    [[nodiscard]] constexpr auto to_string(format const fmt = format::default_format) const -> std::string {
+    [[nodiscard]] constexpr auto to_string(xabc_hex_string_format const fmt = default_format) const -> std::string {
         std::string r;
 
         if (empty()) {
             return r;
         }
 
-        r.reserve((binary_data_.size() + 1) * 2);
+        std::span data_span{binary_data_};
+        if (abc::no_leading_zero(fmt)) {
+            while (!data_span.empty() && data_span.front() == 0) {
+                data_span = data_span.subspan(1);
+            }
+        }
+
+        r.reserve((data_span.size() + 1) * 2);
         std::array<char, 3> hex{ 0, 0, 0 };
         if (lower_case(fmt)) {
             r.append(hex_prefix);
-            std::ranges::for_each(binary_data_ | std::views::transform([&hex](auto const byte) mutable { assert(hex[2] == 0); hex[0] = lower_case_hex_digits[byte >> 4], hex[1] = lower_case_hex_digits[byte & 0x0f]; return hex.data(); }), [&r](auto const* c_str) { r.append(c_str); });
-        } else if (upper_case(fmt)) {
+            std::ranges::for_each(data_span | std::views::transform([&hex](auto const byte) mutable { assert(hex[2] == 0); hex[0] = lower_case_hex_digits[byte >> 4], hex[1] = lower_case_hex_digits[byte & 0x0f]; return hex.data(); }), [&r](auto const* c_str) { r.append(c_str); });
+        } else if (abc::upper_case(fmt)) {
             r.append(hex_prefix_uppercase);
-            std::ranges::for_each(binary_data_ | std::views::transform([&hex](auto const byte) mutable { assert(hex[2] == 0); hex[0] = upper_case_hex_digits[byte >> 4], hex[1] = upper_case_hex_digits[byte & 0x0f]; return hex.data(); }), [&r](auto const* c_str) { r.append(c_str); });
+            std::ranges::for_each(data_span | std::views::transform([&hex](auto const byte) mutable { assert(hex[2] == 0); hex[0] = upper_case_hex_digits[byte >> 4], hex[1] = upper_case_hex_digits[byte & 0x0f]; return hex.data(); }), [&r](auto const* c_str) { r.append(c_str); });
         } else {
             assert(false);
+        }
+
+        if (r == hex_prefix || r == hex_prefix_uppercase) {
+            r.clear();
         }
 
         return r;

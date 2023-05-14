@@ -13,11 +13,15 @@ namespace abc {
 using xhex_string_format_t = details::xabc_hex_string_format;
 
 constexpr bool lower_case(xhex_string_format_t const format) noexcept {
-    return !(static_cast<uint8_t>(format) & 0b00000001);
+    return !(static_cast<uint8_t>(format) & 0b00000001u);
 }
 
 constexpr bool upper_case(xhex_string_format_t const format) noexcept {
     return !lower_case(format);
+}
+
+constexpr bool no_leading_zero(xhex_string_format_t const format) noexcept {
+    return static_cast<uint8_t>(format) & 0b00000010u;
 }
 
 }

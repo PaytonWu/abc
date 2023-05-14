@@ -11,8 +11,9 @@ TEST(hex_string, from_string_view) {
     auto const hex_string1 = xhex_string_t::from("0x0123456789abcdefABCDEF");
     ASSERT_FALSE(hex_string1.empty());
     ASSERT_EQ(hex_string1.to_string(), "0x0123456789abcdefabcdef");
-    ASSERT_EQ(hex_string1.to_string(xhex_string_t::format::lower_case), "0x0123456789abcdefabcdef");
-    ASSERT_EQ(hex_string1.to_string(xhex_string_t::format::upper_case), "0X0123456789ABCDEFABCDEF");
+    ASSERT_EQ(hex_string1.to_string(xhex_string_t::upper_case), "0X0123456789ABCDEFABCDEF");
+    ASSERT_EQ(hex_string1.to_string(xhex_string_t::no_leading_zero), "0x0123456789abcdefabcdef");
+    ASSERT_EQ(hex_string1.to_string(xhex_string_t::upper_case | xhex_string_t::no_leading_zero), "0X0123456789ABCDEFABCDEF");
     ASSERT_EQ(hex_string1.size(), hex_string1.length());
     ASSERT_EQ(hex_string1.size(), 24);
     ASSERT_EQ(hex_string1.bytes_size(), 11);
@@ -24,8 +25,9 @@ TEST(hex_string, from_string_view) {
     auto const hex_string3 = xhex_string_t::from("0x123456789abcdefABCDEF");
     ASSERT_FALSE(hex_string3.empty());
     ASSERT_EQ(hex_string3.to_string(), "0x0123456789abcdefabcdef");
-    ASSERT_EQ(hex_string3.to_string(xhex_string_t::format::lower_case), "0x0123456789abcdefabcdef");
-    ASSERT_EQ(hex_string3.to_string(xhex_string_t::format::upper_case), "0X0123456789ABCDEFABCDEF");
+    ASSERT_EQ(hex_string3.to_string(xhex_string_t::upper_case), "0X0123456789ABCDEFABCDEF");
+    ASSERT_EQ(hex_string1.to_string(xhex_string_t::no_leading_zero), "0x0123456789abcdefabcdef");
+    ASSERT_EQ(hex_string1.to_string(xhex_string_t::upper_case | xhex_string_t::no_leading_zero), "0X0123456789ABCDEFABCDEF");
     ASSERT_EQ(hex_string3.size(), hex_string3.length());
     ASSERT_EQ(hex_string3.size(), 24);
     ASSERT_EQ(hex_string3.bytes_size(), 11);
@@ -37,8 +39,9 @@ TEST(hex_string, from_bytes) {
     auto const hex_string4 = xhex_string_t::from(bytes, std::endian::big);
     ASSERT_FALSE(hex_string4.empty());
     ASSERT_EQ(hex_string4.to_string(), "0x0102030405060708090a0b0c0d0e0f10");
-    ASSERT_EQ(hex_string4.to_string(xhex_string_t::format::lower_case), "0x0102030405060708090a0b0c0d0e0f10");
     ASSERT_EQ(hex_string4.to_string(xhex_string_t::format::upper_case), "0X0102030405060708090A0B0C0D0E0F10");
+    ASSERT_EQ(hex_string4.to_string(xhex_string_t::format::no_leading_zero), "0x0102030405060708090a0b0c0d0e0f10");
+    ASSERT_EQ(hex_string4.to_string(xhex_string_t::format::no_leading_zero | xhex_string_t::format::upper_case), "0X0102030405060708090A0B0C0D0E0F10");
     ASSERT_EQ(hex_string4.size(), hex_string4.length());
     ASSERT_EQ(hex_string4.size(), 34);
     ASSERT_EQ(hex_string4.bytes_size(), 16);
@@ -50,8 +53,9 @@ TEST(hex_string, from_bytes_zero) {
     auto const hex_string4 = xhex_string_t::from(bytes, std::endian::big);
     ASSERT_FALSE(hex_string4.empty());
     ASSERT_EQ(hex_string4.to_string(), "0x0000");
-    ASSERT_EQ(hex_string4.to_string(xhex_string_t::format::lower_case), "0x0000");
     ASSERT_EQ(hex_string4.to_string(xhex_string_t::format::upper_case), "0X0000");
+    ASSERT_EQ(hex_string4.to_string(xhex_string_t::no_leading_zero), "");
+    ASSERT_EQ(hex_string4.to_string(xhex_string_t::no_leading_zero | xhex_string_t::upper_case), "");
     ASSERT_EQ(hex_string4.size(), hex_string4.length());
     ASSERT_EQ(hex_string4.size(), 6);
     ASSERT_EQ(hex_string4.bytes_size(), 2);
@@ -63,8 +67,9 @@ TEST(hex_string, from_empty) {
     auto const hex_string4 = xhex_string_t::from(bytes, std::endian::little);
     ASSERT_TRUE(hex_string4.empty());
     ASSERT_EQ(hex_string4.to_string(), "");
-    ASSERT_EQ(hex_string4.to_string(xhex_string_t::format::lower_case), "");
     ASSERT_EQ(hex_string4.to_string(xhex_string_t::format::upper_case), "");
+    ASSERT_EQ(hex_string4.to_string(xhex_string_t::format::no_leading_zero), "");
+    ASSERT_EQ(hex_string4.to_string(xhex_string_t::format::upper_case | xhex_string_t::no_leading_zero), "");
     ASSERT_EQ(hex_string4.size(), hex_string4.length());
     ASSERT_EQ(hex_string4.size(), 0);
     ASSERT_EQ(hex_string4.bytes_size(), 0);
