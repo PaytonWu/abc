@@ -40,6 +40,8 @@ enum class xabc_enum_errc {
     xxhash_error,
     invalid_hex_char,
     invalid_hex_string,
+    invalid_byte_numbering,
+    invalid_bit_numbering,
 };
 
 auto make_error_code(xabc_enum_errc errc) noexcept -> std::error_code;

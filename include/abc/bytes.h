@@ -6,8 +6,8 @@
 
 #pragma once
 
-#include "abc/byte_bit_numbering.h"
 #include "abc/byte.h"
+#include "abc/byte_bit_numbering.h"
 #include "abc/details/bytes.h"
 
 #include <array>

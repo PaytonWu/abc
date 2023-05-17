@@ -127,7 +127,7 @@ TEST(hex_utility, hex_string_to_binary) {
         byte = static_cast<abc::xbyte_t>(distribution(rd));
     }
 
-    auto const hex_string = abc::xhex_string_t::from(bytes, std::endian::little);
+    auto const hex_string = abc::xhex_string_t::from_bytes(bytes, abc::xbyte_numbering_t::lsb0);
     EXPECT_EQ(abc::hex_string_to_binary<std::endian::little>(hex_string.to_string()), bytes);
     EXPECT_EQ(abc::hex_string_to_binary<std::endian::little>(hex_string.to_string().substr(2)), bytes);
 }

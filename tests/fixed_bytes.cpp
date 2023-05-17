@@ -120,7 +120,7 @@ TEST(fixed_bytes_le, zero) {
 }
 
 TEST(fixed_bytes_le, prefix_plusplus) {
-    xfixed_bytes_t<2, std::endian::little> bytes;
+    xfixed_bytes_t<2, xbyte_numbering_t::lsb0> bytes;
     for (uint16_t i : std::views::iota(0u, std::numeric_limits<uint16_t>::max())) {
         ASSERT_EQ(i, bytes.to<uint16_t>());
         ++bytes;
@@ -128,7 +128,7 @@ TEST(fixed_bytes_le, prefix_plusplus) {
 }
 
 TEST(fixed_bytes_be, prefix_plusplus) {
-    xfixed_bytes_t<2, std::endian::big> bytes;
+    xfixed_bytes_t<2, xbyte_numbering_t::msb0> bytes;
     for (uint16_t i : std::views::iota(0u, std::numeric_limits<uint16_t>::max())) {
         ASSERT_EQ(i, bytes.to<uint16_t>());
         ++bytes;

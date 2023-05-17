@@ -39,26 +39,32 @@ auto make_error_condition(xabc_enum_errc errc) noexcept -> std::error_condition 
 
 static constexpr auto errc_map(int const errc) noexcept -> char const * {
     switch (static_cast<xabc_enum_errc>(errc)) {
-    case xabc_enum_errc::success:
-        return "success";
+        case xabc_enum_errc::success:
+            return "success";
 
-    case xabc_enum_errc::timer_driver_not_run:
-        return "timer driver not run";
+        case xabc_enum_errc::timer_driver_not_run:
+            return "timer driver not run";
 
-    case xabc_enum_errc::empty_buffer:
-        return "empty buffer";
+        case xabc_enum_errc::empty_buffer:
+            return "empty buffer";
 
-    case xabc_enum_errc::invalid_hex_char:
-        return "invalid hex char";
+        case xabc_enum_errc::xxhash_error:
+            return "xxhash error";
 
-    case xabc_enum_errc::invalid_hex_string:
-        return "invalid hex string";
+        case xabc_enum_errc::invalid_hex_char:
+            return "invalid hex char";
 
-    case xabc_enum_errc::xxhash_error:
-        return "xxhash error";
+        case xabc_enum_errc::invalid_hex_string:
+            return "invalid hex string";
 
-    default:  // NOLINT(clang-diagnostic-covered-switch-default)
-        return "unknown error";
+        case xabc_enum_errc::invalid_byte_numbering:
+            return "invalid byte numbering";
+
+        case xabc_enum_errc::invalid_bit_numbering:
+            return "invalid bit numbering";
+
+        default:  // NOLINT(clang-diagnostic-covered-switch-default)
+            return "unknown error";
     }
 }
 

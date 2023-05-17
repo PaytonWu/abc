@@ -8,6 +8,7 @@
 
 #include "abc/byte.h"
 #include "abc/hex_string.h"
+#include "abc/byte_bit_numbering.h"
 
 #include <algorithm>
 #include <array>
@@ -19,10 +20,10 @@
 
 namespace abc::details {
 
-template <size_t N, std::endian Endian>
+template <size_t N, xbyte_numbering_t ByteNumbering>
 class [[nodiscard]] xabc_fixed_bytes {
     static_assert(N > 0);
-    static_assert(Endian == std::endian::little || Endian == std::endian::big);
+    static_assert(ByteNumbering == xbyte_numbering_t::lsb0 || ByteNumbering == xbyte_numbering_t::msb0);
 
 private:
     using internal_type = std::array<xbyte_t, N>;
@@ -52,18 +53,18 @@ public:
     }
 
     constexpr xabc_fixed_bytes(xhex_string_t const & hex_string) : xabc_fixed_bytes{} {
-        auto const &bytes = hex_string.to_bytes<Endian>();
+        auto const &bytes = hex_string.to_bytes<ByteNumbering>();
         size_t const size = std::min(N, bytes.size());
 
         std::memcpy(&data_[N - size], &bytes[bytes.size() - size], size);
     }
 
     constexpr xabc_fixed_bytes(std::unsigned_integral auto const value) : xabc_fixed_bytes{} {
-        if constexpr (Endian == std::endian::little) {
+        if constexpr (ByteNumbering == xbyte_numbering_t::lsb0) {
             to_little_endian(value, data_);
         }
 
-        if constexpr (Endian == std::endian::big) {
+        if constexpr (ByteNumbering == xbyte_numbering_t::msb0) {
             to_big_endian(value, data_);
         }
     }
@@ -154,19 +155,20 @@ public:
         data_.fill(value);
     }
 
-    [[nodiscard]] constexpr static auto endian() noexcept -> std::endian {
-        return Endian;
+    [[nodiscard]] constexpr static auto byte_numbering() noexcept -> xbyte_numbering_t {
+        return ByteNumbering;
     }
 
     template <std::unsigned_integral T>
     [[nodiscard]] constexpr auto to() const noexcept -> T {
         T result{};
-        if constexpr (Endian == std::endian::little) {
+        if constexpr (ByteNumbering == xbyte_numbering_t::lsb0) {
             for (auto i = 0u; i < std::min(sizeof(T), data_.size()); ++i) {
                 result |= static_cast<T>(data_[i]) << (i * 8);
             }
         }
-        if constexpr (Endian == std::endian::big) {
+
+        if constexpr (ByteNumbering == xbyte_numbering_t::msb0) {
             for (auto i = 0u; i < std::min(sizeof(T), data_.size()); ++i) {
                 result |= static_cast<T>(data_[data_.size() - i - 1]) << (i * 8);
             }
@@ -220,12 +222,12 @@ public:
     }
 
     constexpr auto operator++() -> xabc_fixed_bytes & {
-        if constexpr (Endian == std::endian::big) {
+        if constexpr (ByteNumbering == xbyte_numbering_t::msb0) {
             for (auto i = N; i > 0 && !++data_[--i];) {}
             return *this;
         }
 
-        if constexpr (Endian == std::endian::little) {
+        if constexpr (ByteNumbering == xbyte_numbering_t::lsb0) {
             for (auto i = 0u; i < N && !++data_[i++];) {}
             return *this;
         }
@@ -234,12 +236,12 @@ public:
 //    constexpr auto operator++(int) -> xabc_fixed_bytes {
 //        xabc_fixed_bytes ret{*this};
 //
-//        if constexpr (Endian == std::endian::big) {
+//        if constexpr (ByteNumbering == xbyte_numbering_t::msb0) {
 //            for (auto i = N; i > 0 && !++data_[--i];) {}
 //            return ret;
 //        }
 //
-//        if constexpr (Endian == std::endian::little) {
+//        if constexpr (ByteNumbering == xbyte_numbering_t::lsb0) {
 //            for (auto i = 0u; i < N && !++data_[i++];) {}
 //            return ret;
 //        }
@@ -250,7 +252,7 @@ public:
     }
 
     constexpr auto hex_string() const -> xhex_string_t {
-        return xhex_string_t::from(data_, Endian);
+        return xhex_string_t::from_bytes(data_, ByteNumbering);
     }
 
 private:
