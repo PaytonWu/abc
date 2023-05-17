@@ -16,6 +16,8 @@
 namespace abc {
 
 using xbytes_t = details::xabc_bytes;
+using xbytes_be_t = details::xabc_bytes_with<std::endian::big>;
+using xbytes_le_t = details::xabc_bytes_with<std::endian::little>;
 
 [[nodiscard]] constexpr auto operator<=>(xbytes_t const & lhs, std::vector<xbyte_t> const & rhs) -> std::strong_ordering {
     return static_cast<std::vector<xbyte_t>>(lhs) <=> rhs;

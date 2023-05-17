@@ -139,12 +139,10 @@ TEST(fixed_bytes_be, hex_string) {
     auto bytes = xbytes16_be_t{0x0123456789abcdefu};
     auto const & hex_str = bytes.hex_string();
     EXPECT_EQ("0x00000000000000000123456789abcdef", hex_str.to_string());
-    EXPECT_EQ("0x0123456789abcdef", hex_str.to_string(xhex_string_t::no_leading_zero));
 }
 
 TEST(fixed_bytes_le, hex_string) {
     auto bytes = xbytes16_le_t{0x0123456789abcdefu};
     auto const & hex_str = bytes.hex_string();
     EXPECT_EQ("0x00000000000000000123456789abcdef", hex_str.to_string());
-    EXPECT_EQ("0x0123456789abcdef", hex_str.to_string(xhex_string_t::no_leading_zero));
 }

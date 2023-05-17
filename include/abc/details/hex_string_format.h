@@ -11,9 +11,9 @@
 namespace abc::details {
 
 enum class [[nodiscard]] xabc_hex_string_format : uint8_t {
-    default_format = 0b00000000u,   // lower_case + full presentation
+    default_format = 0b00000000u,   // 0x + leading_zero + lower_case
+    lower_case = 0b00000000u,
     upper_case = 0b00000001u,
-    no_leading_zero = 0b00000010u,
 };
 
 constexpr auto operator|(xabc_hex_string_format const lhs, xabc_hex_string_format const rhs) noexcept -> xabc_hex_string_format {

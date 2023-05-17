@@ -1,4 +1,4 @@
-﻿// Copyright(c) 2023 - present, Payton Wu (payton.wu@outlook.com) & abc contributors.
+// Copyright(c) 2023 - present, Payton Wu (payton.wu@outlook.com) & abc contributors.
 // Distributed under the MIT License (http://opensource.org/licenses/MIT)
 
 #if !defined(ABC_DETAILS_CONFIG)
