@@ -6,7 +6,8 @@
 
 #pragma once
 
-#include "abc/byte.h"
+#include "abc/details/byte.h"
+#include "abc/details/byte_bit_numbering.h"
 
 #include <algorithm>
 #include <bit>
@@ -24,7 +25,7 @@ namespace abc::details {
 
 class [[nodiscard]] xabc_bytes {
 private:
-    using internal_type = std::vector<xbyte_t>;
+    using internal_type = std::vector<xabc_byte>;
 
     internal_type data_{};
 
@@ -49,10 +50,10 @@ public:
     auto operator=(xabc_bytes &&)->xabc_bytes & = default;
     ~xabc_bytes() = default;
 
-    constexpr explicit xabc_bytes(std::vector<xbyte_t> raw) noexcept : data_{ std::move(raw) } {
+    constexpr explicit xabc_bytes(std::vector<xabc_byte> raw) noexcept : data_{ std::move(raw) } {
     }
 
-    constexpr auto operator=(std::vector<xbyte_t> raw) noexcept -> xabc_bytes & {
+    constexpr auto operator=(std::vector<xabc_byte> raw) noexcept -> xabc_bytes & {
         data_ = std::move(raw);
         return *this;
     }
@@ -61,13 +62,13 @@ public:
     constexpr xabc_bytes(Iterator first, Iterator last) : data_{ first, last } {
     }
 
-    constexpr explicit xabc_bytes(std::span<xbyte_t const> const span) : xabc_bytes{ std::begin(span), std::end(span) } {
+    constexpr explicit xabc_bytes(std::span<xabc_byte const> const span) : xabc_bytes{ std::begin(span), std::end(span) } {
     }
 
     constexpr xabc_bytes(std::initializer_list<value_type> const init) : data_{ init } {
     }
 
-    constexpr void assign(size_type const count, xbyte_t const & value) {
+    constexpr void assign(size_type const count, xabc_byte const & value) {
         data_.assign(count, value);
     }
 
@@ -205,11 +206,11 @@ public:
         data_.swap(other.data_);
     }
 
-    constexpr explicit operator std::vector<xbyte_t> const &() const noexcept {
+    constexpr explicit operator std::vector<xabc_byte> const &() const noexcept {
         return data_;
     }
 
-    constexpr explicit operator std::vector<xbyte_t> & () noexcept {
+    constexpr explicit operator std::vector<xabc_byte> & () noexcept {
         return data_;
     }
 
@@ -229,12 +230,12 @@ public:
     //    return *this;
     //}
 
-    constexpr auto operator+(std::span<xbyte_t const> const other) const -> xabc_bytes {
+    constexpr auto operator+(std::span<xabc_byte const> const other) const -> xabc_bytes {
         auto data = *this;
         return data += other;
     }
 
-    constexpr auto operator+=(std::span<xbyte_t const> const other) -> xabc_bytes & {
+    constexpr auto operator+=(std::span<xabc_byte const> const other) -> xabc_bytes & {
         data_.reserve(size() + other.size());
 #if defined(__cpp_lib_ranges) && __cpp_lib_ranges >= 201911L
         std::ranges::copy(other, std::back_inserter(data_));
@@ -244,23 +245,23 @@ public:
         return *this;
     }
 
-    constexpr auto operator+(xbyte_t const byte) const -> xabc_bytes {
+    constexpr auto operator+(xabc_byte const byte) const -> xabc_bytes {
         auto bytes = *this;
         bytes += byte;
         return bytes;
     }
 
-    constexpr auto operator+=(xbyte_t const byte) -> xabc_bytes & {
+    constexpr auto operator+=(xabc_byte const byte) -> xabc_bytes & {
         data_.push_back(byte);
         return *this;
     }
 
-    [[nodiscard]] constexpr auto first(size_t const count) const noexcept -> std::span<xbyte_t const> {
+    [[nodiscard]] constexpr auto first(size_t const count) const noexcept -> std::span<xabc_byte const> {
         assert(count <= data_.size());
         return std::span{ std::begin(data_), count };
     }
 
-    [[nodiscard]] constexpr auto last(size_t const count) const noexcept -> std::span<xbyte_t const> {
+    [[nodiscard]] constexpr auto last(size_t const count) const noexcept -> std::span<xabc_byte const> {
         assert(count <= data_.size());
         return std::span{ std::next(std::begin(data_), static_cast<std::ptrdiff_t>(size() - count)), count };
     }
@@ -278,10 +279,10 @@ private:
     friend constexpr auto operator<=>(xabc_bytes const & lhs, xabc_bytes const & rhs) noexcept -> std::strong_ordering = default;
 };
 
-template <std::endian Endian>
+template <xabc_byte_numbering ByteNumbering>
 class [[nodiscard]] xabc_bytes_with {
 private:
-    using internal_type = std::vector<xbyte_t>;
+    using internal_type = std::vector<xabc_byte>;
 
     internal_type data_{};
 
@@ -315,23 +316,26 @@ public:
     constexpr xabc_bytes_with(Iterator first, Iterator last) : data_{ first, last } {
     }
 
-    constexpr explicit xabc_bytes_with(std::span<xbyte_t const> const span) : xabc_bytes_with{ std::begin(span), std::end(span) } {
+    constexpr explicit xabc_bytes_with(std::span<xabc_byte const> const span) : xabc_bytes_with{ std::begin(span), std::end(span) } {
     }
 
     constexpr xabc_bytes_with(std::initializer_list<value_type> const init) : data_{ init } {
     }
 
-    constexpr xabc_bytes_with(std::unsigned_integral auto i) : xabc_bytes_with{} {
-        data_.reserve(sizeof(i));
+    constexpr static auto from(std::unsigned_integral auto i) -> xabc_bytes_with {
+        xabc_bytes_with bytes;
+        bytes.reserve(sizeof(i));
 
         do {
-            data_.push_back(static_cast<xbyte_t>(i));
+            bytes.push_back(static_cast<xabc_byte>(i));
             i >>= 8;
         } while (i);
 
-        if constexpr (Endian == std::endian::big) {
-            std::ranges::reverse(data_);
+        if constexpr (ByteNumbering == xabc_byte_numbering::msb0) {
+            std::ranges::reverse(bytes);
         }
+
+        return bytes;
     }
 
     [[nodiscard]] constexpr auto at(size_type const pos) -> reference {
@@ -426,30 +430,30 @@ public:
         data_.swap(other.data_);
     }
 
-    constexpr explicit operator std::vector<xbyte_t> const &() const noexcept {
+    constexpr explicit operator std::vector<xabc_byte> const &() const noexcept {
         return data_;
     }
 
-    constexpr explicit operator std::vector<xbyte_t> & () noexcept {
+    constexpr explicit operator std::vector<xabc_byte> & () noexcept {
         return data_;
     }
 
     [[nodiscard]] constexpr auto least_significant_byte() const -> const_reference {
-        if constexpr (Endian == std::endian::big) {
+        if constexpr (ByteNumbering == xabc_byte_numbering::msb0) {
             return data_.back();
         }
 
-        if constexpr (Endian == std::endian::little) {
+        if constexpr (ByteNumbering == xabc_byte_numbering::lsb0) {
             return data_.front();
         }
     }
 
     [[nodiscard]] constexpr auto most_significant_byte() const -> const_reference {
-        if constexpr (Endian == std::endian::big) {
+        if constexpr (ByteNumbering == xabc_byte_numbering::msb0) {
             return data_.front();
         }
 
-        if constexpr (Endian == std::endian::little) {
+        if constexpr (ByteNumbering == xabc_byte_numbering::lsb0) {
             return data_.back();
         }
     }

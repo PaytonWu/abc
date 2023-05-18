@@ -6,6 +6,8 @@
 
 #pragma once
 
+#include "abc/byte_bit_numbering.h"
+#include "abc/byte.h"
 #include "abc/details/bytes.h"
 
 #include <array>
@@ -16,8 +18,8 @@
 namespace abc {
 
 using xbytes_t = details::xabc_bytes;
-using xbytes_be_t = details::xabc_bytes_with<std::endian::big>;
-using xbytes_le_t = details::xabc_bytes_with<std::endian::little>;
+using xbytes_be_t = details::xabc_bytes_with<xbyte_numbering_t::msb0>;
+using xbytes_le_t = details::xabc_bytes_with<xbyte_numbering_t::lsb0>;
 
 [[nodiscard]] constexpr auto operator<=>(xbytes_t const & lhs, std::vector<xbyte_t> const & rhs) -> std::strong_ordering {
     return static_cast<std::vector<xbyte_t>>(lhs) <=> rhs;
