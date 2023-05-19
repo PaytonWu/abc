@@ -1,44 +1,44 @@
 // Copyright(c) 2023 - present, Payton Wu (payton.wu@outlook.com) & abc contributors.
 // Distributed under the MIT License (http://opensource.org/licenses/MIT)
 
-#include "abc/details/timer_driver.h"
+#include "abc/timer_driver.h"
 
 #include <cassert>
 
-namespace abc::details {
+namespace abc {
 
-xabc_timer_driver::xabc_timer_driver(asio::io_context * io_context, std::chrono::milliseconds reap_interval) : reap_interval_{ reap_interval }, io_context_{ io_context } {
+timer_driver::timer_driver(asio::io_context * io_context, std::chrono::milliseconds reap_interval) : reap_interval_{ reap_interval }, io_context_{ io_context } {
 }
 
-auto xabc_timer_driver::running() const noexcept -> bool {
+auto timer_driver::running() const noexcept -> bool {
     return running_.load(std::memory_order::acquire);
 }
 
-void xabc_timer_driver::running(bool const r) {
+void timer_driver::running(bool const r) {
     running_.store(r, std::memory_order::release);
 }
 
-void xabc_timer_driver::start() {
+void timer_driver::start() {
     assert(!running());
     running(true);
     do_reap();
 }
 
-void xabc_timer_driver::stop() {
+void timer_driver::stop() {
     assert(running());
     running(false);
 }
 
-void xabc_timer_driver::schedule(std::chrono::milliseconds const & ms_in_future, xtimer_t::timeout_callback_t callback) {
+void timer_driver::schedule(std::chrono::milliseconds const & ms_in_future, timer::timeout_callback_t callback) {
     if (!running()) {
         return;
     }
 
     std::lock_guard<std::mutex> lock{timers_mutex_};
-    timers_.emplace_back(std::make_unique<xtimer_t>(io_context_, ms_in_future, std::move(callback)));
+    timers_.emplace_back(std::make_unique<timer>(io_context_, ms_in_future, std::move(callback)));
 }
 
-void xabc_timer_driver::do_reap() {
+void timer_driver::do_reap() {
     if (!running()) {
         return;
     }
@@ -61,7 +61,7 @@ void xabc_timer_driver::do_reap() {
         return;
     }
 
-    timers_.emplace_back(std::make_unique<xtimer_t>(io_context_, reap_interval_, [this, self = shared_from_this()](std::error_code const & ec) {
+    timers_.emplace_back(std::make_unique<timer>(io_context_, reap_interval_, [this, self = shared_from_this()](std::error_code const & ec) {
         if (ec && ec == asio::error::operation_aborted) {
             return;
         }

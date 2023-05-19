@@ -6,17 +6,50 @@
 
 #pragma once
 
-#include "abc/details/hex_string_format.h"
+#include "abc/details/config.h"
+
+#include <type_traits>
 
 namespace abc {
 
-using xhex_string_format_t = details::xabc_hex_string_format;
+enum class [[nodiscard]] hex_string_format : uint8_t {
+    default_format = 0b00000000u,   // 0x + leading_zero + lower_case
+    lower_case = 0b00000000u,
+    upper_case = 0b00000001u,
+};
 
-constexpr bool lower_case(xhex_string_format_t const format) noexcept {
+constexpr auto operator|(hex_string_format const lhs, hex_string_format const rhs) noexcept -> hex_string_format {
+    using underlying_t = std::underlying_type_t<hex_string_format>;
+    return static_cast<hex_string_format>(static_cast<underlying_t>(lhs) | static_cast<underlying_t>(rhs));
+}
+
+constexpr auto operator&(hex_string_format const lhs, hex_string_format const rhs) noexcept -> hex_string_format {
+    using underlying_t = std::underlying_type_t<hex_string_format>;
+    return static_cast<hex_string_format>(static_cast<underlying_t>(lhs) | static_cast<underlying_t>(rhs));
+}
+
+constexpr auto operator^(hex_string_format const lhs, hex_string_format const rhs) noexcept -> hex_string_format {
+    using underlying_t = std::underlying_type_t<hex_string_format>;
+    return static_cast<hex_string_format>(static_cast<underlying_t>(lhs) ^ static_cast<underlying_t>(rhs));
+}
+
+constexpr auto operator|=(hex_string_format & lhs, hex_string_format const rhs) noexcept -> hex_string_format & {
+    return lhs = lhs | rhs;
+}
+
+constexpr auto operator&=(hex_string_format & lhs, hex_string_format const rhs) noexcept -> hex_string_format & {
+    return lhs = lhs & rhs;
+}
+
+constexpr auto operator^=(hex_string_format & lhs, hex_string_format const rhs) noexcept -> hex_string_format & {
+    return lhs = lhs ^ rhs;
+}
+
+constexpr bool lower_case(hex_string_format const format) noexcept {
     return !(static_cast<uint8_t>(format) & 0b00000001u);
 }
 
-constexpr bool upper_case(xhex_string_format_t const format) noexcept {
+constexpr bool upper_case(hex_string_format const format) noexcept {
     return !lower_case(format);
 }
 

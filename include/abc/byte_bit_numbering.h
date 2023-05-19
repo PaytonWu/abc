@@ -6,12 +6,21 @@
 
 #pragma once
 
-#include "abc/details/byte_bit_numbering.h"
+#include "abc/details/config.h"
 
 namespace abc {
 
-using xbyte_numbering_t = details::xabc_byte_numbering;
-using xbit_numbering_t = details::xabc_bit_numbering;
+enum class byte_numbering {
+    none,
+    lsb0,
+    msb0
+};
+
+enum class bit_numbering {
+    invalid,
+    lsb0,
+    msb0
+};
 
 }
 

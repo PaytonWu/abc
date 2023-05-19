@@ -11,7 +11,7 @@ using namespace abc;
 
 TEST(xbytes_endian_t, constructor_il) {
     {
-        xbytes_be_t bytes{ 0x01, 0x02, 0x03, 0x04 };
+        bytes_msb0_t bytes{ 0x01, 0x02, 0x03, 0x04 };
         EXPECT_EQ(bytes[0], 0x01);
         EXPECT_EQ(bytes[1], 0x02);
         EXPECT_EQ(bytes[2], 0x03);
@@ -19,8 +19,8 @@ TEST(xbytes_endian_t, constructor_il) {
     }
 
     {
-        xbytes_be_t bytes{ 0x01, 0x02, 0x03, 0x04 };
-        xbytes_be_t bytes2{ bytes };
+        bytes_msb0_t bytes{ 0x01, 0x02, 0x03, 0x04 };
+        bytes_msb0_t bytes2{ bytes };
         EXPECT_EQ(bytes2[0], 0x01);
         EXPECT_EQ(bytes2[1], 0x02);
         EXPECT_EQ(bytes2[2], 0x03);
@@ -28,8 +28,8 @@ TEST(xbytes_endian_t, constructor_il) {
     }
 
     {
-        xbytes_be_t bytes{ 0x01, 0x02, 0x03, 0x04 };
-        xbytes_be_t bytes2{ std::move(bytes) };
+        bytes_msb0_t bytes{ 0x01, 0x02, 0x03, 0x04 };
+        bytes_msb0_t bytes2{ std::move(bytes) };
         EXPECT_EQ(bytes2[0], 0x01);
         EXPECT_EQ(bytes2[1], 0x02);
         EXPECT_EQ(bytes2[2], 0x03);
@@ -37,7 +37,7 @@ TEST(xbytes_endian_t, constructor_il) {
     }
 
     {
-        xbytes_le_t bytes{ 0x01, 0x02, 0x03, 0x04 };
+        bytes_lsb0_t bytes{ 0x01, 0x02, 0x03, 0x04 };
         EXPECT_EQ(bytes[0], 0x01);
         EXPECT_EQ(bytes[1], 0x02);
         EXPECT_EQ(bytes[2], 0x03);
@@ -45,16 +45,16 @@ TEST(xbytes_endian_t, constructor_il) {
     }
 
     {
-        xbytes_le_t bytes{ 0x01, 0x02, 0x03, 0x04 };
-        xbytes_le_t bytes2{ bytes };
+        bytes_lsb0_t bytes{ 0x01, 0x02, 0x03, 0x04 };
+        bytes_lsb0_t bytes2{ bytes };
         EXPECT_EQ(bytes2[0], 0x01);
         EXPECT_EQ(bytes2[1], 0x02);
         EXPECT_EQ(bytes2[2], 0x03);
         EXPECT_EQ(bytes2[3], 0x04);
     }
     {
-        xbytes_le_t bytes{ 0x01, 0x02, 0x03, 0x04 };
-        xbytes_le_t bytes2{ std::move(bytes) };
+        bytes_lsb0_t bytes{ 0x01, 0x02, 0x03, 0x04 };
+        bytes_lsb0_t bytes2{ std::move(bytes) };
         EXPECT_EQ(bytes2[0], 0x01);
         EXPECT_EQ(bytes2[1], 0x02);
         EXPECT_EQ(bytes2[2], 0x03);
@@ -64,20 +64,20 @@ TEST(xbytes_endian_t, constructor_il) {
 
 TEST(xbytes_endian_t, construct_uint) {
     {
-        xbytes_be_t bytes = xbytes_be_t::from(0x0102u);
+        bytes_msb0_t bytes = bytes_msb0_t::from(0x0102u);
         EXPECT_EQ(bytes[0], 0x01);
         EXPECT_EQ(bytes[1], 0x02);
         EXPECT_EQ(bytes.size(), 2);
     }
     {
-        xbytes_be_t bytes = xbytes_be_t::from(0x010203u);
+        bytes_msb0_t bytes = bytes_msb0_t::from(0x010203u);
         EXPECT_EQ(bytes[0], 0x01);
         EXPECT_EQ(bytes[1], 0x02);
         EXPECT_EQ(bytes[2], 0x03);
         EXPECT_EQ(bytes.size(), 3);
     }
     {
-        xbytes_be_t bytes = xbytes_be_t::from(0x01020304u);
+        bytes_msb0_t bytes = bytes_msb0_t::from(0x01020304u);
         EXPECT_EQ(bytes[0], 0x01);
         EXPECT_EQ(bytes[1], 0x02);
         EXPECT_EQ(bytes[2], 0x03);
@@ -85,25 +85,25 @@ TEST(xbytes_endian_t, construct_uint) {
         EXPECT_EQ(bytes.size(), 4);
     }
     {
-        xbytes_le_t bytes = xbytes_le_t::from(0x01u);
+        bytes_lsb0_t bytes = bytes_lsb0_t::from(0x01u);
         EXPECT_EQ(bytes[0], 0x01);
         EXPECT_EQ(bytes.size(), 1);
     }
     {
-        xbytes_le_t bytes = xbytes_le_t::from(0x0102u);
+        bytes_lsb0_t bytes = bytes_lsb0_t::from(0x0102u);
         EXPECT_EQ(bytes[0], 0x02);
         EXPECT_EQ(bytes[1], 0x01);
         EXPECT_EQ(bytes.size(), 2);
     }
     {
-        xbytes_le_t bytes = xbytes_le_t::from(0x010203u);
+        bytes_lsb0_t bytes = bytes_lsb0_t::from(0x010203u);
         EXPECT_EQ(bytes[0], 0x03);
         EXPECT_EQ(bytes[1], 0x02);
         EXPECT_EQ(bytes[2], 0x01);
         EXPECT_EQ(bytes.size(), 3);
     }
     {
-        xbytes_le_t bytes = xbytes_le_t::from(0x01020304u);
+        bytes_lsb0_t bytes = bytes_lsb0_t::from(0x01020304u);
         EXPECT_EQ(bytes[0], 0x04);
         EXPECT_EQ(bytes[1], 0x03);
         EXPECT_EQ(bytes[2], 0x02);
@@ -111,7 +111,7 @@ TEST(xbytes_endian_t, construct_uint) {
         EXPECT_EQ(bytes.size(), 4);
     }
     {
-        xbytes_be_t bytes = xbytes_be_t::from(0x0102030405060708u);
+        bytes_msb0_t bytes = bytes_msb0_t::from(0x0102030405060708u);
         EXPECT_EQ(bytes[0], 0x01);
         EXPECT_EQ(bytes[1], 0x02);
         EXPECT_EQ(bytes[2], 0x03);
@@ -123,7 +123,7 @@ TEST(xbytes_endian_t, construct_uint) {
         EXPECT_EQ(bytes.size(), 8);
     }
     {
-        xbytes_le_t bytes = xbytes_le_t::from(0x0102030405060708u);
+        bytes_lsb0_t bytes = bytes_lsb0_t::from(0x0102030405060708u);
         EXPECT_EQ(bytes[0], 0x08);
         EXPECT_EQ(bytes[1], 0x07);
         EXPECT_EQ(bytes[2], 0x06);

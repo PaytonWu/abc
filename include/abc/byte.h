@@ -6,11 +6,13 @@
 
 #pragma once
 
-#include "abc/details/byte.h"
+#include "abc/details/config.h"
+
+#include <cstdint>
 
 namespace abc {
 
-using xbyte_t = details::xabc_byte;
+using byte = std::uint8_t;
 
 }
 

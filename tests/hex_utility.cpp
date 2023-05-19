@@ -120,14 +120,14 @@ TEST(hex_utility, hex_char) {
 TEST(hex_utility, hex_string_to_binary) {
     std::random_device rd;
     std::uniform_int_distribution distribution{ 0, 255 };
-    abc::xbytes_t bytes;
+    abc::bytes bytes;
 
     bytes.resize(std::uniform_int_distribution<size_t>{0u, 5000u}(rd));
     for (auto & byte : bytes) {
-        byte = static_cast<abc::xbyte_t>(distribution(rd));
+        byte = static_cast<abc::byte>(distribution(rd));
     }
 
-    auto const hex_string = abc::xhex_string_t::from_bytes(bytes, abc::xbyte_numbering_t::lsb0);
+    auto const hex_string = abc::hex_string::from_bytes(bytes, abc::byte_numbering::lsb0);
     EXPECT_EQ(abc::hex_string_to_binary<std::endian::little>(hex_string.to_string()), bytes);
     EXPECT_EQ(abc::hex_string_to_binary<std::endian::little>(hex_string.to_string().substr(2)), bytes);
 }
