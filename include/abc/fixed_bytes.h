@@ -261,15 +261,25 @@ private:
     }
 };
 
-using fixed_bytes4_msb0_t = fixed_bytes<4, byte_numbering::msb0>;
-using fixed_bytes8_msb0_t = fixed_bytes<8, byte_numbering::msb0>;
-using fixed_bytes16_msb0_t = fixed_bytes<16, byte_numbering::msb0>;
-using fixed_bytes32_msb0_t = fixed_bytes<32, byte_numbering::msb0>;
+using bytes4_msb0_t = fixed_bytes<4, byte_numbering::msb0>;
+using bytes8_msb0_t = fixed_bytes<8, byte_numbering::msb0>;
+using bytes16_msb0_t = fixed_bytes<16, byte_numbering::msb0>;
+using bytes32_msb0_t = fixed_bytes<32, byte_numbering::msb0>;
 
-using fixed_bytes4_lsb0_t = fixed_bytes<4, byte_numbering::lsb0>;
-using fixed_bytes8_lsb0_t = fixed_bytes<8, byte_numbering::lsb0>;
-using fixed_bytes16_lsb0_t = fixed_bytes<16, byte_numbering::lsb0>;
-using fixed_bytes32_lsb0_t = fixed_bytes<32, byte_numbering::lsb0>;
+using bytes4_be_t = bytes4_msb0_t;
+using bytes8_be_t = bytes8_msb0_t;
+using bytes16_be_t = bytes16_msb0_t;
+using bytes32_be_t = bytes32_msb0_t;
+
+using bytes4_lsb0_t = fixed_bytes<4, byte_numbering::lsb0>;
+using bytes8_lsb0_t = fixed_bytes<8, byte_numbering::lsb0>;
+using bytes16_lsb0_t = fixed_bytes<16, byte_numbering::lsb0>;
+using bytes32_lsb0_t = fixed_bytes<32, byte_numbering::lsb0>;
+
+using bytes4_le_t = bytes4_lsb0_t;
+using bytes8_le_t = bytes8_lsb0_t;
+using bytes16_le_t = bytes16_lsb0_t;
+using bytes32_le_t = bytes32_lsb0_t;
 
 }
 
