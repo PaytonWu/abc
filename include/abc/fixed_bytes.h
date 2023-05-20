@@ -51,6 +51,7 @@ public:
         data_.fill(0);
     }
 
+    template <std::enable_if_t<ByteNumbering == byte_numbering::lsb0 || ByteNumbering == byte_numbering::msb0> * = nullptr>
     constexpr fixed_bytes(std::unsigned_integral auto const value) : fixed_bytes{} {
         if constexpr (ByteNumbering == byte_numbering::lsb0) {
             to_little_endian(value, data_);
