@@ -97,20 +97,20 @@ void throw_error(std::error_code const & ec, std::string_view extra_msg) {
 namespace abc::details {
 
 template <typename ExceptionT>
-void throw_exception(ExceptionT const & eh) {
-    throw eh;
+void throw_exception(ExceptionT eh) {
+    throw std::move(eh);
 }
 
 void do_throw_error(std::error_code const & ec) {
     assert(ec);
-    error const eh{ ec };
-    throw_exception(eh);
+    error eh{ ec };
+    throw_exception(std::move(eh));
 }
 
 void do_throw_error(std::error_code const & ec, std::string_view const extra_msg) {
     assert(ec);
-    error const eh{ ec, extra_msg };
-    throw_exception(eh);
+    error eh{ ec, extra_msg };
+    throw_exception(std::move(eh));
 }
 
 }

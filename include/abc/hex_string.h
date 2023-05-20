@@ -72,9 +72,9 @@ public:
         constexpr auto operator=(const_reference &&) noexcept -> const_reference & = default;
         constexpr ~const_reference() noexcept = default;
 
-        constexpr operator byte() const noexcept {
+        constexpr operator char() const noexcept {
             assert(str_ != nullptr);
-            return (str_->binary_data_[byte_index_] >> (static_cast<size_t>(high_) * 4)) & 0x0f;
+            return lower_case_hex_digits[(str_->binary_data_[byte_index_] >> (static_cast<size_t>(high_) * 4)) & 0x0f];
         }
     };
 
@@ -94,15 +94,23 @@ public:
         constexpr auto operator=(reference &&) noexcept -> reference & = default;
         constexpr ~reference() noexcept = default;
 
-        constexpr auto operator=(byte const value) noexcept -> reference & {
+        constexpr auto operator=(char const value) -> reference & {
             assert(str_ != nullptr);
-            assert(value <= 0x0f);
 
-            if (high_) {
-                const_cast<hex_string *>(str_)->binary_data_[byte_index_] = (str_->binary_data_[byte_index_] & 0x0f) | (value << 4);
-            } else {
-                const_cast<hex_string *>(str_)->binary_data_[byte_index_] = (str_->binary_data_[byte_index_] & 0xf0) | value;
+            if (!std::isxdigit(static_cast<unsigned char>(value))) {
+                throw_error(make_error_code(errc::invalid_hex_char));
+                return *this;
             }
+
+            assert((value >= '0' && value <= '9') || (value >= 'a' && value <= 'f') || (value >= 'A' && value <= 'F'));
+            hex_char_to_binary(value).transform([this](auto && byte) {
+                if (high_) {
+                    const_cast<hex_string *>(str_)->binary_data_[byte_index_] = (str_->binary_data_[byte_index_] & 0x0f) | (byte << 4);
+                } else {
+                    const_cast<hex_string *>(str_)->binary_data_[byte_index_] = (str_->binary_data_[byte_index_] & 0xf0) | byte;
+                }
+            });
+
             return *this;
         }
     };

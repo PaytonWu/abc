@@ -70,3 +70,58 @@ TEST(hex_string, from_empty) {
     ASSERT_EQ(hex_string4.bytes_size(), 0);
     ASSERT_EQ(hex_string4.to_bytes<byte_numbering::lsb0>(), bytes);
 }
+
+TEST(hex_string, operator_index) {
+    auto const hex_string1 = hex_string::from_hex_prefixed("0x0123456789abcdefABCDEF").value();
+    ASSERT_EQ(hex_string1[0], 'f');
+    ASSERT_EQ(hex_string1[1], 'e');
+    ASSERT_EQ(hex_string1[2], 'd');
+    ASSERT_EQ(hex_string1[3], 'c');
+    ASSERT_EQ(hex_string1[4], 'b');
+    ASSERT_EQ(hex_string1[5], 'a');
+    ASSERT_EQ(hex_string1[6], 'f');
+    ASSERT_EQ(hex_string1[7], 'e');
+    ASSERT_EQ(hex_string1[8], 'd');
+    ASSERT_EQ(hex_string1[9], 'c');
+    ASSERT_EQ(hex_string1[10], 'b');
+    ASSERT_EQ(hex_string1[11], 'a');
+    ASSERT_EQ(hex_string1[12], '9');
+    ASSERT_EQ(hex_string1[13], '8');
+    ASSERT_EQ(hex_string1[14], '7');
+    ASSERT_EQ(hex_string1[15], '6');
+    ASSERT_EQ(hex_string1[16], '5');
+    ASSERT_EQ(hex_string1[17], '4');
+    ASSERT_EQ(hex_string1[18], '3');
+    ASSERT_EQ(hex_string1[19], '2');
+    ASSERT_EQ(hex_string1[20], '1');
+    ASSERT_EQ(hex_string1[21], '0');
+
+    auto hex_string2 = hex_string::from_hex_prefixed("0x0123456789abcdefABCDEF").value();
+    hex_string2[0] = '0';
+    hex_string2[1] = '1';
+    hex_string2[2] = '2';
+    hex_string2[3] = '3';
+    hex_string2[4] = '4';
+    hex_string2[5] = '5';
+    hex_string2[6] = '6';
+    hex_string2[7] = '7';
+    hex_string2[8] = '8';
+    hex_string2[9] = '9';
+    hex_string2[10] = 'a';
+    hex_string2[11] = 'b';
+    hex_string2[12] = 'c';
+    hex_string2[13] = 'd';
+    hex_string2[14] = 'e';
+    hex_string2[15] = 'f';
+    hex_string2[16] = 'A';
+    hex_string2[17] = 'B';
+    hex_string2[18] = 'C';
+    hex_string2[19] = 'D';
+    hex_string2[20] = 'E';
+    hex_string2[21] = 'F';
+
+    ASSERT_EQ(hex_string2.to_string(), "0xfedcbafedcba9876543210");
+
+    auto hex_string3 = hex_string::from_hex_prefixed("0x0123456789abcdefABCDEF").value();
+    ASSERT_THROW(hex_string3[20] = 'g', abc::error);
+}
