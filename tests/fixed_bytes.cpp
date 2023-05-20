@@ -138,12 +138,12 @@ TEST(fixed_bytes_be, prefix_plusplus) {
 
 TEST(fixed_bytes_be, hex_string) {
     auto bytes = bytes16_msb0_t{0x0123456789abcdefu};
-    auto const & hex_str = to_hex_string(bytes);
+    auto const hex_str = convert_to<hex_string>::from(bytes).value();
     EXPECT_EQ("0x00000000000000000123456789abcdef", hex_str.to_string());
 }
 
 TEST(fixed_bytes_le, hex_string) {
     auto bytes = bytes16_lsb0_t{0x0123456789abcdefu};
-    auto const & hex_str = to_hex_string(bytes);
+    auto const hex_str = convert_to<hex_string>::from(bytes).value();
     EXPECT_EQ("0x00000000000000000123456789abcdef", hex_str.to_string());
 }
