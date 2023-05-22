@@ -15,7 +15,7 @@ abc_error::abc_error(std::error_code const & ec)
 }
 
 abc_error::abc_error(std::error_code const & ec, std::string_view const msg)
-    : std::exception{}, msg_{ fmt::format("{} {}", msg, ec.message()) }, ec_{ ec } {
+    : std::exception{}, msg_{ fmt::format("{}:{}", msg, ec.message()) }, ec_{ ec } {
 }
 
 abc_error::abc_error(int const ec, std::error_category const & category)
@@ -23,7 +23,7 @@ abc_error::abc_error(int const ec, std::error_category const & category)
 }
 
 abc_error::abc_error(int const ec, std::error_category const & category, std::string_view const msg)
-    : std::exception{}, msg_{ fmt::format("{} {}", msg, std::error_code{ec, category}.message()) }, ec_{ ec, category } {
+    : std::exception{}, msg_{ fmt::format("{}:{}", msg, std::error_code{ec, category}.message()) }, ec_{ ec, category } {
 }
 
 auto abc_error::code() const noexcept -> std::error_code const & {
@@ -67,6 +67,9 @@ static constexpr auto errc_map(int const ec) noexcept -> char const * {
 
         case errc::invalid_bit_numbering:
             return "invalid bit numbering";
+
+        case errc::bad_result_access:
+            return "bad result access";
     }
 
     std::unreachable();
