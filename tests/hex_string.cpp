@@ -123,5 +123,5 @@ TEST(hex_string, operator_index) {
     ASSERT_EQ(hex_string2.to_string(), "0xfedcbafedcba9876543210");
 
     auto hex_string3 = hex_string::from_hex_prefixed("0x0123456789abcdefABCDEF").value();
-    ASSERT_THROW(hex_string3[20] = 'g', abc::error);
+    ASSERT_THROW(hex_string3[20] = 'g', abc::abc_error);
 }

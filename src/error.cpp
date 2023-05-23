@@ -6,30 +6,31 @@
 #include <fmt/core.h>
 
 #include <cassert>
+#include <utility>
 
 namespace abc {
 
-error::error(std::error_code const & ec)
+abc_error::abc_error(std::error_code const & ec)
     : std::exception{}, msg_{ ec.message() }, ec_{ ec } {
 }
 
-error::error(std::error_code const & ec, std::string_view const msg)
+abc_error::abc_error(std::error_code const & ec, std::string_view const msg)
     : std::exception{}, msg_{ fmt::format("{} {}", msg, ec.message()) }, ec_{ ec } {
 }
 
-error::error(int const ec, std::error_category const & category)
+abc_error::abc_error(int const ec, std::error_category const & category)
     : std::exception{}, msg_{ std::error_code{ec, category}.message() }, ec_{ ec, category } {
 }
 
-error::error(int const ec, std::error_category const & category, std::string_view const msg)
+abc_error::abc_error(int const ec, std::error_category const & category, std::string_view const msg)
     : std::exception{}, msg_{ fmt::format("{} {}", msg, std::error_code{ec, category}.message()) }, ec_{ ec, category } {
 }
 
-auto error::code() const noexcept -> std::error_code const & {
+auto abc_error::code() const noexcept -> std::error_code const & {
     return ec_;
 }
 
-auto error::what() const noexcept -> char const * {
+auto abc_error::what() const noexcept -> char const * {
     return msg_.c_str();
 }
 
@@ -66,10 +67,9 @@ static constexpr auto errc_map(int const ec) noexcept -> char const * {
 
         case errc::invalid_bit_numbering:
             return "invalid bit numbering";
-
-        default:  // NOLINT(clang-diagnostic-covered-switch-default)
-            return "unknown error";
     }
+
+    std::unreachable();
 }
 
 auto abc_category() noexcept -> std::error_category const & {
@@ -103,13 +103,13 @@ void throw_exception(ExceptionT eh) {
 
 void do_throw_error(std::error_code const & ec) {
     assert(ec);
-    error eh{ ec };
+    abc_error eh{ ec };
     throw_exception(std::move(eh));
 }
 
 void do_throw_error(std::error_code const & ec, std::string_view const extra_msg) {
     assert(ec);
-    error eh{ ec, extra_msg };
+    abc_error eh{ ec, extra_msg };
     throw_exception(std::move(eh));
 }
 

@@ -12,22 +12,22 @@
 
 namespace abc {
 
-class error final : public std::exception {
+class abc_error final : public std::exception {
 private:
     std::string msg_{};
     std::error_code ec_{};
 
 public:
-    error(error const &) = default;
-    auto operator=(error const &) -> error & = default;
-    error(error &&) = default;
-    auto operator=(error &&) -> error & = default;
-    ~error() override = default;
+    abc_error(abc_error const &) = default;
+    auto operator=(abc_error const &) -> abc_error & = default;
+    abc_error(abc_error &&) = default;
+    auto operator=(abc_error &&) -> abc_error & = default;
+    ~abc_error() override = default;
 
-    explicit error(std::error_code const & ec);
-    explicit error(std::error_code const & ec, std::string_view msg);
-    explicit error(int ec, std::error_category const & category);
-    explicit error(int ec, std::error_category const & category, std::string_view msg);
+    explicit abc_error(std::error_code const & ec);
+    explicit abc_error(std::error_code const & ec, std::string_view msg);
+    explicit abc_error(int ec, std::error_category const & category);
+    explicit abc_error(int ec, std::error_category const & category, std::string_view msg);
 
     [[nodiscard]] auto code() const noexcept -> std::error_code const &;
 
