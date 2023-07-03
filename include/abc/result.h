@@ -41,6 +41,9 @@ constexpr bool is_result_v = false;
 template <typename T, typename E>
 constexpr bool is_result_v<abc::result<T, E>> = true;
 
+template <typename Fn, typename T>
+using fn_map_t = std::remove_cvref_t<std::invoke_result_t<Fn &&, T &&>>;
+
 template <typename T>
 struct exception_safe_guard {
     static_assert(std::is_nothrow_move_constructible_v<T>);
@@ -724,40 +727,41 @@ public:
 #endif
 
 private:
-    template <typename Self, typename U, typename Fn> requires std::is_same_v<result, std::remove_cvref_t<Self>> &&
-                                                               std::is_invocable_r_v<U, Fn, T> &&
-                                                               (std::is_copy_constructible_v<E> || std::is_move_constructible_v<E>)
+    template <typename Self, typename Fn> requires std::is_same_v<result, std::remove_cvref_t<Self>> &&
+                                                   (std::is_copy_constructible_v<E> || std::is_move_constructible_v<E>)
     constexpr static auto
-    map_impl(Self && self, Fn && f) -> result<U, E> {
+    map_impl(Self && self, Fn && f) -> result<details::fn_map_t<Fn, decltype(std::forward<Self>(self).value())>, E> {
+        using U = details::fn_map_t<Fn, decltype(std::forward<Self>(self).value())>;
+
         if (self.is_ok()) {
             return result<U, E>(std::invoke(std::forward<Fn>(f), std::forward<Self>(self).value()));
         }
 
-        return result<U, E>(std::forward<Self>(self).error());
+        return result<U, E>(abc::err{std::forward<Self>(self).error()});
     }
 
 public:
-    template <typename U, typename Fn> requires std::is_invocable_r_v<U, Fn, T> && std::is_copy_constructible_v<E>
+    template <typename Fn> requires std::is_invocable_v<Fn, T &> && std::is_copy_constructible_v<E>
     constexpr auto
-    map(Fn && f) & -> result<U, E> {
+    map(Fn && f) & -> result<details::fn_map_t<Fn, T &>, E> {
         return map_impl(*this, std::forward<Fn>(f));
     }
 
-    template <typename U, typename Fn> requires std::is_invocable_r_v<U, Fn, T> && std::is_copy_constructible_v<E>
+    template <typename Fn> requires std::is_invocable_v<Fn, T> && std::is_copy_constructible_v<E>
     constexpr auto
-    map(Fn && f) const & -> result<U, E> {
+    map(Fn && f) const & -> result<details::fn_map_t<Fn, T const &>, E> {
         return map_impl(*this, std::forward<Fn>(f));
     }
 
-    template <typename U, typename Fn> requires std::is_invocable_r_v<U, Fn, T> && std::is_move_constructible_v<E>
+    template <typename Fn> requires std::is_invocable_v<Fn, T> && std::is_move_constructible_v<E>
     constexpr auto
-    map(Fn && f) && -> result<U, E> {
+    map(Fn && f) && -> result<details::fn_map_t<Fn, T &&>, E> {
         return map_impl(std::move(*this), std::forward<Fn>(f));
     }
 
-    template <typename U, typename Fn> requires std::is_invocable_r_v<U, Fn, T> && std::is_move_constructible_v<E>
+    template <typename Fn> requires std::is_invocable_v<Fn, T> && std::is_move_constructible_v<E>
     constexpr auto
-    map(Fn && f) const && -> result<U, E> {
+    map(Fn && f) const && -> result<details::fn_map_t<Fn, T const &&>, E> {
         return map_impl(std::move(*this), std::forward<Fn>(f));
     }
 

@@ -534,3 +534,134 @@ TEST(result, value) {
         ASSERT_EQ(2, r1.value_or(2));
     }
 }
+
+TEST(result, map_copyable_value) {
+    {
+        abc::result<int, int> r1{1};
+        auto r2 = r1.map([](int v) { return v + 1; });
+        ASSERT_TRUE(r2.has_value());
+        ASSERT_EQ(2, r2.value());
+    }
+
+    {
+        abc::result<int, int> const r1{1};
+        auto r2 = r1.map([](int v) { return v + 1; });
+        ASSERT_TRUE(r2.has_value());
+        ASSERT_EQ(2, r2.value());
+    }
+
+    {
+        auto r2 = abc::result<int, int>{1}.map([](int v) { return v + 1; });
+        ASSERT_TRUE(r2.has_value());
+        ASSERT_EQ(2, r2.value());
+    }
+
+    {
+        auto r2 = static_cast<abc::result<int, int> const &&>(abc::result<int, int>{1}).map([](int v) { return v + 1; });
+        ASSERT_TRUE(r2.has_value());
+        ASSERT_EQ(2, r2.value());
+    }
+
+    {
+        abc::result<int, int> r1{abc::err<int>{1}};
+        auto r2 = r1.map([](int v) { return v + 1; });
+        ASSERT_FALSE(r2.has_value());
+        ASSERT_EQ(1, r2.error());
+    }
+
+    {
+        abc::result<int, int> const r1{abc::err<int>{1}};
+        auto r2 = r1.map([](int v) { return v + 1; });
+        ASSERT_FALSE(r2.has_value());
+        ASSERT_EQ(1, r2.error());
+    }
+
+    {
+        auto r2 = abc::result<int, int>{abc::err<int>{1}}.map([](int v) { return v + 1; });
+        ASSERT_FALSE(r2.has_value());
+        ASSERT_EQ(1, r2.error());
+    }
+
+    {
+        auto r2 = static_cast<abc::result<int, int> const &&>(abc::result<int, int>{abc::err<int>{1}}).map([](int v) { return v + 1; });
+        ASSERT_FALSE(r2.has_value());
+        ASSERT_EQ(1, r2.error());
+    }
+}
+
+TEST(result, map_non_copyable_value) {
+    struct noncopyable {
+    private:
+        std::string str_;
+
+    public:
+        noncopyable();
+        noncopyable(noncopyable const &) = delete;
+        auto operator=(noncopyable const &) -> noncopyable & = delete;
+        noncopyable(noncopyable &&) = default;
+        auto operator=(noncopyable &&) -> noncopyable & = default;
+        ~noncopyable() = default;
+
+        constexpr noncopyable(std::string_view str) : str_{str} {}
+
+        constexpr auto value() & -> std::string & { return str_; }
+        constexpr auto value() const & -> std::string const & { return str_; }
+        constexpr auto value() && -> std::string && { return std::move(str_); }
+        constexpr auto value() const && -> std::string const && { return std::move(str_); }
+    };
+
+    static_assert(!std::is_copy_constructible_v<noncopyable>);
+    static_assert(!std::is_copy_assignable_v<noncopyable>);
+
+    {
+        abc::result<noncopyable, int> r1{"abc"};
+        auto r2 = r1.map([](auto & v) { return v.value(); });
+        ASSERT_TRUE(r2.has_value());
+        ASSERT_EQ(r1.value().value(), r2.value());
+    }
+
+    {
+        abc::result<noncopyable, int> const r1{"a"};
+        auto r2 = r1.map([](auto const & v) { return v.value(); });
+        ASSERT_TRUE(r2.has_value());
+        ASSERT_EQ(r1.value().value(), r2.value());
+    }
+
+    {
+        auto r2 = abc::result<noncopyable, int>{"abc"}.map([](auto && v) { return std::move(v).value(); });
+        ASSERT_TRUE(r2.has_value());
+        ASSERT_EQ("abc", r2.value());
+    }
+
+    {
+        auto r2 = static_cast<abc::result<noncopyable, int> const &&>(abc::result<noncopyable, int>{"abc"}).map([](auto const && v) { return std::move(v).value(); });
+        ASSERT_TRUE(r2.has_value());
+        ASSERT_EQ("abc", r2.value());
+    }
+
+    {
+        abc::result<noncopyable, int> r1{abc::err<int>{1}};
+        auto r2 = r1.map([](auto & v) { return v.value().length() + 1; });
+        ASSERT_FALSE(r2.has_value());
+        ASSERT_EQ(1, r2.error());
+    }
+
+    {
+        abc::result<noncopyable, int> const r1{abc::err<int>{1}};
+        auto r2 = r1.map([](auto const & v) { return v.value().length() + 1; });
+        ASSERT_FALSE(r2.has_value());
+        ASSERT_EQ(1, r2.error());
+    }
+
+    {
+        auto r2 = abc::result<noncopyable, int>{abc::err<int>{1}}.map([](auto && v) { return std::move(v).value().length() + 1; });
+        ASSERT_FALSE(r2.has_value());
+        ASSERT_EQ(1, r2.error());
+    }
+
+    {
+        auto r2 = static_cast<abc::result<noncopyable, int> const &&>(abc::result<noncopyable, int>{abc::err<int>{1}}).map([](auto const && v) { return std::move(v).value().length() + 1; });
+        ASSERT_FALSE(r2.has_value());
+        ASSERT_EQ(1, r2.error());
+    }
+}
