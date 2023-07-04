@@ -535,6 +535,59 @@ TEST(result, value) {
     }
 }
 
+TEST(result, value_or) {
+    {
+        abc::result<int, int> r1{1};
+        ASSERT_EQ(1, r1.value_or(2));
+    }
+
+    {
+        abc::result<int, int> r1{abc::err<int>{1}};
+        ASSERT_EQ(2, r1.value_or(2));
+    }
+
+    ASSERT_EQ(1, (abc::result<int, int>{1}.value_or(2)));
+    ASSERT_EQ(2, (abc::result<int, int>{abc::err<int>{1}}.value_or(2)));
+
+    struct base {
+        int i;
+
+        base() = default;
+        base(base const&) = default;
+        auto operator=(base const&) -> base & = default;
+        base(base &&) = default;
+        auto operator=(base &&) -> base & = default;
+        ~base() = default;
+
+        base(int i) : i(i) {}
+    };
+
+    struct derived : base {
+        int j;
+
+        derived() = default;
+        derived(derived const&) = default;
+        auto operator=(derived const&) -> derived & = default;
+        derived(derived &&) = default;
+        auto operator=(derived &&) -> derived & = default;
+        ~derived() = default;
+
+        derived(int i, int j) : base(i), j(j) {}
+    };
+
+    {
+        abc::result<base, int> r1{derived{1,2}};
+        auto r2 = r1.value_or(derived{3,4});
+        ASSERT_EQ(1, r2.i);
+    }
+
+    {
+        abc::result<int,  base> r1{abc::err<derived>{derived{1,2}}};
+        auto r2 = r1.value_or(3);
+        ASSERT_EQ(3, r2);
+    }
+}
+
 TEST(result, map_copyable_value) {
     {
         abc::result<int, int> r1{1};
@@ -663,5 +716,59 @@ TEST(result, map_non_copyable_value) {
         auto r2 = static_cast<abc::result<noncopyable, int> const &&>(abc::result<noncopyable, int>{abc::err<int>{1}}).map([](auto const && v) { return std::move(v).value().length() + 1; });
         ASSERT_FALSE(r2.has_value());
         ASSERT_EQ(1, r2.error());
+    }
+}
+
+TEST(result, is_ok_and) {
+    {
+        auto r1 = abc::result<int, int>{1};
+        ASSERT_TRUE(r1.is_ok_and([](int v) { return v == 1; }));
+        ASSERT_FALSE(r1.is_ok_and([](int v) { return v == 2; }));
+    }
+
+    {
+        auto r1 = abc::result<int, int>{abc::err<int>{1}};
+        ASSERT_FALSE(r1.is_ok_and([](int v) { return v == 1; }));
+        ASSERT_FALSE(r1.is_ok_and([](int v) { return v == 2; }));
+    }
+}
+
+TEST(result, is_err_and) {
+    {
+        auto r1 = abc::result<int, int>{1};
+        ASSERT_FALSE(r1.is_err_and([](int v) { return v == 1; }));
+        ASSERT_FALSE(r1.is_err_and([](int v) { return v == 2; }));
+    }
+
+    {
+        auto r1 = abc::result<int, int>{abc::err<int>{1}};
+        ASSERT_TRUE(r1.is_err_and([](int v) { return v == 1; }));
+        ASSERT_FALSE(r1.is_err_and([](int v) { return v == 2; }));
+    }
+}
+
+TEST(result, ok) {
+    {
+        auto r1 = abc::result<int, int>{1};
+        ASSERT_TRUE(r1.ok().has_value());
+        ASSERT_EQ(1, r1.ok().value());
+    }
+
+    {
+        auto r1 = abc::result<int, int>{abc::err<int>{1}};
+        ASSERT_FALSE(r1.ok().has_value());
+    }
+}
+
+TEST(result, err) {
+    {
+        auto r1 = abc::result<int, int>{1};
+        ASSERT_EQ(std::nullopt, r1.err());
+    }
+
+    {
+        auto r1 = abc::result<int, int>{abc::err<int>{1}};
+        ASSERT_TRUE(r1.err().has_value());
+        ASSERT_EQ(1, r1.err().value());
     }
 }

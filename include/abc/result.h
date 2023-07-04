@@ -615,9 +615,11 @@ public:
         return has_value();
     }
 
-    template <typename Fn> requires std::is_invocable_r_v<bool, Fn, T>
+    template <typename Fn>
     constexpr auto
     is_ok_and(Fn && f) const -> bool {
+        static_assert(std::is_invocable_r_v<bool, Fn, T>);
+
         return has_value() && std::invoke(std::forward<Fn>(f), val_);
     }
 
@@ -635,7 +637,10 @@ public:
 private:
     template <typename Self>
     constexpr static auto
-    ok_impl(Self && self) -> std::optional<T> requires std::is_same_v<result, std::remove_cvref_t<Self>> && (std::is_move_constructible_v<T> || std::is_copy_constructible_v<T>) {
+    ok_impl(Self && self) -> std::optional<T> {
+        static_assert(std::is_same_v<result, std::remove_cvref_t<Self>>);
+        static_assert(std::is_move_constructible_v<T> || std::is_copy_constructible_v<T>);
+
         if (self.is_ok()) {
             return std::make_optional<T>(std::forward<Self>(self).value());
         }
@@ -727,10 +732,14 @@ public:
 #endif
 
 private:
-    template <typename Self, typename Fn> requires std::is_same_v<result, std::remove_cvref_t<Self>> &&
-                                                   (std::is_copy_constructible_v<E> || std::is_move_constructible_v<E>)
+    template <typename Self, typename Fn>
+
     constexpr static auto
     map_impl(Self && self, Fn && f) -> result<details::fn_map_t<Fn, decltype(std::forward<Self>(self).value())>, E> {
+        static_assert(std::is_same_v<result, std::remove_cvref_t<Self>>);
+        static_assert((std::is_copy_constructible_v<E> || std::is_move_constructible_v<E>));
+        static_assert(std::is_invocable_v<Fn, decltype(std::forward<Self>(self).value())>);
+
         using U = details::fn_map_t<Fn, decltype(std::forward<Self>(self).value())>;
 
         if (self.is_ok()) {
