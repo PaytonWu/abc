@@ -7,6 +7,7 @@
 #pragma once
 
 #include "abc/error.h"
+#include "abc/utility.h"
 
 #include <cassert>
 #include <expected>
@@ -14,7 +15,6 @@
 #include <memory>
 #include <optional>
 #include <type_traits>
-#include <utility>
 
 namespace abc {
 
@@ -520,7 +520,7 @@ public:
         }
 
         throw_error(make_error_code(errc::bad_result_access));
-        std::unreachable();
+        abc::unreachable();
     }
 
     [[nodiscard]]
@@ -531,7 +531,7 @@ public:
         }
 
         throw_error(make_error_code(errc::bad_result_access));
-        std::unreachable();
+        abc::unreachable();
     }
 
     [[nodiscard]]
@@ -542,7 +542,7 @@ public:
         }
 
         throw_error(make_error_code(errc::bad_result_access));
-        std::unreachable();
+        abc::unreachable();
     }
 
     [[nodiscard]]
@@ -553,7 +553,7 @@ public:
         }
 
         throw_error(make_error_code(errc::bad_result_access));
-        std::unreachable();
+        abc::unreachable();
     }
 
     constexpr auto

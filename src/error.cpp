@@ -2,11 +2,11 @@
 // Distributed under the MIT License (http://opensource.org/licenses/MIT)
 
 #include "abc/error.h"
+#include "abc/utility.h"
 
 #include <fmt/core.h>
 
 #include <cassert>
-#include <utility>
 
 namespace abc {
 
@@ -72,7 +72,7 @@ static constexpr auto errc_map(int const ec) noexcept -> char const * {
             return "bad result access";
     }
 
-    std::unreachable();
+    abc::unreachable();
 }
 
 auto abc_category() noexcept -> std::error_category const & {
