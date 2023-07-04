@@ -379,7 +379,7 @@ public:
 
     // Eligible copy assignment operator: https://en.cppreference.com/w/cpp/language/copy_assignment#Eligible_copy_assignment_operator
     constexpr auto
-    operator=(result const & other) -> result & = default;
+    operator=(result const & other) -> result & = delete;
 
     constexpr auto
     operator=(result const & other) /* noexcept(std::conjunction_v<std::is_nothrow_copy_constructible<T>, std::is_nothrow_copy_constructible<E>, std::is_nothrow_copy_assignable<T>, std::is_nothrow_copy_assignable<E>>) */ -> result &
@@ -432,7 +432,7 @@ public:
                                    (std::is_nothrow_constructible_v<E, G const &> || std::is_nothrow_move_constructible_v<T> || std::is_nothrow_move_constructible_v<E>)
     constexpr auto
     operator=(err<G> const & e) -> result & {
-        this->assign_error(e.error_value());
+        this->assign_error(e.error());
         return *this;
     }
 
@@ -441,7 +441,7 @@ public:
                                    (std::is_nothrow_constructible_v<E, G> || std::is_nothrow_move_constructible_v<T> || std::is_nothrow_move_constructible_v<E>)
     constexpr auto
     operator=(err<G> && e) -> result & {
-        this->assign_error(std::move(e).error_value());
+        this->assign_error(std::move(e).error());
         return *this;
     }
 
