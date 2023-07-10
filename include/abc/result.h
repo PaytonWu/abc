@@ -76,18 +76,18 @@ private:
     T tmp_;
 };
 
-template <typename T, typename U, typename ... Args>
-constexpr void reinit_result(T * new_value, U * old_value, Args && ... args) {
-    if constexpr (std::is_nothrow_constructible_v<T, Args...>) {
+template <typename T, typename U, typename V>
+constexpr void reinit_result(T * new_value, U * old_value, V && v) {
+    if constexpr (std::is_nothrow_constructible_v<T, V>) {
         std::destroy_at(old_value);
-        std::construct_at(new_value, std::forward<Args>(args)...);
+        std::construct_at(new_value, std::forward<V>(v));
     } else if constexpr (std::is_nothrow_move_constructible_v<T>) {
-        T tmp{ std::forward<Args>(args)... };
+        T tmp{ std::forward<V>(v) };
         std::destroy_at(old_value);
         std::construct_at(new_value, std::move(tmp));
     } else {
         exception_safe_guard<U> guard{ std::move(*old_value) };
-        std::construct_at(new_value, std::forward<Args>(args)...);
+        std::construct_at(new_value, std::forward<V>(v));
         [[maybe_unused]] auto _ = guard.release();
     }
 }
@@ -1055,6 +1055,63 @@ public:
     constexpr
     explicit(!std::is_convertible_v<G, E>)
     result(err <G> && e) : err_{ std::move(e).error() }, has_value_{ false } {
+    }
+
+    // Destructor
+
+    constexpr ~result() = default;
+
+    constexpr ~result() requires (!std::is_trivially_destructible_v<E>)
+    {
+        if (!has_value_)
+            std::destroy_at(__builtin_addressof(err_));
+    }
+
+    // assignment
+
+    auto operator=(result const &) -> result & = delete;
+
+    constexpr auto
+    operator=(result const & rhs) noexcept(std::conjunction_v<std::is_nothrow_copy_constructible<E>, std::is_nothrow_copy_assignable<E>>) -> result &
+                                  requires std::is_copy_constructible_v<E> && std::is_copy_assignable_v<E>
+    {
+        if (rhs.has_value_) {
+            // emplace();
+        } else {
+            // _M_assign_unex(__x._M_unex);
+        }
+        return *this;
+    }
+
+    constexpr auto
+    operator=(result && rhs) noexcept(std::conjunction_v<std::is_nothrow_move_constructible<E>, std::is_nothrow_move_assignable<E>>) -> result &
+                             requires std::is_move_constructible_v<E> && std::is_move_assignable_v<E>
+    {
+        if (rhs.has_value_) {
+            //emplace();
+        } else {
+            // _M_assign_unex(std::move(__x._M_unex));
+        }
+        return *this;
+    }
+
+    template<typename G> requires std::is_constructible_v<E, G const &> && std::is_assignable_v<E &, G const &>
+    constexpr auto
+    operator=(err<G> const & rhs) -> result & {
+        // _M_assign_unex(__e.error());
+        return *this;
+    }
+
+    template<typename G> requires std::is_constructible_v<E, G> && std::is_assignable_v<E &, G>
+    constexpr auto
+    operator=(err<G> && rhs) -> result & {
+        // _M_assign_unex(std::move(__e.error()));
+        return *this;
+    }
+
+    constexpr auto
+    has_value() const noexcept -> bool {
+        return has_value_;
     }
 };
 
