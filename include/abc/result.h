@@ -1076,9 +1076,9 @@ public:
                                   requires std::is_copy_constructible_v<E> && std::is_copy_assignable_v<E>
     {
         if (rhs.has_value_) {
-            // emplace();
+            emplace();
         } else {
-            // _M_assign_unex(__x._M_unex);
+            this->assign_err(rhs.err_);
         }
         return *this;
     }
@@ -1088,9 +1088,9 @@ public:
                              requires std::is_move_constructible_v<E> && std::is_move_assignable_v<E>
     {
         if (rhs.has_value_) {
-            //emplace();
+            emplace();
         } else {
-            // _M_assign_unex(std::move(__x._M_unex));
+            this->assign_err(std::move(rhs.err_));
         }
         return *this;
     }
@@ -1098,20 +1098,165 @@ public:
     template<typename G> requires std::is_constructible_v<E, G const &> && std::is_assignable_v<E &, G const &>
     constexpr auto
     operator=(err<G> const & rhs) -> result & {
-        // _M_assign_unex(__e.error());
+        this->assign_err(rhs.error());
         return *this;
     }
 
     template<typename G> requires std::is_constructible_v<E, G> && std::is_assignable_v<E &, G>
     constexpr auto
     operator=(err<G> && rhs) -> result & {
-        // _M_assign_unex(std::move(__e.error()));
+        this->assign_err(std::move(rhs).error());
         return *this;
     }
+
+    // modifiers
+
+    constexpr auto
+    emplace() noexcept -> void
+    {
+        if (!has_value_) {
+            std::destroy_at(std::addressof(err_));
+            has_value_ = true;
+        }
+    }
+
+    // swap
+
+    constexpr void
+    swap(result & rhs) noexcept(std::conjunction_v<std::is_nothrow_swappable<E &>, std::is_nothrow_move_constructible<E>>)
+                       requires std::is_swappable_v<E> && std::is_move_constructible_v<E> {
+        if (has_value_) {
+            if (!rhs.has_value_) {
+                std::construct_at(std::addressof(err_),std::move(rhs.err_)); // might throw
+                std::destroy_at(std::addressof(rhs.err_));
+                has_value_ = false;
+                rhs.has_value_ = true;
+            }
+        } else {
+            if (rhs.has_value_) {
+                std::construct_at(std::addressof(rhs.err_), std::move(err_)); // might throw
+                std::destroy_at(std::addressof(err_));
+                has_value_ = true;
+                rhs.has_value_ = false;
+            } else {
+                using std::swap;
+                swap(err_, rhs.err_);
+            }
+        }
+    }
+
+    friend constexpr void
+    swap(result & lhs, result & rhs) noexcept(noexcept(lhs.swap(rhs)))
+                                     requires requires{ lhs.swap(rhs); } {
+        lhs.swap(rhs);
+    }
+
+    // observers
 
     constexpr auto
     has_value() const noexcept -> bool {
         return has_value_;
+    }
+
+    constexpr void
+    value() const & {
+        if (has_value_) [[likely]] {
+            return;
+        }
+
+        throw_error(make_error_code(errc::bad_result_access));
+        unreachable();
+    }
+
+    constexpr void
+    value() && {
+        if (has_value_) [[likely]] {
+            return;
+        }
+
+        throw_error(make_error_code(errc::bad_result_access));
+        unreachable();
+    }
+
+    constexpr auto
+    error() const & noexcept -> E const & {
+        assert(!has_value_);
+        return err_;
+    }
+
+    constexpr auto
+    error() & noexcept -> E & {
+        assert(!has_value_);
+        return err_;
+    }
+
+    constexpr auto
+    error() const && noexcept -> E const && {
+        assert(!has_value_);
+        return std::move(err_);
+    }
+
+    constexpr auto
+    error() && noexcept -> E && {
+        assert(!has_value_);
+        return std::move(err_);
+    }
+
+    template<typename G = E>
+    constexpr auto
+    error_or(G && e) const & -> E {
+        static_assert(std::is_copy_constructible_v<E>);
+        static_assert(std::is_convertible_v<G, E>);
+
+        if (has_value_) {
+            return std::forward<G>(e);
+        }
+
+        return err_;
+    }
+
+    template<typename G = E>
+    constexpr auto
+    error_or(G && e) && -> E
+    {
+        static_assert(std::is_move_constructible_v<E>);
+        static_assert(std::is_convertible_v<G, E>);
+
+        if (has_value_) {
+            return std::forward<G>(e);
+        }
+        return std::move(err_);
+    }
+
+    // equality operators
+
+    template<typename U, typename G> requires std::is_void_v<U>
+    friend constexpr auto
+    operator==(result const & lhs, result<U, G> const & rhs) noexcept(noexcept(lhs.has_value_ == rhs.has_value_)) -> bool {
+        if (lhs.has_value_) {
+            return rhs.has_value_;
+        } else {
+            return !rhs.has_value_ && lhs.err_ == rhs.err_;
+        }
+    }
+
+    template<typename G>
+    friend constexpr auto
+    operator==(result const & lhs, err<G> const & rhs) noexcept(noexcept(lhs.err_ == rhs.error())) -> bool {
+        return !lhs.has_value_ && lhs.err_ == rhs.error();
+    }
+
+private:
+    template<typename V>
+    constexpr auto
+    assign_err(V && v) -> void {
+        if (has_value_) {
+            std::construct_at(std::addressof(err_), std::forward<V>(v));
+            has_value_ = false;
+        }
+        else {
+            err_ = std::forward<V>(v);
+        }
     }
 };
 
