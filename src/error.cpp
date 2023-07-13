@@ -6,8 +6,6 @@
 
 #include <fmt/core.h>
 
-#include <cassert>
-
 namespace abc {
 
 abc_error::abc_error(std::error_code const & ec)
@@ -68,8 +66,8 @@ static constexpr auto errc_map(int const ec) noexcept -> char const * {
         case errc::invalid_bit_numbering:
             return "invalid bit numbering";
 
-        case errc::bad_result_access:
-            return "bad result access";
+        case errc::bad_expected_access:
+            return "bad expected access";
     }
 
     abc::unreachable();
@@ -93,27 +91,6 @@ void throw_error(std::error_code const & ec) {
 }
 void throw_error(std::error_code const & ec, std::string_view extra_msg) {
     if (ec) { details::do_throw_error(ec, extra_msg); }
-}
-
-}
-
-namespace abc::details {
-
-template <typename ExceptionT>
-void throw_exception(ExceptionT eh) {
-    throw std::move(eh);
-}
-
-void do_throw_error(std::error_code const & ec) {
-    assert(ec);
-    abc_error eh{ ec };
-    throw_exception(std::move(eh));
-}
-
-void do_throw_error(std::error_code const & ec, std::string_view const extra_msg) {
-    assert(ec);
-    abc_error eh{ ec, extra_msg };
-    throw_exception(std::move(eh));
 }
 
 }

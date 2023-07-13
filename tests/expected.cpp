@@ -1,16 +1,16 @@
 // Copyright(c) 2023 - present, Payton Wu (payton.wu@outlook.com) & abc contributors.
 // Distributed under the MIT License (http://opensource.org/licenses/MIT)
 
-#include "abc/result.h"
+#include "abc/expected.h"
 
 #include <gtest/gtest.h>
 
-TEST(result, default_constructor) {
+TEST(expected, default_constructor) {
     enum class errc{};
 
 #define TEST_CASE(TYPE)             \
     do {                            \
-        abc::result<TYPE, errc> r;  \
+        abc::expected<TYPE, errc> r;  \
         ASSERT_TRUE(r.has_value()); \
     } while (false)
 
@@ -37,17 +37,17 @@ TEST(result, default_constructor) {
 #undef TEST_CASE
 }
 
-TEST(result, constructor) {
+TEST(expected, constructor) {
     enum class errc {
         err1,
         err2,
         err3
     };
-    abc::result<int, errc> r1{ 1 };
+    abc::expected<int, errc> r1{ 1 };
     ASSERT_TRUE(r1.has_value());
 }
 
-TEST(result, val_constructor) {
+TEST(expected, val_constructor) {
     struct base {
         std::string s;
         int count{0};
@@ -77,47 +77,47 @@ TEST(result, val_constructor) {
     };
 
     {
-        abc::result<base *, int> r = new derived;
+        abc::expected<base *, int> r = new derived;
         ASSERT_TRUE(r.has_value());
         ASSERT_EQ(0, r.value()->count);
     }
 
     {
-        abc::result<base *, int> r = nullptr;
+        abc::expected<base *, int> r = nullptr;
         ASSERT_TRUE(r.has_value());
         ASSERT_EQ(nullptr, r.value());
     }
 
     {
-        abc::result<base *, int> r = new derived;
+        abc::expected<base *, int> r = new derived;
         ASSERT_TRUE(r.has_value());
         ASSERT_EQ(0, r.value()->count);
 
-        abc::result<derived *, int> rr{dynamic_cast<derived *>(r.value())};
+        abc::expected<derived *, int> rr{dynamic_cast<derived *>(r.value())};
         ASSERT_TRUE(rr.has_value());
         ASSERT_EQ(0, rr.value()->count);
     }
 
     {
-        abc::result<base, int> r = base{};
+        abc::expected<base, int> r = base{};
         ASSERT_TRUE(r.has_value());
         ASSERT_EQ(0, r.value().count);
     }
 
     {
-        abc::result<base, int> r = derived{};
+        abc::expected<base, int> r = derived{};
         ASSERT_TRUE(r.has_value());
         ASSERT_EQ(0, r.value().count);
     }
 
     {
-        abc::result<trival_base, int> r = trival_base{.count = 1};
+        abc::expected<trival_base, int> r = trival_base{.count = 1};
         ASSERT_TRUE(r.has_value());
         ASSERT_EQ(1, r.value().count);
     }
 }
 
-TEST(result, copy_constructor) {
+TEST(expected, copy_constructor) {
     struct non_trivally_copyable {
         non_trivally_copyable() = default;
         non_trivally_copyable(non_trivally_copyable&&) = default;
@@ -142,8 +142,8 @@ TEST(result, copy_constructor) {
         non_trivally_copyable ntc;
         ntc._ = "abc";
 
-        abc::result<non_trivally_copyable, int> r1{ntc};
-        abc::result<non_trivally_copyable, int> r2{r1};
+        abc::expected<non_trivally_copyable, int> r1{ntc};
+        abc::expected<non_trivally_copyable, int> r2{r1};
         ASSERT_TRUE(r1.has_value());
         ASSERT_EQ(1, r1.value().count);
         ASSERT_EQ("abc", r1.value()._);
@@ -154,8 +154,8 @@ TEST(result, copy_constructor) {
     }
 
     {
-        abc::result<int, non_trivally_copyable> r1{1};
-        abc::result<int, non_trivally_copyable> r2{r1};
+        abc::expected<int, non_trivally_copyable> r1{1};
+        abc::expected<int, non_trivally_copyable> r2{r1};
 
         ASSERT_EQ(r1.value(), 1);
         ASSERT_EQ(r2.value(), 1);
@@ -171,11 +171,11 @@ TEST(result, copy_constructor) {
         ntc2.ntc = ntc;            // count == 0, assignement
         ASSERT_EQ(0, ntc.count);
 
-        abc::err<non_trivally_copyable2> e{ntc2};   // count == 1
+        abc::unexpected<non_trivally_copyable2> e{ntc2};   // count == 1
         ASSERT_EQ(1, e.error().ntc.count);
 
-        abc::result<non_trivally_copyable, non_trivally_copyable2> r1{e};   // count == 2
-        abc::result<non_trivally_copyable, non_trivally_copyable2> r2{r1};  // count == 3
+        abc::expected<non_trivally_copyable, non_trivally_copyable2> r1{e};   // count == 2
+        abc::expected<non_trivally_copyable, non_trivally_copyable2> r2{r1};  // count == 3
 
         ASSERT_FALSE(r1.has_value());
         ASSERT_FALSE(r2.has_value());
@@ -184,7 +184,7 @@ TEST(result, copy_constructor) {
     }
 }
 
-TEST(result, move_constructor) {
+TEST(expected, move_constructor) {
     struct non_trivally_moveable {
         non_trivally_moveable() = default;
         non_trivally_moveable(non_trivally_moveable const &) = default;
@@ -209,8 +209,8 @@ TEST(result, move_constructor) {
         non_trivally_moveable ntm;
         ntm._ = "abc";
 
-        abc::result<non_trivally_moveable, int> r1{std::move(ntm)};
-        abc::result<non_trivally_moveable, int> r2{std::move(r1)};
+        abc::expected<non_trivally_moveable, int> r1{std::move(ntm)};
+        abc::expected<non_trivally_moveable, int> r2{std::move(r1)};
         ASSERT_TRUE(r1.has_value());
         ASSERT_EQ(1, r1.value().count);
         ASSERT_TRUE(r1.value()._.empty());
@@ -221,8 +221,8 @@ TEST(result, move_constructor) {
     }
 
     {
-        abc::result<int, non_trivally_moveable> r1{1};
-        abc::result<int, non_trivally_moveable> r2{std::move(r1)};
+        abc::expected<int, non_trivally_moveable> r1{1};
+        abc::expected<int, non_trivally_moveable> r2{std::move(r1)};
 
         ASSERT_EQ(r1.value(), 1);
         ASSERT_EQ(r2.value(), 1);
@@ -238,22 +238,22 @@ TEST(result, move_constructor) {
         ntm2.ntm = std::move(ntm);            // count == 0, assignement
         ASSERT_EQ(0, ntm.count);
 
-        abc::err<non_trivally_moveable2> e{std::move(ntm)};   // count == 1
+        abc::unexpected<non_trivally_moveable2> e{std::move(ntm)};   // count == 1
         ASSERT_EQ(1, e.error().ntm.count);
     }
 }
 
-TEST(result, err_constructor) {
+TEST(expected, err_constructor) {
     {
-        abc::err<int> e{1};
-        abc::result<int, int> r{e};
+        abc::unexpected<int> e{1};
+        abc::expected<int, int> r{e};
         ASSERT_FALSE(r.has_value());
         ASSERT_EQ(1, r.error());
     }
 
     {
-        abc::err<int> e{1};
-        abc::result<int, int> r{e};
+        abc::unexpected<int> e{1};
+        abc::expected<int, int> r{e};
         ASSERT_FALSE(r.has_value());
         ASSERT_EQ(1, r.error());
         ASSERT_THROW({ auto v = r.value(); (void)v; }, abc::abc_error);
@@ -274,10 +274,10 @@ TEST(result, err_constructor) {
         };
 
         non_trivally_copyable ntc{};
-        abc::err<non_trivally_copyable> e{ntc};   // count == 1
+        abc::unexpected<non_trivally_copyable> e{ntc};   // count == 1
         ASSERT_EQ(1, e.error().count);
 
-        abc::result<int, non_trivally_copyable> r{e};   // count == 2
+        abc::expected<int, non_trivally_copyable> r{e};   // count == 2
         ASSERT_FALSE(r.has_value());
         ASSERT_EQ(2, r.error().count);
         ASSERT_THROW({ auto v = r.value(); (void)v; }, abc::abc_error);
@@ -297,18 +297,18 @@ TEST(result, err_constructor) {
             int count{0};
         };
 
-        abc::err<non_trivally_moveable> e{non_trivally_moveable{}};   // count == 1
-        abc::result<int, non_trivally_moveable> r{std::move(e)};   // count == 2
+        abc::unexpected<non_trivally_moveable> e{non_trivally_moveable{}};   // count == 1
+        abc::expected<int, non_trivally_moveable> r{std::move(e)};   // count == 2
         ASSERT_FALSE(r.has_value());
         ASSERT_EQ(2, r.error().count);
         ASSERT_THROW({ auto v = r.value(); (void)v; }, abc::abc_error);
     }
 }
 
-TEST(result, copy_assignment) {
+TEST(expected, copy_assignment) {
     {
-        abc::result<int, int> r1{1};
-        abc::result<int, int> r2{2};
+        abc::expected<int, int> r1{1};
+        abc::expected<int, int> r2{2};
         r2 = r1;
         ASSERT_TRUE(r1.has_value());
         ASSERT_TRUE(r2.has_value());
@@ -317,8 +317,8 @@ TEST(result, copy_assignment) {
     }
 
     {
-        abc::result<int, int> r1{1};
-        abc::result<int, int> r2{2};
+        abc::expected<int, int> r1{1};
+        abc::expected<int, int> r2{2};
         r1 = r2;
         ASSERT_TRUE(r1.has_value());
         ASSERT_TRUE(r2.has_value());
@@ -327,8 +327,8 @@ TEST(result, copy_assignment) {
     }
 
     {
-        abc::result<int, int> r1{1};
-        abc::result<int, int> r2{abc::err<int>{2}};
+        abc::expected<int, int> r1{1};
+        abc::expected<int, int> r2{abc::unexpected<int>{2}};
         r1 = r2;
         ASSERT_FALSE(r1.has_value());
         ASSERT_FALSE(r2.has_value());
@@ -337,8 +337,8 @@ TEST(result, copy_assignment) {
     }
 
     {
-        abc::result<int, int> r1{abc::err<int>{1}};
-        abc::result<int, int> r2{2};
+        abc::expected<int, int> r1{abc::unexpected<int>{1}};
+        abc::expected<int, int> r2{2};
         r1 = r2;
         ASSERT_TRUE(r1.has_value());
         ASSERT_TRUE(r2.has_value());
@@ -347,8 +347,8 @@ TEST(result, copy_assignment) {
     }
 
     {
-        abc::result<int, int> r1{abc::err<int>{1}};
-        abc::result<int, int> r2{abc::err<int>{2}};
+        abc::expected<int, int> r1{abc::unexpected<int>{1}};
+        abc::expected<int, int> r2{abc::unexpected<int>{2}};
         r1 = r2;
         ASSERT_FALSE(r1.has_value());
         ASSERT_FALSE(r2.has_value());
@@ -357,10 +357,10 @@ TEST(result, copy_assignment) {
     }
 }
 
-TEST(result, move_assignment) {
+TEST(expected, move_assignment) {
     {
-        abc::result<int, int> r1{1};
-        abc::result<int, int> r2{2};
+        abc::expected<int, int> r1{1};
+        abc::expected<int, int> r2{2};
         r2 = std::move(r1);
         ASSERT_TRUE(r1.has_value());
         ASSERT_TRUE(r2.has_value());
@@ -369,8 +369,8 @@ TEST(result, move_assignment) {
     }
 
     {
-        abc::result<int, int> r1{1};
-        abc::result<int, int> r2{2};
+        abc::expected<int, int> r1{1};
+        abc::expected<int, int> r2{2};
         r1 = std::move(r2);
         ASSERT_TRUE(r1.has_value());
         ASSERT_TRUE(r2.has_value());
@@ -379,8 +379,8 @@ TEST(result, move_assignment) {
     }
 
     {
-        abc::result<int, int> r1{1};
-        abc::result<int, int> r2{abc::err<int>{2}};
+        abc::expected<int, int> r1{1};
+        abc::expected<int, int> r2{abc::unexpected<int>{2}};
         r1 = std::move(r2);
         ASSERT_FALSE(r1.has_value());
         ASSERT_FALSE(r2.has_value());
@@ -389,8 +389,8 @@ TEST(result, move_assignment) {
     }
 
     {
-        abc::result<int, int> r1{abc::err<int>{1}};
-        abc::result<int, int> r2{2};
+        abc::expected<int, int> r1{abc::unexpected<int>{1}};
+        abc::expected<int, int> r2{2};
         r1 = std::move(r2);
         ASSERT_TRUE(r1.has_value());
         ASSERT_TRUE(r2.has_value());
@@ -399,8 +399,8 @@ TEST(result, move_assignment) {
     }
 
     {
-        abc::result<int, int> r1{abc::err<int>{1}};
-        abc::result<int, int> r2{abc::err<int>{2}};
+        abc::expected<int, int> r1{abc::unexpected<int>{1}};
+        abc::expected<int, int> r2{abc::unexpected<int>{2}};
         r1 = std::move(r2);
         ASSERT_FALSE(r1.has_value());
         ASSERT_FALSE(r2.has_value());
@@ -409,10 +409,10 @@ TEST(result, move_assignment) {
     }
 }
 
-TEST(result, swap) {
+TEST(expected, swap) {
     {
-        abc::result<int, int> r1{1};
-        abc::result<int, int> r2{2};
+        abc::expected<int, int> r1{1};
+        abc::expected<int, int> r2{2};
         r1.swap(r2);
         ASSERT_TRUE(r1.has_value());
         ASSERT_TRUE(r2.has_value());
@@ -427,8 +427,8 @@ TEST(result, swap) {
     }
 
     {
-        abc::result<int, int> r1{1};
-        abc::result<int, int> r2{abc::err<int>{2}};
+        abc::expected<int, int> r1{1};
+        abc::expected<int, int> r2{abc::unexpected<int>{2}};
         r1.swap(r2);
         ASSERT_FALSE(r1.has_value());
         ASSERT_TRUE(r2.has_value());
@@ -443,8 +443,8 @@ TEST(result, swap) {
     }
 
     {
-        abc::result<int, int> r1{abc::err<int>{1}};
-        abc::result<int, int> r2{2};
+        abc::expected<int, int> r1{abc::unexpected<int>{1}};
+        abc::expected<int, int> r2{2};
         r1.swap(r2);
         ASSERT_TRUE(r1.has_value());
         ASSERT_FALSE(r2.has_value());
@@ -459,8 +459,8 @@ TEST(result, swap) {
     }
 
     {
-        abc::result<int, int> r1{abc::err<int>{1}};
-        abc::result<int, int> r2{abc::err<int>{2}};
+        abc::expected<int, int> r1{abc::unexpected<int>{1}};
+        abc::expected<int, int> r2{abc::unexpected<int>{2}};
         r1.swap(r2);
         ASSERT_FALSE(r1.has_value());
         ASSERT_FALSE(r2.has_value());
@@ -475,10 +475,10 @@ TEST(result, swap) {
     }
 }
 
-TEST(result, equal_operator) {
+TEST(expected, equal_operator) {
     {
-        abc::result<int, int> r1{1};
-        abc::result<int, int> r2{2};
+        abc::expected<int, int> r1{1};
+        abc::expected<int, int> r2{2};
         ASSERT_FALSE(r1 == r2);
         ASSERT_TRUE(r1 != r2);
         ASSERT_FALSE(r1 == 2);
@@ -488,8 +488,8 @@ TEST(result, equal_operator) {
     }
 
     {
-        abc::result<int, int> r1{1};
-        abc::result<int, int> r2{abc::err<int>{2}};
+        abc::expected<int, int> r1{1};
+        abc::expected<int, int> r2{abc::unexpected<int>{2}};
         ASSERT_FALSE(r1 == r2);
         ASSERT_TRUE(r1 != r2);
         ASSERT_FALSE(r1 == 2);
@@ -499,8 +499,8 @@ TEST(result, equal_operator) {
     }
 
     {
-        abc::result<int, int> r1{abc::err<int>{1}};
-        abc::result<int, int> r2{2};
+        abc::expected<int, int> r1{abc::unexpected<int>{1}};
+        abc::expected<int, int> r2{2};
         ASSERT_FALSE(r1 == r2);
         ASSERT_TRUE(r1 != r2);
         ASSERT_FALSE(r1 == 2);
@@ -510,8 +510,8 @@ TEST(result, equal_operator) {
     }
 
     {
-        abc::result<int, int> r1{abc::err<int>{1}};
-        abc::result<int, int> r2{abc::err<int>{2}};
+        abc::expected<int, int> r1{abc::unexpected<int>{1}};
+        abc::expected<int, int> r2{abc::unexpected<int>{2}};
         ASSERT_FALSE(r1 == r2);
         ASSERT_TRUE(r1 != r2);
         ASSERT_FALSE(r1 == 2);
@@ -521,33 +521,33 @@ TEST(result, equal_operator) {
     }
 }
 
-TEST(result, value) {
+TEST(expected, value) {
     {
-        abc::result<int, int> r1{1};
+        abc::expected<int, int> r1{1};
         ASSERT_EQ(1, r1.value());
         ASSERT_EQ(1, r1.value_or(2));
     }
 
     {
-        abc::result<int, int> r1{abc::err<int>{1}};
+        abc::expected<int, int> r1{abc::unexpected<int>{1}};
         ASSERT_THROW({ auto v = r1.value(); (void)v; }, abc::abc_error);
         ASSERT_EQ(2, r1.value_or(2));
     }
 }
 
-TEST(result, value_or) {
+TEST(expected, value_or) {
     {
-        abc::result<int, int> r1{1};
+        abc::expected<int, int> r1{1};
         ASSERT_EQ(1, r1.value_or(2));
     }
 
     {
-        abc::result<int, int> r1{abc::err<int>{1}};
+        abc::expected<int, int> r1{abc::unexpected<int>{1}};
         ASSERT_EQ(2, r1.value_or(2));
     }
 
-    ASSERT_EQ(1, (abc::result<int, int>{1}.value_or(2)));
-    ASSERT_EQ(2, (abc::result<int, int>{abc::err<int>{1}}.value_or(2)));
+    ASSERT_EQ(1, (abc::expected<int, int>{1}.value_or(2)));
+    ASSERT_EQ(2, (abc::expected<int, int>{abc::unexpected<int>{1}}.value_or(2)));
 
     struct base {
         int i;
@@ -576,73 +576,73 @@ TEST(result, value_or) {
     };
 
     {
-        abc::result<base, int> r1{derived{1,2}};
+        abc::expected<base, int> r1{derived{1,2}};
         auto r2 = r1.value_or(derived{3,4});
         ASSERT_EQ(1, r2.i);
     }
 
     {
-        abc::result<int,  base> r1{abc::err<derived>{derived{1,2}}};
+        abc::expected<int,  base> r1{abc::unexpected<derived>{derived{1,2}}};
         auto r2 = r1.value_or(3);
         ASSERT_EQ(3, r2);
     }
 }
 
-TEST(result, map_copyable_value) {
+TEST(expected, map_copyable_value) {
     {
-        abc::result<int, int> r1{1};
+        abc::expected<int, int> r1{1};
         auto r2 = r1.map([](int v) { return v + 1; });
         ASSERT_TRUE(r2.has_value());
         ASSERT_EQ(2, r2.value());
     }
 
     {
-        abc::result<int, int> const r1{1};
+        abc::expected<int, int> const r1{1};
         auto r2 = r1.map([](int v) { return v + 1; });
         ASSERT_TRUE(r2.has_value());
         ASSERT_EQ(2, r2.value());
     }
 
     {
-        auto r2 = abc::result<int, int>{1}.map([](int v) { return v + 1; });
+        auto r2 = abc::expected<int, int>{1}.map([](int v) { return v + 1; });
         ASSERT_TRUE(r2.has_value());
         ASSERT_EQ(2, r2.value());
     }
 
     {
-        auto r2 = static_cast<abc::result<int, int> const &&>(abc::result<int, int>{1}).map([](int v) { return v + 1; });
+        auto r2 = static_cast<abc::expected<int, int> const &&>(abc::expected<int, int>{1}).map([](int v) { return v + 1; });
         ASSERT_TRUE(r2.has_value());
         ASSERT_EQ(2, r2.value());
     }
 
     {
-        abc::result<int, int> r1{abc::err<int>{1}};
-        auto r2 = r1.map([](int v) { return v + 1; });
-        ASSERT_FALSE(r2.has_value());
-        ASSERT_EQ(1, r2.error());
-    }
-
-    {
-        abc::result<int, int> const r1{abc::err<int>{1}};
+        abc::expected<int, int> r1{abc::unexpected<int>{1}};
         auto r2 = r1.map([](int v) { return v + 1; });
         ASSERT_FALSE(r2.has_value());
         ASSERT_EQ(1, r2.error());
     }
 
     {
-        auto r2 = abc::result<int, int>{abc::err<int>{1}}.map([](int v) { return v + 1; });
+        abc::expected<int, int> const r1{abc::unexpected<int>{1}};
+        auto r2 = r1.map([](int v) { return v + 1; });
         ASSERT_FALSE(r2.has_value());
         ASSERT_EQ(1, r2.error());
     }
 
     {
-        auto r2 = static_cast<abc::result<int, int> const &&>(abc::result<int, int>{abc::err<int>{1}}).map([](int v) { return v + 1; });
+        auto r2 = abc::expected<int, int>{abc::unexpected<int>{1}}.map([](int v) { return v + 1; });
+        ASSERT_FALSE(r2.has_value());
+        ASSERT_EQ(1, r2.error());
+    }
+
+    {
+        auto r2 = static_cast<abc::expected<int, int> const &&>(abc::expected<int, int>{abc::unexpected<int>{1}}).map([](int v) { return v + 1; });
         ASSERT_FALSE(r2.has_value());
         ASSERT_EQ(1, r2.error());
     }
 }
 
-TEST(result, map_non_copyable_value) {
+TEST(expected, map_non_copyable_value) {
     struct noncopyable {
     private:
         std::string str_;
@@ -667,107 +667,107 @@ TEST(result, map_non_copyable_value) {
     static_assert(!std::is_copy_assignable_v<noncopyable>);
 
     {
-        abc::result<noncopyable, int> r1{"abc"};
+        abc::expected<noncopyable, int> r1{"abc"};
         auto r2 = r1.map([](auto & v) { return v.value(); });
         ASSERT_TRUE(r2.has_value());
         ASSERT_EQ(r1.value().value(), r2.value());
     }
 
     {
-        abc::result<noncopyable, int> const r1{"a"};
+        abc::expected<noncopyable, int> const r1{"a"};
         auto r2 = r1.map([](auto const & v) { return v.value(); });
         ASSERT_TRUE(r2.has_value());
         ASSERT_EQ(r1.value().value(), r2.value());
     }
 
     {
-        auto r2 = abc::result<noncopyable, int>{"abc"}.map([](auto && v) { return std::move(v).value(); });
+        auto r2 = abc::expected<noncopyable, int>{"abc"}.map([](auto && v) { return std::move(v).value(); });
         ASSERT_TRUE(r2.has_value());
         ASSERT_EQ("abc", r2.value());
     }
 
     {
-        auto r2 = static_cast<abc::result<noncopyable, int> const &&>(abc::result<noncopyable, int>{"abc"}).map([](auto const && v) { return std::move(v).value(); });
+        auto r2 = static_cast<abc::expected<noncopyable, int> const &&>(abc::expected<noncopyable, int>{"abc"}).map([](auto const && v) { return std::move(v).value(); });
         ASSERT_TRUE(r2.has_value());
         ASSERT_EQ("abc", r2.value());
     }
 
     {
-        abc::result<noncopyable, int> r1{abc::err<int>{1}};
+        abc::expected<noncopyable, int> r1{abc::unexpected<int>{1}};
         auto r2 = r1.map([](auto & v) { return v.value().length() + 1; });
         ASSERT_FALSE(r2.has_value());
         ASSERT_EQ(1, r2.error());
     }
 
     {
-        abc::result<noncopyable, int> const r1{abc::err<int>{1}};
+        abc::expected<noncopyable, int> const r1{abc::unexpected<int>{1}};
         auto r2 = r1.map([](auto const & v) { return v.value().length() + 1; });
         ASSERT_FALSE(r2.has_value());
         ASSERT_EQ(1, r2.error());
     }
 
     {
-        auto r2 = abc::result<noncopyable, int>{abc::err<int>{1}}.map([](auto && v) { return std::move(v).value().length() + 1; });
+        auto r2 = abc::expected<noncopyable, int>{abc::unexpected<int>{1}}.map([](auto && v) { return std::move(v).value().length() + 1; });
         ASSERT_FALSE(r2.has_value());
         ASSERT_EQ(1, r2.error());
     }
 
     {
-        auto r2 = static_cast<abc::result<noncopyable, int> const &&>(abc::result<noncopyable, int>{abc::err<int>{1}}).map([](auto const && v) { return std::move(v).value().length() + 1; });
+        auto r2 = static_cast<abc::expected<noncopyable, int> const &&>(abc::expected<noncopyable, int>{abc::unexpected<int>{1}}).map([](auto const && v) { return std::move(v).value().length() + 1; });
         ASSERT_FALSE(r2.has_value());
         ASSERT_EQ(1, r2.error());
     }
 }
 
-TEST(result, is_ok_and) {
+TEST(expected, is_ok_and) {
     {
-        auto r1 = abc::result<int, int>{1};
+        auto r1 = abc::expected<int, int>{1};
         ASSERT_TRUE(r1.is_ok_and([](int v) { return v == 1; }));
         ASSERT_FALSE(r1.is_ok_and([](int v) { return v == 2; }));
     }
 
     {
-        auto r1 = abc::result<int, int>{abc::err<int>{1}};
+        auto r1 = abc::expected<int, int>{abc::unexpected<int>{1}};
         ASSERT_FALSE(r1.is_ok_and([](int v) { return v == 1; }));
         ASSERT_FALSE(r1.is_ok_and([](int v) { return v == 2; }));
     }
 }
 
-TEST(result, is_err_and) {
+TEST(expected, is_err_and) {
     {
-        auto r1 = abc::result<int, int>{1};
+        auto r1 = abc::expected<int, int>{1};
         ASSERT_FALSE(r1.is_err_and([](int v) { return v == 1; }));
         ASSERT_FALSE(r1.is_err_and([](int v) { return v == 2; }));
     }
 
     {
-        auto r1 = abc::result<int, int>{abc::err<int>{1}};
+        auto r1 = abc::expected<int, int>{abc::unexpected<int>{1}};
         ASSERT_TRUE(r1.is_err_and([](int v) { return v == 1; }));
         ASSERT_FALSE(r1.is_err_and([](int v) { return v == 2; }));
     }
 }
 
-TEST(result, ok) {
+TEST(expected, ok) {
     {
-        auto r1 = abc::result<int, int>{1};
+        auto r1 = abc::expected<int, int>{1};
         ASSERT_TRUE(r1.ok().has_value());
         ASSERT_EQ(1, r1.ok().value());
     }
 
     {
-        auto r1 = abc::result<int, int>{abc::err<int>{1}};
+        auto r1 = abc::expected<int, int>{abc::unexpected<int>{1}};
         ASSERT_FALSE(r1.ok().has_value());
     }
 }
 
-TEST(result, err) {
+TEST(expected, err) {
     {
-        auto r1 = abc::result<int, int>{1};
+        auto r1 = abc::expected<int, int>{1};
         ASSERT_EQ(std::nullopt, r1.err());
     }
 
     {
-        auto r1 = abc::result<int, int>{abc::err<int>{1}};
+        auto r1 = abc::expected<int, int>{abc::unexpected<int>{1}};
         ASSERT_TRUE(r1.err().has_value());
         ASSERT_EQ(1, r1.err().value());
     }
