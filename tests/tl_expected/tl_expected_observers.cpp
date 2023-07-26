@@ -7,7 +7,7 @@
 struct move_detector {
     move_detector() = default;
 
-    move_detector(move_detector && rhs) { rhs.been_moved = true; }
+    move_detector(move_detector && rhs) noexcept { rhs.been_moved = true; }
 
     bool been_moved = false;
 };

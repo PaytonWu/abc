@@ -56,8 +56,20 @@ template <typename Fn, typename ... Args>
 using transformed_type = std::remove_cv_t<std::invoke_result_t<Fn &&, Args &&...>>;
 
 template <typename Fn, typename ... Args>
+using transformed_decay_type = std::decay_t<std::invoke_result_t<Fn &&, Args && ...>>;
+
+template <typename Fn, typename ... Args>
 using expected_t = std::remove_cvref_t<std::invoke_result_t<Fn &&, Args &&...>>;
 
+struct in_place_val_fn_t {
+    constexpr in_place_val_fn_t() = default;
+};
+constexpr inline in_place_val_fn_t in_place_val_fn{};
+
+struct in_place_err_fn_t {
+    constexpr in_place_err_fn_t() = default;
+};
+constexpr inline in_place_err_fn_t in_place_err_fn{};
 
 template <typename T>
 struct exception_safe_guard {
@@ -443,10 +455,10 @@ template <typename T, typename E>
 class expected {
 private:
     union {
-        T val_{};
+        T val_;
         E err_;
     };
-    bool has_value_{true};
+    bool has_value_;
 
     static_assert(!std::is_reference_v<T>);
     static_assert(!std::is_function_v<T>);
@@ -545,10 +557,12 @@ public:
     // Default constructors
 
     constexpr
-    expected() noexcept(std::is_nothrow_default_constructible_v<T>) requires std::is_default_constructible_v<T> && std::is_trivially_default_constructible_v<T> && std::is_trivially_default_constructible_v<E> = default;
+    expected() noexcept(std::is_nothrow_default_constructible_v<T>) requires std::is_default_constructible_v<T> && std::is_trivially_default_constructible_v<T> && std::is_trivially_default_constructible_v<E> : val_{}, has_value_{ true } {
+    }
 
     constexpr
-    expected() noexcept(std::is_nothrow_default_constructible_v<T>) requires std::is_default_constructible_v<T> && (!std::is_trivially_default_constructible_v<T> || !std::is_trivially_default_constructible_v<E>) : val_{}, has_value_{ true } {}
+    expected() noexcept(std::is_nothrow_default_constructible_v<T>) requires std::is_default_constructible_v<T> && (!std::is_trivially_default_constructible_v<T> || !std::is_trivially_default_constructible_v<E>) : val_{}, has_value_{ true } {
+    }
 
     // Copy constructors
 
@@ -668,6 +682,22 @@ public:
     constexpr explicit
     expected(unexpect_t, std::initializer_list<U> il, Args &&... args ) noexcept(std::is_nothrow_constructible_v<E, std::initializer_list<U> &, Args...>) : err_{ il, std::forward<Args>(args)... }, has_value_{ false } {
     }
+
+private:
+    template<typename, typename> friend class expected;
+
+    template <typename Fn>
+    explicit
+    expected(details::in_place_val_fn_t, Fn && f)
+        : val_{ std::forward<Fn>(f)() }, has_value_{ true } {
+    }
+
+    template <typename Fn>
+    explicit
+    expected(details::in_place_err_fn_t, Fn && f)
+        : err_{ std::forward<Fn>(f)() }, has_value_{ false } {
+    }
+public:
 
     // Destructor
     // Prospective destructor: https://en.cppreference.com/w/cpp/language/destructor#Prospective_destructor
@@ -960,13 +990,13 @@ public:
     }
 
     [[nodiscard]] constexpr const T *
-    operator->() const noexcept {
+    operator->() const & noexcept {
         assert(has_value());
         return std::addressof(val_);
     }
 
     [[nodiscard]] constexpr T *
-    operator->() noexcept {
+    operator->() && noexcept {
         assert(has_value());
         return std::addressof(val_);
     }
@@ -1045,7 +1075,7 @@ public:
 
     template <typename Fn> requires std::is_copy_constructible_v<E>
     [[nodiscard]] constexpr auto
-    and_then(Fn && f) const && -> abc::details::expected_t<Fn, T const &&> {
+    and_then(Fn && f) const && -> details::expected_t<Fn, T const &&> {
         using U = abc::details::expected_t<Fn, T const &&>;
 
         static_assert(is_expected_with_same_error_type_v<U>);
@@ -1055,48 +1085,50 @@ public:
             return std::invoke(std::forward<Fn>(f), std::move(value()));
         }
 
-        return U{ unexpect, move(error()) };
+        return U{ unexpect, std::move(error()) };
     }
 
 private:
     template <typename Self, typename Fn>
     constexpr static auto
-    transform_impl(Self && self, Fn && f) -> expected<details::transformed_type<Fn, decltype(std::forward<Self>(self).value())>, E> {
+    transform_impl(Self && self, Fn && f) -> expected<details::transformed_decay_type<Fn, decltype(std::forward<Self>(self).value())>, E> {
         static_assert(std::is_same_v<expected, std::remove_cvref_t<Self>>);
         static_assert(std::is_invocable_v<Fn, decltype(std::forward<Self>(self).value())>);
 
         using U = details::transformed_type<Fn, decltype(std::forward<Self>(self).value())>;
         static_assert(!details::is_expected_v<U>);
 
+        using result_type = expected<details::transformed_decay_type<Fn, decltype(std::forward<Self>(self).value())>, E>;
+
         if (self.has_value()) {
-            return expected<U, E>(std::invoke(std::forward<Fn>(f), std::forward<Self>(self).value()));
+            return result_type{ details::in_place_val_fn, [&]() { return std::invoke(std::forward<Fn>(f), std::forward<Self>(self).value()); } };
         }
 
-        return expected<U, E>{ unexpect, std::forward<Self>(self).error() };
+        return result_type{ unexpect, std::forward<Self>(self).error() };
     }
 
 public:
     template <typename Fn> requires std::is_copy_constructible_v<E>
     constexpr auto
-    transform(Fn && f) & -> expected<details::transformed_type<Fn, T &>, E> {
+    transform(Fn && f) & -> expected<details::transformed_decay_type<Fn, T &>, E> {
         return transform_impl(*this, std::forward<Fn>(f));
     }
 
     template <typename Fn> requires std::is_copy_constructible_v<E>
     constexpr auto
-    transform(Fn && f) const & -> expected<details::transformed_type<Fn, T const &>, E> {
+    transform(Fn && f) const & -> expected<details::transformed_decay_type<Fn, T const &>, E> {
         return transform_impl(*this, std::forward<Fn>(f));
     }
 
     template <typename Fn> requires std::is_move_constructible_v<E>
     constexpr auto
-    transform(Fn && f) && -> expected<details::transformed_type<Fn, T &&>, E> {
+    transform(Fn && f) && -> expected<details::transformed_decay_type<Fn, T &&>, E> {
         return transform_impl(std::move(*this), std::forward<Fn>(f));
     }
 
     template <typename Fn> requires std::is_move_constructible_v<E>
     constexpr auto
-    transform(Fn && f) const && -> expected<details::transformed_type<Fn, T const &&>, E> {
+    transform(Fn && f) const && -> expected<details::transformed_decay_type<Fn, T const &&>, E> {
         return transform_impl(std::move(*this), std::forward<Fn>(f));
     }
 
@@ -1145,7 +1177,7 @@ public:
 private:
     template <typename Self, typename Fn>
     constexpr static auto
-    transform_error_impl(Self && self, Fn && f) -> expected<T, details::transformed_type<Fn, decltype(std::forward<Self>(self).error())>> {
+    transform_error_impl(Self && self, Fn && f) -> expected<T, details::transformed_decay_type<Fn, decltype(std::forward<Self>(self).error())>> {
         static_assert(std::is_same_v<expected, std::remove_cvref_t<Self>>);
         static_assert(std::is_invocable_v<Fn, decltype(std::forward<Self>(self).error())>);
 
@@ -1153,36 +1185,38 @@ private:
         static_assert(!details::is_expected_v<G>);
         static_assert(details::can_be_unexpected<G>);
 
+        using result_type = expected<T, details::transformed_decay_type<Fn, decltype(std::forward<Self>(self).error())>>;
+
         if (self.has_value()) {
-            return expected<T, G>{ std::in_place, std::forward<Self>(self).value() };
+            return result_type{ std::in_place, std::forward<Self>(self).value() };
         }
 
-        return expected<T, G>{ unexpect, std::invoke(std::forward<Fn>(f), std::forward<Self>(self).error()) };
+        return result_type{ details::in_place_err_fn, [&]() { return std::invoke(std::forward<Fn>(f), std::forward<Self>(self).error()); } };
     }
 
 public:
 
     template <typename Fn> requires std::is_copy_constructible_v<T>
     constexpr auto
-    transform_error(Fn && f) & -> expected<T, details::transformed_type<Fn, E &>> {
+    transform_error(Fn && f) & -> expected<T, details::transformed_decay_type<Fn, E &>> {
         return transform_error_impl(*this, std::forward<Fn>(f));
     }
 
     template <typename Fn> requires std::is_copy_constructible_v<T>
     constexpr auto
-    transform_error(Fn && f) const & -> expected<T, details::transformed_type<Fn, E const &>> {
+    transform_error(Fn && f) const & -> expected<T, details::transformed_decay_type<Fn, E const &>> {
         return transform_error_impl(*this, std::forward<Fn>(f));
     }
 
     template <typename Fn> requires std::is_move_constructible_v<T>
     constexpr auto
-    transform_error(Fn && f) && -> expected<T, details::transformed_type<Fn, E &&>> {
+    transform_error(Fn && f) && -> expected<T, details::transformed_decay_type<Fn, E &&>> {
         return transform_error_impl(std::move(*this), std::forward<Fn>(f));
     }
 
     template <typename Fn> requires std::is_move_constructible_v<T>
     constexpr auto
-    transform_error(Fn && f) const && -> expected<T, details::transformed_type<Fn, E const &&>> {
+    transform_error(Fn && f) const && -> expected<T, details::transformed_decay_type<Fn, E const &&>> {
         return transform_error_impl(std::move(*this), std::forward<Fn>(f));
     }
 
@@ -1316,25 +1350,25 @@ public:
 
     template <typename Fn> requires std::is_copy_constructible_v<E>
     constexpr auto
-    map(Fn && f) & -> expected<details::transformed_type<Fn, T &>, E> {
+    map(Fn && f) & -> expected<details::transformed_decay_type<Fn, T &>, E> {
         return transform_impl(*this, std::forward<Fn>(f));
     }
 
     template <typename Fn> requires std::is_copy_constructible_v<E>
     constexpr auto
-    map(Fn && f) const & -> expected<details::transformed_type<Fn, T const &>, E> {
+    map(Fn && f) const & -> expected<details::transformed_decay_type<Fn, T const &>, E> {
         return transform_impl(*this, std::forward<Fn>(f));
     }
 
     template <typename Fn> requires std::is_move_constructible_v<E>
     constexpr auto
-    map(Fn && f) && -> expected<details::transformed_type<Fn, T &&>, E> {
+    map(Fn && f) && -> expected<details::transformed_decay_type<Fn, T &&>, E> {
         return transform_impl(std::move(*this), std::forward<Fn>(f));
     }
 
     template <typename Fn> requires std::is_move_constructible_v<E>
     constexpr auto
-    map(Fn && f) const && -> expected<details::transformed_type<Fn, T const &&>, E> {
+    map(Fn && f) const && -> expected<details::transformed_decay_type<Fn, T const &&>, E> {
         return transform_impl(std::move(*this), std::forward<Fn>(f));
     }
 
@@ -1427,25 +1461,25 @@ public:
 public:
     template <typename Fn> requires std::is_copy_constructible_v<T>
     constexpr auto
-    map_err(Fn && f) & -> expected<T, details::transformed_type<Fn, E &>> {
+    map_err(Fn && f) & -> expected<T, details::transformed_decay_type<Fn, E &>> {
         return transform_error_impl(*this, std::forward<Fn>(f));
     }
 
     template <typename Fn> requires std::is_copy_constructible_v<T>
     constexpr auto
-    map_err(Fn && f) const & -> expected<T, details::transformed_type<Fn, E const &>> {
+    map_err(Fn && f) const & -> expected<T, details::transformed_decay_type<Fn, E const &>> {
         return transform_error_impl(*this, std::forward<Fn>(f));
     }
 
     template <typename Fn> requires std::is_move_constructible_v<T>
     constexpr auto
-    map_err(Fn && f) && -> expected<T, details::transformed_type<Fn, E &&>> {
+    map_err(Fn && f) && -> expected<T, details::transformed_decay_type<Fn, E &&>> {
         return transform_error_impl(std::move(*this), std::forward<Fn>(f));
     }
 
     template <typename Fn> requires std::is_move_constructible_v<T>
     constexpr auto
-    map_err(Fn && f) const && -> expected<T, details::transformed_type<Fn, E const &&>> {
+    map_err(Fn && f) const && -> expected<T, details::transformed_decay_type<Fn, E const &&>> {
         return transform_error_impl(std::move(*this), std::forward<Fn>(f));
     }
 
@@ -1742,6 +1776,23 @@ public:
         : err_{ il, std::forward<Args>(args)... }, has_value_{ false } {
     }
 
+private:
+    template<typename, typename> friend class expected;
+
+    template <typename Fn>
+    explicit
+    expected(details::in_place_val_fn_t, Fn && f)
+        : void_{}, has_value_{ true } {
+        std::forward<Fn>(f)();
+    }
+
+    template <typename Fn>
+    explicit
+    expected(details::in_place_err_fn_t, Fn && f)
+        : err_{ std::forward<Fn>(f)() }, has_value_{ false } {
+    }
+public:
+
     // Destructor
 
     constexpr ~expected() = default;
@@ -1835,6 +1886,11 @@ public:
     }
 
     // observers
+
+    [[nodiscard]] constexpr explicit
+    operator bool() const noexcept {
+        return has_value_;
+    }
 
     constexpr auto
     has_value() const noexcept -> bool {
@@ -1979,84 +2035,88 @@ public:
 private:
     template <typename Self, typename Fn>
     constexpr static auto
-    transform_impl(Self && self, Fn && f) -> expected<details::transformed_type<Fn>, E> {
+    transform_impl(Self && self, Fn && f) -> expected<details::transformed_decay_type<Fn>, E> {
         static_assert(std::is_same_v<expected, std::remove_cvref_t<Self>>);
         static_assert(std::is_invocable_v<Fn>);
 
         using U = details::transformed_type<Fn>;
         static_assert(!details::is_expected_v<U>);
 
+        using result_type = expected<details::transformed_decay_type<Fn>, E>;
+
         if (self.has_value()) {
-            return expected<U, E>{std::invoke(std::forward<Fn>(f))};
+            return result_type{ details::in_place_val_fn, [&]() { return std::invoke(std::forward<Fn>(f)); } };
         }
 
-        return expected<U, E>{ unexpect, std::forward<Self>(self).error() };
+        return result_type{ unexpect, std::forward<Self>(self).error() };
     }
 
 public:
     template<typename Fn> requires std::is_copy_constructible_v<E>
     constexpr auto
-    transform(Fn && f) & -> expected<details::transformed_type<Fn>, E> {
+    transform(Fn && f) & -> expected<details::transformed_decay_type<Fn>, E> {
         return transform_impl(*this, std::forward<Fn>(f));
     }
 
     template<typename Fn> requires std::is_copy_constructible_v<E>
     constexpr auto
-    transform(Fn && f) const & -> expected<details::transformed_type<Fn>, E> {
+    transform(Fn && f) const & -> expected<details::transformed_decay_type<Fn>, E> {
         return transform_impl(*this, std::forward<Fn>(f));
     }
 
     template<typename Fn> requires std::is_move_constructible_v<E>
     constexpr auto
-    transform(Fn && f) && -> expected<details::transformed_type<Fn>, E> {
+    transform(Fn && f) && -> expected<details::transformed_decay_type<Fn>, E> {
         return transform_impl(std::move(*this), std::forward<Fn>(f));
     }
 
     template<typename Fn> requires std::is_move_constructible_v<E>
     constexpr auto
-    transform(Fn && f) const && -> expected<details::transformed_type<Fn>, E> {
+    transform(Fn && f) const && -> expected<details::transformed_decay_type<Fn>, E> {
         return transform_impl(std::move(*this), std::forward<Fn>(f));
     }
 
 private:
     template <typename Self, typename Fn>
     constexpr static auto
-    transform_error_impl(Self && self, Fn && f) -> expected<T, details::transformed_type<Fn, decltype(std::forward<Self>(self).error())>> {
+    transform_error_impl(Self && self, Fn && f) -> expected<T, details::transformed_decay_type<Fn, decltype(std::forward<Self>(self).error())>> {
         static_assert(std::is_same_v<expected, std::remove_cvref_t<Self>>);
         static_assert(std::is_invocable_v<Fn, decltype(std::forward<Self>(self).error())>);
 
         using U = details::transformed_type<Fn, decltype(std::forward<Self>(self).error())>;
         static_assert(!details::is_expected_v<U>);
 
+        using result_type = expected<T, details::transformed_decay_type<Fn, decltype(std::forward<Self>(self).error())>>;
+
         if (!self.has_value()) {
-            return expected<T, U>{ unexpect, std::invoke(std::forward<Fn>(f), std::forward<Self>(self).error()) };
+            return result_type{ unexpect, std::invoke(std::forward<Fn>(f), std::forward<Self>(self).error()) };
         }
 
-        return expected<T, U>{ std::in_place };
+        return result_type{ std::in_place };
     }
 
 public:
     template<typename Fn>
     constexpr auto
-    transform_error(Fn && f) & -> expected<T, details::transformed_type<Fn, E &>> {
+    transform_error(Fn && f) & -> expected<T, details::transformed_decay_type<Fn, E &>> {
         return transform_error_impl(*this, std::forward<Fn>(f));
     }
 
     template<typename Fn>
     constexpr auto
-    transform_error(Fn && f) const & -> expected<T, details::transformed_type<Fn, E const &>> {
+    transform_error(Fn && f) const & -> expected<T, details::transformed_decay_type<Fn, E const &>> {
         return transform_error_impl(*this, std::forward<Fn>(f));
     }
 
     template<typename Fn>
     constexpr auto
-    transform_error(Fn && f) && -> expected<T, details::transformed_type<Fn, E &&>> {
+    transform_error(Fn && f) && -> expected<T, details::transformed_decay_type<Fn, E &&>> {
         return transform_error_impl(std::move(*this), std::forward<Fn>(f));
     }
 
     template<typename Fn>
     constexpr auto
-    transform_error(Fn && f) const && -> expected<T, details::transformed_type<Fn, E const &&>> {
+    transform_error(Fn && f) const && -> expected<T, details::transformed_decay_type<Fn, E const &&>> {
         return transform_error_impl(std::move(*this), std::forward<Fn>(f));
     }
 
@@ -2168,25 +2228,25 @@ public:
 
     template <typename Fn> requires std::is_copy_constructible_v<E>
     constexpr auto
-    map(Fn && f) & -> expected<details::transformed_type<Fn>, E> {
+    map(Fn && f) & -> expected<details::transformed_decay_type<Fn>, E> {
         return transform_impl(*this, std::forward<Fn>(f));
     }
 
     template <typename Fn> requires std::is_copy_constructible_v<E>
     constexpr auto
-    map(Fn && f) const & -> expected<details::transformed_type<Fn>, E> {
+    map(Fn && f) const & -> expected<details::transformed_decay_type<Fn>, E> {
         return transform_impl(*this, std::forward<Fn>(f));
     }
 
     template <typename Fn> requires std::is_move_constructible_v<E>
     constexpr auto
-    map(Fn && f) && -> expected<details::transformed_type<Fn>, E> {
+    map(Fn && f) && -> expected<details::transformed_decay_type<Fn>, E> {
         return transform_impl(std::move(*this), std::forward<Fn>(f));
     }
 
     template <typename Fn> requires std::is_move_constructible_v<E>
     constexpr auto
-    map(Fn && f) const && -> expected<details::transformed_type<Fn>, E> {
+    map(Fn && f) const && -> expected<details::transformed_decay_type<Fn>, E> {
         return transform_impl(std::move(*this), std::forward<Fn>(f));
     }
 
@@ -2282,25 +2342,25 @@ public:
 public:
     template <typename Fn> requires std::is_copy_constructible_v<T>
     constexpr auto
-    map_err(Fn && f) & -> expected<T, details::transformed_type<Fn, E &>> {
+    map_err(Fn && f) & -> expected<T, details::transformed_decay_type<Fn, E &>> {
         return transform_error_impl(*this, std::forward<Fn>(f));
     }
 
     template <typename Fn> requires std::is_copy_constructible_v<T>
     constexpr auto
-    map_err(Fn && f) const & -> expected<T, details::transformed_type<Fn, E const &>> {
+    map_err(Fn && f) const & -> expected<T, details::transformed_decay_type<Fn, E const &>> {
         return transform_error_impl(*this, std::forward<Fn>(f));
     }
 
     template <typename Fn> requires std::is_move_constructible_v<T>
     constexpr auto
-    map_err(Fn && f) && -> expected<T, details::transformed_type<Fn, E &&>> {
+    map_err(Fn && f) && -> expected<T, details::transformed_decay_type<Fn, E &&>> {
         return transform_error_impl(std::move(*this), std::forward<Fn>(f));
     }
 
     template <typename Fn> requires std::is_move_constructible_v<T>
     constexpr auto
-    map_err(Fn && f) const && -> expected<T, details::transformed_type<Fn, E const &&>> {
+    map_err(Fn && f) const && -> expected<T, details::transformed_decay_type<Fn, E const &&>> {
         return transform_error_impl(std::move(*this), std::forward<Fn>(f));
     }
 
