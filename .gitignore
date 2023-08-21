@@ -43,6 +43,7 @@
 # Build folders
 build*
 out
+cmake-build*
 
 # CMakeUserPresets.json
 CMakeUserPresets.json

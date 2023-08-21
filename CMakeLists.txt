@@ -116,9 +116,6 @@ find_package(fmt CONFIG REQUIRED)
 find_package(xxHash CONFIG REQUIRED)
 
 include_directories(include)
-aux_source_directory(src SRCS)
-add_library(${ABC_LIBRARY} ${SRCS})
-target_link_libraries(${ABC_LIBRARY} PRIVATE fmt::fmt-header-only)
 
 if (BUILD_SHARED_LIBS)
     target_compile_definitions(${ABC_LIBRARY} PRIVATE ABC_DLL ABC_EXPORT)
