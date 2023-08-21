@@ -571,7 +571,7 @@ public:
 
     constexpr
     expected(expected const & other) noexcept(std::conjunction_v<std::is_nothrow_copy_constructible<T>, std::is_nothrow_copy_constructible<E>>)
-                                 requires std::is_copy_constructible_v<T> && std::is_copy_constructible_v<E> && (!std::is_trivially_copy_constructible_v<T> || !std::is_trivially_copy_constructible_v<E>)
+                                     requires std::is_copy_constructible_v<T> && std::is_copy_constructible_v<E> && (!std::is_trivially_copy_constructible_v<T> || !std::is_trivially_copy_constructible_v<E>)
         : has_value_{ other.has_value_ } {
         if (has_value_) {
             if constexpr (!std::is_trivially_copy_constructible_v<T>) {

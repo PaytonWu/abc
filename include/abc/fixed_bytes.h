@@ -51,8 +51,7 @@ public:
         data_.fill(0);
     }
 
-    template <std::enable_if_t<ByteNumbering == byte_numbering::lsb0 || ByteNumbering == byte_numbering::msb0> * = nullptr>
-    constexpr fixed_bytes(std::unsigned_integral auto const value) : fixed_bytes{} {
+    constexpr fixed_bytes(std::unsigned_integral auto const value) requires ((ByteNumbering == byte_numbering::lsb0) || (ByteNumbering == byte_numbering::msb0)) : fixed_bytes{} {
         if constexpr (ByteNumbering == byte_numbering::lsb0) {
             to_little_endian(value, data_);
         }
@@ -246,7 +245,7 @@ public:
 
 private:
     template <std::unsigned_integral T>
-    constexpr static void to_little_endian(T value, internal_type & data) {
+    constexpr static void to_little_endian(T value, internal_type & data) requires ((ByteNumbering == byte_numbering::lsb0) || (ByteNumbering == byte_numbering::msb0)) {
         for (auto i = 0u; i < std::min(sizeof(T), data.size()); value >>= 8, ++i) {
             T v = value & static_cast<T>(0xff);
             data[i] = static_cast<uint8_t>(v);
@@ -254,7 +253,7 @@ private:
     }
 
     template <std::unsigned_integral T>
-    constexpr static void to_big_endian(T value, internal_type & data) {
+    constexpr static void to_big_endian(T value, internal_type & data) requires ((ByteNumbering == byte_numbering::lsb0) || (ByteNumbering == byte_numbering::msb0)) {
         for (auto i = data.size(); i != 0; value >>= 8, --i) {
             T v = value & static_cast<T>(0xff);
             data[i - 1] = static_cast<uint8_t>(v);
@@ -281,6 +280,11 @@ using bytes4_le_t = bytes4_lsb0_t;
 using bytes8_le_t = bytes8_lsb0_t;
 using bytes16_le_t = bytes16_lsb0_t;
 using bytes32_le_t = bytes32_lsb0_t;
+
+using bytes4_t = fixed_bytes<4, byte_numbering::none>;
+using bytes8_t = fixed_bytes<8, byte_numbering::none>;
+using bytes16_t = fixed_bytes<16, byte_numbering::none>;
+using bytes32_t = fixed_bytes<32, byte_numbering::none>;
 
 }
 
