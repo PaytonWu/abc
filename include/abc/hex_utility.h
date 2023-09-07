@@ -6,16 +6,20 @@
 
 #pragma once
 
-#include "abc/bytes.h"
-#include "abc/error.h"
+#include <abc/bytes.h>
+#include <abc/error.h>
+#include <abc/expected.h>
+
+#include <range/v3/algorithm/for_each.hpp>
+#include <range/v3/view/chunk.hpp>
+#include <range/v3/view/enumerate.hpp>
+#include <range/v3/view/reverse.hpp>
 
 #include <algorithm>
 #include <bitset>
 #include <cassert>
 #include <concepts>
 #include <cstddef>
-#include <expected>
-#include <ranges>
 #include <string_view>
 #include <system_error>
 
@@ -75,7 +79,7 @@ template <std::unsigned_integral T>
     return hex_string_without_prefix(string_slice.substr(2));
 }
 
-[[nodiscard]] constexpr auto hex_char_to_binary(char const ch) noexcept -> std::expected<byte, errc> {
+[[nodiscard]] constexpr auto hex_char_to_binary(char const ch) noexcept -> abc::expected<byte, errc> {
     if ('0' <= ch && ch <= '9') {
         return static_cast<byte>(ch - '0');
     }
@@ -88,7 +92,7 @@ template <std::unsigned_integral T>
         return static_cast<byte>(ch - 'A' + 10);
     }
 
-    return std::unexpected{ errc::invalid_hex_char };
+    return abc::unexpected{ errc::invalid_hex_char };
 }
 
 template <std::endian Endian>
@@ -109,10 +113,10 @@ constexpr auto hex_string_to_binary(std::string_view string_slice) -> std::expec
             assert(r.has_value());
         }
 
-        auto const & chunks = string_slice | std::views::chunk(2);
-        std::ranges::for_each(chunks, [&binary_data](std::ranges::viewable_range auto && compound_byte) mutable {
+        auto const & chunks = string_slice | ranges::views::chunk(2);
+        ranges::for_each(chunks, [&binary_data](ranges::viewable_range auto && compound_byte) mutable {
             byte byte{};
-            for (auto const [i, nibble_byte] : compound_byte | std::views::reverse | std::views::enumerate) {
+            for (auto const [i, nibble_byte] : compound_byte | ranges::views::reverse | ranges::views::enumerate) {
                 byte |= hex_char_to_binary(nibble_byte).value() << (4 * i);
             }
             binary_data.push_back(byte);
@@ -127,10 +131,10 @@ constexpr auto hex_string_to_binary(std::string_view string_slice) -> std::expec
             assert(r.has_value());
         }
 
-        auto const & chunks = string_slice | std::views::reverse | std::views::chunk(2);
-        std::ranges::for_each(chunks, [&binary_data](std::ranges::viewable_range auto && compound_byte) mutable {
+        auto const & chunks = string_slice | ranges::views::reverse | ranges::views::chunk(2);
+        ranges::for_each(chunks, [&binary_data](ranges::viewable_range auto && compound_byte) mutable {
             byte byte{};
-            for (auto const [i, nibble_byte] : compound_byte | std::views::enumerate) {
+            for (auto const [i, nibble_byte] : compound_byte | ranges::views::enumerate) {
                 byte |= hex_char_to_binary(nibble_byte).value() << (4 * i);
             }
             binary_data.push_back(byte);

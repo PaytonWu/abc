@@ -1027,78 +1027,58 @@ public:
     }
 
     // Monadic operations
+private:
+    template <typename Self, typename Fn, typename Val = decltype(std::declval<Self>().value())>
+    static constexpr auto and_then_impl(Self && self, Fn && fn) -> details::expected_t<Fn, Val> {
+        static_assert(std::is_same_v<expected, std::remove_cvref_t<Self>>);
+        static_assert(std::is_invocable_v<Fn, Val>);
 
-    template <typename Fn> requires std::is_copy_constructible_v<E>
-    [[nodiscard]] constexpr auto
-    and_then(Fn && f) & -> abc::details::expected_t<Fn, T &> {
-        using U = abc::details::expected_t<Fn, T &>;
-
+        using U = details::expected_t<Fn, Val>;
         static_assert(is_expected_with_same_error_type_v<U>);
-        static_assert(std::is_invocable_v<Fn, T &>);
 
-        if (has_value()) {
-            return std::invoke(std::forward<Fn>(f), value());
+        if (self.has_value()) {
+            return std::invoke(std::forward<Fn>(fn), std::forward<Self>(self).value());
         }
 
-        return U{ unexpect, error() };
+        return U{ unexpect, std::forward<Self>(self).error() };
     }
 
-    template <typename Fn> requires std::is_copy_constructible_v<E>
+public:
+    template <typename Fn> requires std::is_constructible_v<E, E &>
     [[nodiscard]] constexpr auto
-    and_then(Fn && f) const & -> abc::details::expected_t<Fn, T const &> {
-        using U = abc::details::expected_t<Fn, T const &>;
-
-        static_assert(is_expected_with_same_error_type_v<U>);
-        static_assert(std::is_invocable_v<Fn, T const &>);
-
-        if (has_value()) {
-            return std::invoke(std::forward<Fn>(f), value());
-        }
-
-        return U{ unexpect, error() };
+    and_then(Fn && f) & -> details::expected_t<Fn, T &> {
+        return and_then_impl(*this, std::forward<Fn>(f));
     }
 
-    template <typename Fn> requires std::is_move_constructible_v<E>
+    template <typename Fn> requires std::is_constructible_v<E, E const &>
     [[nodiscard]] constexpr auto
-    and_then(Fn && f) && -> abc::details::expected_t<Fn, T &&> {
-        using U = abc::details::expected_t<Fn, T &&>;
-
-        static_assert(is_expected_with_same_error_type_v<U>);
-        static_assert(std::is_invocable_v<Fn, T &&>);
-
-        if (has_value()) {
-            return std::invoke(std::forward<Fn>(f), std::move(value()));
-        }
-
-        return U{ unexpect, std::move(error()) };
+    and_then(Fn && f) const & -> details::expected_t<Fn, T const &> {
+        return and_then_impl(*this, std::forward<Fn>(f));
     }
 
-    template <typename Fn> requires std::is_copy_constructible_v<E>
+    template <typename Fn> requires std::is_constructible_v<E, E &&>
+    [[nodiscard]] constexpr auto
+    and_then(Fn && f) && -> details::expected_t<Fn, T &&> {
+        return and_then_impl(std::move(*this), std::forward<Fn>(f));
+    }
+
+    template <typename Fn> requires std::is_constructible_v<E, E const &&>
     [[nodiscard]] constexpr auto
     and_then(Fn && f) const && -> details::expected_t<Fn, T const &&> {
-        using U = abc::details::expected_t<Fn, T const &&>;
-
-        static_assert(is_expected_with_same_error_type_v<U>);
-        static_assert(std::is_invocable_v<Fn, T const &&>);
-
-        if (has_value()) {
-            return std::invoke(std::forward<Fn>(f), std::move(value()));
-        }
-
-        return U{ unexpect, std::move(error()) };
+        return and_then_impl(std::move(*this), std::forward<Fn>(f));
     }
 
 private:
-    template <typename Self, typename Fn>
+    template <typename Self, typename Fn, typename Val = decltype(std::declval<Self>().value())>
     constexpr static auto
-    transform_impl(Self && self, Fn && f) -> expected<details::transformed_decay_type<Fn, decltype(std::forward<Self>(self).value())>, E> {
+    transform_impl(Self && self, Fn && f) {
         static_assert(std::is_same_v<expected, std::remove_cvref_t<Self>>);
-        static_assert(std::is_invocable_v<Fn, decltype(std::forward<Self>(self).value())>);
+        static_assert(std::is_invocable_v<Fn, Val>);
 
-        using U = details::transformed_type<Fn, decltype(std::forward<Self>(self).value())>;
+        using U = details::transformed_decay_type<Fn, Val>;
         static_assert(!details::is_expected_v<U>);
 
-        using result_type = expected<details::transformed_decay_type<Fn, decltype(std::forward<Self>(self).value())>, E>;
+        using result_type = expected<U, E>;
 
         if (self.has_value()) {
             return result_type{ details::in_place_val_fn, [&]() { return std::invoke(std::forward<Fn>(f), std::forward<Self>(self).value()); } };
@@ -1108,27 +1088,27 @@ private:
     }
 
 public:
-    template <typename Fn> requires std::is_copy_constructible_v<E>
+    template <typename Fn> requires std::is_constructible_v<E, E &>
     constexpr auto
-    transform(Fn && f) & -> expected<details::transformed_decay_type<Fn, T &>, E> {
+    transform(Fn && f) & {
         return transform_impl(*this, std::forward<Fn>(f));
     }
 
-    template <typename Fn> requires std::is_copy_constructible_v<E>
+    template <typename Fn> requires std::is_constructible_v<E, E const &>
     constexpr auto
-    transform(Fn && f) const & -> expected<details::transformed_decay_type<Fn, T const &>, E> {
+    transform(Fn && f) const & {
         return transform_impl(*this, std::forward<Fn>(f));
     }
 
-    template <typename Fn> requires std::is_move_constructible_v<E>
+    template <typename Fn> requires std::is_constructible_v<E, E &&>
     constexpr auto
-    transform(Fn && f) && -> expected<details::transformed_decay_type<Fn, T &&>, E> {
+    transform(Fn && f) && {
         return transform_impl(std::move(*this), std::forward<Fn>(f));
     }
 
-    template <typename Fn> requires std::is_move_constructible_v<E>
+    template <typename Fn> requires std::is_constructible_v<E, E const &&>
     constexpr auto
-    transform(Fn && f) const && -> expected<details::transformed_decay_type<Fn, T const &&>, E> {
+    transform(Fn && f) const && {
         return transform_impl(std::move(*this), std::forward<Fn>(f));
     }
 
@@ -1348,25 +1328,25 @@ public:
 
 #endif
 
-    template <typename Fn> requires std::is_copy_constructible_v<E>
+    template <typename Fn> requires std::is_constructible_v<E, E &>
     constexpr auto
     map(Fn && f) & -> expected<details::transformed_decay_type<Fn, T &>, E> {
         return transform_impl(*this, std::forward<Fn>(f));
     }
 
-    template <typename Fn> requires std::is_copy_constructible_v<E>
+    template <typename Fn> requires std::is_constructible_v<E, E const &>
     constexpr auto
     map(Fn && f) const & -> expected<details::transformed_decay_type<Fn, T const &>, E> {
         return transform_impl(*this, std::forward<Fn>(f));
     }
 
-    template <typename Fn> requires std::is_move_constructible_v<E>
+    template <typename Fn> requires std::is_constructible_v<E, E &&>
     constexpr auto
     map(Fn && f) && -> expected<details::transformed_decay_type<Fn, T &&>, E> {
         return transform_impl(std::move(*this), std::forward<Fn>(f));
     }
 
-    template <typename Fn> requires std::is_move_constructible_v<E>
+    template <typename Fn> requires std::is_constructible_v<E, E const &&>
     constexpr auto
     map(Fn && f) const && -> expected<details::transformed_decay_type<Fn, T const &&>, E> {
         return transform_impl(std::move(*this), std::forward<Fn>(f));
@@ -2039,7 +2019,7 @@ private:
         static_assert(std::is_same_v<expected, std::remove_cvref_t<Self>>);
         static_assert(std::is_invocable_v<Fn>);
 
-        using U = details::transformed_type<Fn>;
+        using U = details::transformed_decay_type<Fn>;
         static_assert(!details::is_expected_v<U>);
 
         using result_type = expected<details::transformed_decay_type<Fn>, E>;
@@ -2052,25 +2032,25 @@ private:
     }
 
 public:
-    template<typename Fn> requires std::is_copy_constructible_v<E>
+    template<typename Fn> requires std::is_constructible_v<E, E &>
     constexpr auto
     transform(Fn && f) & -> expected<details::transformed_decay_type<Fn>, E> {
         return transform_impl(*this, std::forward<Fn>(f));
     }
 
-    template<typename Fn> requires std::is_copy_constructible_v<E>
+    template<typename Fn> requires std::is_constructible_v<E, E const &>
     constexpr auto
     transform(Fn && f) const & -> expected<details::transformed_decay_type<Fn>, E> {
         return transform_impl(*this, std::forward<Fn>(f));
     }
 
-    template<typename Fn> requires std::is_move_constructible_v<E>
+    template<typename Fn> requires std::is_constructible_v<E, E &&>
     constexpr auto
     transform(Fn && f) && -> expected<details::transformed_decay_type<Fn>, E> {
         return transform_impl(std::move(*this), std::forward<Fn>(f));
     }
 
-    template<typename Fn> requires std::is_move_constructible_v<E>
+    template<typename Fn> requires std::is_constructible_v<E, E const &&>
     constexpr auto
     transform(Fn && f) const && -> expected<details::transformed_decay_type<Fn>, E> {
         return transform_impl(std::move(*this), std::forward<Fn>(f));
@@ -2226,25 +2206,25 @@ public:
         return std::nullopt;
     }
 
-    template <typename Fn> requires std::is_copy_constructible_v<E>
+    template <typename Fn> requires std::is_constructible_v<E, E &>
     constexpr auto
     map(Fn && f) & -> expected<details::transformed_decay_type<Fn>, E> {
         return transform_impl(*this, std::forward<Fn>(f));
     }
 
-    template <typename Fn> requires std::is_copy_constructible_v<E>
+    template <typename Fn> requires std::is_constructible_v<E, E const &>
     constexpr auto
     map(Fn && f) const & -> expected<details::transformed_decay_type<Fn>, E> {
         return transform_impl(*this, std::forward<Fn>(f));
     }
 
-    template <typename Fn> requires std::is_move_constructible_v<E>
+    template <typename Fn> requires std::is_constructible_v<E, E &&>
     constexpr auto
     map(Fn && f) && -> expected<details::transformed_decay_type<Fn>, E> {
         return transform_impl(std::move(*this), std::forward<Fn>(f));
     }
 
-    template <typename Fn> requires std::is_move_constructible_v<E>
+    template <typename Fn> requires std::is_constructible_v<E, E const &&>
     constexpr auto
     map(Fn && f) const && -> expected<details::transformed_decay_type<Fn>, E> {
         return transform_impl(std::move(*this), std::forward<Fn>(f));

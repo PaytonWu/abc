@@ -6,21 +6,21 @@
 
 #pragma once
 
-#include "abc/byte_bit_numbering.h"
-#include "abc/bytes.h"
-#include "abc/error.h"
-#include "abc/hex_string_format.h"
-#include "abc/hex_utility.h"
+#include <abc/byte_bit_numbering.h>
+#include <abc/bytes.h>
+#include <abc/error.h>
+#include <abc/expected.h>
+#include <abc/hex_string_format.h>
+#include <abc/hex_utility.h>
 
 #include <fmt/format.h>
 #include <range/v3/range/conversion.hpp>
-#include <range/v3/view/reverse.hpp>
+#include <range/v3/algorithm/reverse.hpp>
 
 #include <bit>
 #include <cassert>
 #include <compare>
 #include <limits>
-#include <ranges>
 #include <span>
 
 namespace abc {
@@ -43,7 +43,7 @@ private:
     constexpr explicit hex_string(std::span<byte const> const input, byte_numbering const bn) : binary_data_{
         std::begin(input), std::end(input)} {
         if (bn == byte_numbering::msb0) {
-            std::ranges::reverse(binary_data_);
+            ranges::reverse(binary_data_);
         }
     }
 
@@ -120,12 +120,12 @@ public:
     constexpr inline static auto lower_case = hex_string_format::lower_case;
     constexpr inline static auto upper_case = hex_string_format::upper_case;
 
-    constexpr static auto from_hex_prefixed(std::string_view const input) -> std::expected<hex_string, errc> {
+    constexpr static auto from_hex_prefixed(std::string_view input) -> std::expected<hex_string, errc> {
         if (!input.starts_with(hex_prefix) && !input.starts_with(hex_prefix_uppercase)) {
             return std::unexpected{errc::invalid_hex_string };
         }
 
-        return hex_string_to_binary<std::endian::big>(input).transform([](auto && bytes) { std::ranges::reverse(bytes); return hex_string{ std::move(bytes) }; });
+        return hex_string_to_binary<std::endian::big>(input).transform([](auto && bytes) { ranges::reverse(bytes); return hex_string{ std::move(bytes) }; });
     }
 
     constexpr static auto from_hex_without_prefix(std::string_view const input, byte_numbering const bn) -> std::expected<hex_string, errc> {
