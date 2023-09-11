@@ -22,7 +22,6 @@ namespace abc {
 template <size_t N, byte_numbering ByteNumbering>
 class [[nodiscard]] fixed_bytes {
     static_assert(N > 0);
-    static_assert(ByteNumbering == byte_numbering::lsb0 || ByteNumbering == byte_numbering::msb0);
 
 private:
     using internal_type = std::array<byte, N>;
