@@ -6,8 +6,13 @@
 
 #pragma once
 
-#include "abc/byte.h"
-#include "abc/byte_bit_numbering.h"
+#include <abc/byte.h>
+#include <abc/byte_bit_numbering.h>
+#include <abc/expected.h>
+
+// #include <range/v3/algorithm/transform.hpp>
+#include <range/v3/view/transform.hpp>
+#include <range/v3/algorithm/copy.hpp>
 
 #include <algorithm>
 #include <array>
@@ -15,7 +20,7 @@
 #include <cassert>
 #include <cstddef>
 #include <initializer_list>
-#include <ranges>
+#include <span>
 
 namespace abc {
 
@@ -40,12 +45,13 @@ public:
     using reverse_iterator = typename internal_type::reverse_iterator;
     using const_reverse_iterator = typename internal_type::const_reverse_iterator;
 
-    fixed_bytes(fixed_bytes const &) = default;
-    auto operator=(fixed_bytes const &) -> fixed_bytes & = default;
-    fixed_bytes(fixed_bytes &&) = default;
-    auto operator=(fixed_bytes &&) -> fixed_bytes & = default;
-    ~fixed_bytes() = default;
+private:
+    constexpr explicit fixed_bytes(std::span<byte const> bytes) requires(ByteNumbering == byte_numbering::none) {
+        assert(bytes.size() == N);
+        ranges::copy(bytes, std::begin(data_));
+    }
 
+public:
     constexpr fixed_bytes() {
         data_.fill(0);
     }
@@ -60,11 +66,19 @@ public:
         }
     }
 
-    constexpr explicit fixed_bytes(internal_type const & data) : data_{ data } {
+    constexpr explicit fixed_bytes(std::array<byte, N> const & data) : data_{ data } {
     }
 
     constexpr explicit fixed_bytes(std::array<std::byte, N> const & data) : fixed_bytes{} {
-        std::ranges::copy(data | std::views::transform([](auto const byte) { return std::to_integer<byte>(byte); }), data_.begin());
+        ranges::copy(data | ranges::views::transform([](auto const byte) { return std::to_integer<byte>(byte); }), data_.begin());
+    }
+
+    inline static auto from(std::span<byte const> bytes) -> expected<fixed_bytes, std::error_code> requires (ByteNumbering == byte_numbering::none) {
+        if (bytes.size() != N) {
+            return make_unexpected(make_error_code(errc::fix_bytes_invalid_argument));
+        }
+
+        return fixed_bytes{bytes};
     }
 
     friend auto operator==(fixed_bytes const &, fixed_bytes const &) noexcept -> bool = default;

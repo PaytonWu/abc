@@ -147,3 +147,15 @@ TEST(fixed_bytes_le, hex_string) {
     auto const hex_str = convert_to<hex_string>::from(bytes).value();
     EXPECT_EQ("0x00000000000000000123456789abcdef", hex_str.to_string());
 }
+
+TEST(fixed_bytes_none, from) {
+    auto bytes = hex_string::from_hex_prefixed("0x1234567890").transform([](auto && hexstr) { return hexstr.template to_bytes<byte_numbering::msb0>(); }).value();
+    auto result = fixed_bytes<5, byte_numbering::none>::from(bytes);
+    EXPECT_TRUE(result.has_value());
+    auto const & fixed_bytes = result.value();
+    EXPECT_EQ(static_cast<byte>(0x12), fixed_bytes[0]);
+    EXPECT_EQ(static_cast<byte>(0x34), fixed_bytes[1]);
+    EXPECT_EQ(static_cast<byte>(0x56), fixed_bytes[2]);
+    EXPECT_EQ(static_cast<byte>(0x78), fixed_bytes[3]);
+    EXPECT_EQ(static_cast<byte>(0x90), fixed_bytes[4]);
+}

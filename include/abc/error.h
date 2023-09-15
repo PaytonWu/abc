@@ -48,6 +48,7 @@ enum class errc {
     invalid_byte_numbering,
     invalid_bit_numbering,
     bad_expected_access,
+    fix_bytes_invalid_argument,
 };
 
 auto make_error_code(errc ec) noexcept -> std::error_code;
@@ -182,6 +183,9 @@ abc_category() noexcept -> std::error_category const & {
 
                 case errc::bad_expected_access:
                     return "bad expected access";
+
+                case errc::fix_bytes_invalid_argument:
+                    return "invalid argument for constructing fix_bytes";
             }
 
             abc::unreachable();

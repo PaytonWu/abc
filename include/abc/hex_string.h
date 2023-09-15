@@ -191,13 +191,13 @@ public:
     }
 
     template <byte_numbering ByteNumbering, std::enable_if_t<ByteNumbering == byte_numbering::lsb0> * = nullptr>
-    constexpr auto to_bytes() const -> bytes const & {
+    [[nodiscard]] constexpr auto to_bytes() const -> bytes const & {
         return binary_data_;
     }
 
     template <byte_numbering ByteNumbering, std::enable_if_t<ByteNumbering == byte_numbering::msb0> * = nullptr>
     constexpr auto to_bytes() const -> bytes {
-        return binary_data_ | std::views::reverse | ranges::to<bytes>();
+        return binary_data_ | ranges::views::reverse | ranges::to<bytes>();
     }
 
     constexpr auto operator[](size_t const index) noexcept -> reference {
@@ -208,11 +208,11 @@ public:
         return const_reference{this, index};
     }
 
-    constexpr auto least_significant_byte() const noexcept -> byte const & {
+    [[nodiscard]] constexpr auto least_significant_byte() const noexcept -> byte {
         return binary_data_.front();
     }
 
-    constexpr auto most_significant_byte() const noexcept -> byte const & {
+    [[nodiscard]] constexpr auto most_significant_byte() const noexcept -> byte {
         return binary_data_.back();
     }
 };

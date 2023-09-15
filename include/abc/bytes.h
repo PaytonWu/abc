@@ -109,7 +109,7 @@ public:
         return data_.back();
     }
 
-    constexpr auto data() noexcept -> value_type * {
+    [[nodiscard]] constexpr auto data() noexcept -> value_type * {
         return data_.data();
     }
 
