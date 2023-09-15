@@ -1029,7 +1029,7 @@ public:
     // Monadic operations
 private:
     template <typename Self, typename Fn, typename Val = decltype(std::declval<Self>().value())>
-    static constexpr auto and_then_impl(Self && self, Fn && fn) -> details::expected_t<Fn, Val> {
+    static constexpr auto and_then_impl(Self && self, Fn && fn) {
         static_assert(std::is_same_v<expected, std::remove_cvref_t<Self>>);
         static_assert(std::is_invocable_v<Fn, Val>);
 
@@ -1046,25 +1046,25 @@ private:
 public:
     template <typename Fn> requires std::is_constructible_v<E, E &>
     [[nodiscard]] constexpr auto
-    and_then(Fn && f) & -> details::expected_t<Fn, T &> {
+    and_then(Fn && f) & {
         return and_then_impl(*this, std::forward<Fn>(f));
     }
 
     template <typename Fn> requires std::is_constructible_v<E, E const &>
     [[nodiscard]] constexpr auto
-    and_then(Fn && f) const & -> details::expected_t<Fn, T const &> {
+    and_then(Fn && f) const & {
         return and_then_impl(*this, std::forward<Fn>(f));
     }
 
     template <typename Fn> requires std::is_constructible_v<E, E &&>
     [[nodiscard]] constexpr auto
-    and_then(Fn && f) && -> details::expected_t<Fn, T &&> {
+    and_then(Fn && f) && {
         return and_then_impl(std::move(*this), std::forward<Fn>(f));
     }
 
     template <typename Fn> requires std::is_constructible_v<E, E const &&>
     [[nodiscard]] constexpr auto
-    and_then(Fn && f) const && -> details::expected_t<Fn, T const &&> {
+    and_then(Fn && f) const && {
         return and_then_impl(std::move(*this), std::forward<Fn>(f));
     }
 
@@ -1931,7 +1931,7 @@ public:
 private:
     template <typename Self, typename Fn>
     constexpr static auto
-    and_then_impl(Self && self, Fn && f) -> details::expected_t<Fn> {
+    and_then_impl(Self && self, Fn && f) {
         static_assert(std::is_same_v<expected, std::remove_cvref_t<Self>>);
         static_assert(std::is_invocable_v<Fn>);
 
@@ -1948,25 +1948,25 @@ private:
 public:
     template<typename Fn> requires std::is_copy_constructible_v<E>
     constexpr auto
-    and_then(Fn && f) & -> details::expected_t<Fn> {
+    and_then(Fn && f) & {
         return and_then_impl(*this, std::forward<Fn>(f));
     }
 
     template<typename Fn> requires std::is_copy_constructible_v<E>
     constexpr auto
-    and_then(Fn && f) const & -> details::expected_t<Fn> {
+    and_then(Fn && f) const & {
         return and_then_impl(*this, std::forward<Fn>(f));
     }
 
     template<typename Fn> requires std::is_move_constructible_v<E>
     constexpr auto
-    and_then(Fn && f) && -> details::expected_t<Fn> {
+    and_then(Fn && f) && {
         return and_then_impl(std::move(*this), std::forward<Fn>(f));
     }
 
     template<typename Fn> requires std::is_move_constructible_v<E>
     constexpr auto
-    and_then(Fn && f) const && -> details::expected_t<Fn> {
+    and_then(Fn && f) const && {
         return and_then_impl(std::move(*this), std::forward<Fn>(f));
     }
 
