@@ -8,7 +8,7 @@
 using namespace abc;
 
 TEST(hex_string, from_string_view) {
-    auto const hex_string1 = hex_string::from_hex_prefixed("0x0123456789abcdefABCDEF").value();
+    auto const hex_string1 = hex_string::from("0x0123456789abcdefABCDEF").value();
     ASSERT_FALSE(hex_string1.empty());
     ASSERT_EQ(hex_string1.to_string(), "0x0123456789abcdefabcdef");
     ASSERT_EQ(hex_string1.to_string(hex_string::lower_case), "0x0123456789abcdefabcdef");
@@ -18,10 +18,10 @@ TEST(hex_string, from_string_view) {
     ASSERT_EQ(hex_string1.bytes_size(), 11);
     ASSERT_EQ(hex_string1.to_bytes<byte_numbering::msb0>(), (bytes{ 0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef, 0xab, 0xcd, 0xef }));
 
-    auto const hex_string2 = hex_string::from_hex_prefixed("0x0123456789abcdefabcdef").value();
+    auto const hex_string2 = hex_string::from("0x0123456789abcdefabcdef").value();
     ASSERT_EQ(std::strong_ordering::equal, hex_string1 <=> hex_string2);
 
-    auto const hex_string3 = hex_string::from_hex_prefixed("0x123456789abcdefABCDEF").value();
+    auto const hex_string3 = hex_string::from("0x123456789abcdefABCDEF").value();
     ASSERT_FALSE(hex_string3.empty());
     ASSERT_EQ(hex_string3.to_string(), "0x0123456789abcdefabcdef");
     ASSERT_EQ(hex_string3.to_string(hex_string::lower_case), "0x0123456789abcdefabcdef");
@@ -72,7 +72,7 @@ TEST(hex_string, from_empty) {
 }
 
 TEST(hex_string, operator_index) {
-    auto const hex_string1 = hex_string::from_hex_prefixed("0x0123456789abcdefABCDEF").value();
+    auto const hex_string1 = hex_string::from("0x0123456789abcdefABCDEF").value();
     ASSERT_EQ(hex_string1[0], 'f');
     ASSERT_EQ(hex_string1[1], 'e');
     ASSERT_EQ(hex_string1[2], 'd');
@@ -96,7 +96,7 @@ TEST(hex_string, operator_index) {
     ASSERT_EQ(hex_string1[20], '1');
     ASSERT_EQ(hex_string1[21], '0');
 
-    auto hex_string2 = hex_string::from_hex_prefixed("0x0123456789abcdefABCDEF").value();
+    auto hex_string2 = hex_string::from("0x0123456789abcdefABCDEF").value();
     hex_string2[0] = '0';
     hex_string2[1] = '1';
     hex_string2[2] = '2';
@@ -122,6 +122,6 @@ TEST(hex_string, operator_index) {
 
     ASSERT_EQ(hex_string2.to_string(), "0xfedcbafedcba9876543210");
 
-    auto hex_string3 = hex_string::from_hex_prefixed("0x0123456789abcdefABCDEF").value();
+    auto hex_string3 = hex_string::from("0x0123456789abcdefABCDEF").value();
     ASSERT_THROW(hex_string3[20] = 'g', abc::abc_error);
 }

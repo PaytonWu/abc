@@ -30,11 +30,6 @@ class [[nodiscard]] hex_string {
 
 public:
     hex_string() = default;
-    hex_string(hex_string const &) = default;
-    hex_string(hex_string &&) = default;
-    auto operator=(hex_string const &) -> hex_string & = default;
-    auto operator=(hex_string &&) -> hex_string & = default;
-    ~hex_string() = default;
 
 private:
     constexpr explicit hex_string(bytes && input) noexcept : binary_data_{std::move(input)} {
@@ -120,17 +115,24 @@ public:
     constexpr inline static auto lower_case = hex_string_format::lower_case;
     constexpr inline static auto upper_case = hex_string_format::upper_case;
 
-    constexpr static auto from_hex_prefixed(std::string_view input) -> std::expected<hex_string, errc> {
+    /// @brief construct hex_string object from 0x... string or 0X... string.
+    /// @param input the input string in hex from and begin with 0x or 0X.
+    /// @return hex_string object or an error value.
+    constexpr static auto from(std::string_view input) -> expected<hex_string, errc> {
         if (!input.starts_with(hex_prefix) && !input.starts_with(hex_prefix_uppercase)) {
-            return std::unexpected{errc::invalid_hex_string };
+            return make_unexpected(errc::invalid_hex_string);
         }
 
         return hex_string_to_binary<std::endian::big>(input).transform([](auto && bytes) { ranges::reverse(bytes); return hex_string{ std::move(bytes) }; });
     }
 
-    constexpr static auto from_hex_without_prefix(std::string_view const input, byte_numbering const bn) -> std::expected<hex_string, errc> {
+    /// @brief construct hex_string object from a hex style string.
+    /// @param input the input string in hex from without 0x or 0X prefix.
+    /// @param bn the byte numbering of the input string.
+    /// @return hex_string object or an error value.
+    constexpr static auto from(std::string_view const input, byte_numbering const bn) -> expected<hex_string, errc> {
         if (bn == byte_numbering::none) {
-            return std::unexpected{errc::invalid_byte_numbering };
+            return make_unexpected(errc::invalid_byte_numbering);
         }
 
         if (bn == byte_numbering::msb0) {

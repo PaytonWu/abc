@@ -1973,7 +1973,7 @@ public:
 private:
     template <typename Self, typename Fn>
     constexpr static auto
-    or_else_impl(Self && self, Fn && f) -> details::expected_t<Fn, decltype(std::forward<Self>(self).error())> {
+    or_else_impl(Self && self, Fn && f) {
         static_assert(std::is_same_v<expected, std::remove_cvref_t<Self>>);
         static_assert(std::is_invocable_v<Fn, decltype(std::forward<Self>(self).error())>);
 
@@ -1990,19 +1990,19 @@ private:
 public:
     template<typename Fn>
     constexpr auto
-    or_else(Fn && f) & -> details::expected_t<Fn, E &> {
+    or_else(Fn && f) & {
         return or_else_impl(*this, std::forward<Fn>(f));
     }
 
     template<typename Fn>
     constexpr auto
-    or_else(Fn && f) const & -> details::expected_t<Fn, E const &> {
+    or_else(Fn && f) const & {
         return or_else_impl(*this, std::forward<Fn>(f));
     }
 
     template<typename Fn>
     constexpr auto
-    or_else(Fn && f) && -> details::expected_t<Fn, E &&> {
+    or_else(Fn && f) && {
         return or_else_impl(std::move(*this), std::forward<Fn>(f));
     }
 

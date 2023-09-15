@@ -92,17 +92,17 @@ template <std::unsigned_integral T>
         return static_cast<byte>(ch - 'A' + 10);
     }
 
-    return abc::unexpected{ errc::invalid_hex_char };
+    return make_unexpected(errc::invalid_hex_char);
 }
 
 template <std::endian Endian>
-constexpr auto hex_string_to_binary(std::string_view string_slice) -> std::expected<bytes, errc> {
+constexpr auto hex_string_to_binary(std::string_view string_slice) -> expected<bytes, errc> {
     if (has_hex_prefix(string_slice)) {
         string_slice.remove_prefix(2);
     }
 
     if (!hex_string_without_prefix(string_slice)) {
-        return std::unexpected{ errc::invalid_hex_char };
+        return make_unexpected(errc::invalid_hex_char);
     }
 
     bytes binary_data;
@@ -144,7 +144,7 @@ constexpr auto hex_string_to_binary(std::string_view string_slice) -> std::expec
 }
 
 constexpr auto to_binary(std::string_view input) -> bytes {
-    return hex_string_to_binary<std::endian::big>(input).or_else([&input](auto const) { return std::expected<bytes, errc>{ std::in_place, std::begin(input), std::end(input) }; }).value();
+    return hex_string_to_binary<std::endian::big>(input).or_else([input](auto const) { return expected<bytes, errc>{ std::in_place, std::begin(input), std::end(input) }; }).value();
 }
 
 }
