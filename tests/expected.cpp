@@ -781,11 +781,11 @@ TEST(expected, err) {
 namespace wrapper {
 template <std::endian Endian>
 constexpr auto hex_string_to_binary(std::string_view string_slice) -> abc::expected<abc::bytes, abc::errc> {
-    if (abc::has_hex_prefix(string_slice)) {
+    if (abc::hex_string::has_hex_prefix(string_slice)) {
         string_slice.remove_prefix(2);
     }
 
-    if (!abc::hex_string_without_prefix(string_slice)) {
+    if (!abc::hex_string::is_hex(string_slice)) {
         return abc::unexpected{abc::errc::invalid_hex_char};
     }
 
@@ -793,7 +793,7 @@ constexpr auto hex_string_to_binary(std::string_view string_slice) -> abc::expec
     binary_data.reserve((string_slice.size() + 1) / 2);
     if constexpr (Endian == std::endian::big) {
         if (string_slice.size() & 1) {
-            [[maybe_unused]] auto r = abc::hex_char_to_binary(string_slice.front()).transform([&binary_data, &string_slice](auto const b) mutable {
+            [[maybe_unused]] auto r = abc::hex_utility::hex_char_to_binary(string_slice.front()).transform([&binary_data, &string_slice](auto const b) mutable {
                 binary_data.push_back(b);
                 string_slice.remove_prefix(1);
             });
@@ -804,7 +804,7 @@ constexpr auto hex_string_to_binary(std::string_view string_slice) -> abc::expec
         ranges::for_each(chunks, [&binary_data](ranges::viewable_range auto && compound_byte) mutable {
             abc::byte byte{};
             for (auto const [i, nibble_byte]: compound_byte | ranges::views::reverse | ranges::views::enumerate) {
-                byte |= abc::hex_char_to_binary(nibble_byte).value() << (4 * i);
+                byte |= abc::hex_utility::hex_char_to_binary(nibble_byte).value() << (4 * i);
             }
             binary_data.push_back(byte);
         });
@@ -814,7 +814,7 @@ constexpr auto hex_string_to_binary(std::string_view string_slice) -> abc::expec
 
     if constexpr (Endian == std::endian::little) {
         if (string_slice.size() & 1) {
-            [[maybe_unused]] auto r = abc::hex_char_to_binary(string_slice.back()).transform([&binary_data, &string_slice](auto const b) mutable {
+            [[maybe_unused]] auto r = abc::hex_utility::hex_char_to_binary(string_slice.back()).transform([&binary_data, &string_slice](auto const b) mutable {
                 binary_data.push_back(b);
                 string_slice.remove_suffix(1);
             });
@@ -834,7 +834,7 @@ constexpr auto hex_string_to_binary(std::string_view string_slice) -> abc::expec
 }
 
 constexpr static auto from_hex_prefixed(std::string_view input) -> abc::expected<abc::hex_string, abc::errc> {
-    if (!input.starts_with(abc::hex_prefix) && !input.starts_with(abc::hex_prefix_uppercase)) {
+    if (!input.starts_with(abc::hex_string::prefix) && !input.starts_with(abc::hex_string::prefix_uppercase)) {
         return abc::unexpected{abc::errc::invalid_hex_string};
     }
 

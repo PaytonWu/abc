@@ -25,8 +25,17 @@
 
 namespace abc {
 
+/// @brief Represents a hex string, like "0x1234567890abcdef" or "1234567890abcdef".
+///        hex_string stores the string value in a binary format. simply speaking,
+///        it treats the hex string as a `number` and stores the number in a binary
+///        buffer. In the above example, hex_string saves "0x1234567890abcdef" as
+///        a hex number 0x1234567890abcdef and force to save it in
+///        lsb0 (least significant byte at zero position) format. This means that,
+///        in the binary byte layer, the beginning byte is `ef` and the ending
+///        byte is `12`. If the hex string is "0xabc", then the beginning byte is
+///        `bc` and the ending byte is `0a`.
 class [[nodiscard]] hex_string {
-    bytes binary_data_;  // force little endian
+    bytes binary_data_;
 
 public:
     hex_string() = default;
@@ -43,7 +52,75 @@ private:
     }
 
 public:
+    constexpr inline static auto prefix = "0x";
+    constexpr inline static auto prefix_uppercase = "0X";
 
+public:
+    // utilities
+    [[nodiscard]] constexpr static auto is_hex(std::string_view string_slice) noexcept -> bool {
+        if (has_hex_prefix(string_slice)) {
+            string_slice = string_slice.substr(2);
+        }
+
+        return is_hex_without_prefix(string_slice);
+    }
+
+    [[nodiscard]] constexpr static auto has_hex_prefix(std::string_view const string_slice) noexcept -> bool {
+        return string_slice.starts_with(prefix) || string_slice.starts_with(prefix_uppercase);
+    }
+
+    template <byte_numbering ByteNumbering>
+    static auto to_bytes(std::string_view string_slice) -> expected<bytes, std::error_code> {
+        if (has_hex_prefix(string_slice)) {
+            string_slice = string_slice.substr(2);
+        }
+
+        if (!is_hex_without_prefix(string_slice)) {
+            return make_unexpected(make_error_code(std::errc::invalid_argument));
+        }
+
+        bytes binary_data;
+        binary_data.reserve((string_slice.size() + 1) / 2);
+        if constexpr (ByteNumbering == byte_numbering::msb0) {
+            if (string_slice.size() & 1) {
+                [[maybe_unused]] auto r = hex_utility::hex_char_to_binary(string_slice.front()).transform([&binary_data, &string_slice](auto const b) mutable { binary_data.push_back(b); string_slice.remove_prefix(1); });
+                assert(r.has_value());
+            }
+
+            auto const & chunks = string_slice | ranges::views::chunk(2);
+            ranges::for_each(chunks, [&binary_data](ranges::viewable_range auto && compound_byte) mutable {
+                byte byte{};
+                for (auto const [i, nibble_byte] : compound_byte | ranges::views::reverse | ranges::views::enumerate) {
+                    byte |= hex_char_to_binary(nibble_byte).value() << (4 * i);
+                }
+                binary_data.push_back(byte);
+            });
+
+            return binary_data;
+        }
+
+        if constexpr (ByteNumbering == byte_numbering::lsb0) {
+            if (string_slice.size() & 1) {
+                [[maybe_unused]] auto r = hex_utility::hex_char_to_binary(string_slice.front()).transform([&binary_data, &string_slice](auto const b) mutable { binary_data.push_back(b); string_slice.remove_prefix(1); });
+                assert(r.has_value());
+            }
+
+            auto const & chunks = string_slice | ranges::views::chunk(2);
+            ranges::for_each(chunks, [&binary_data](ranges::viewable_range auto && compound_byte) mutable {
+                byte byte{};
+                for (auto const [i, nibble_byte] : compound_byte | ranges::views::reverse | ranges::views::enumerate) {
+                    byte |= hex_utility::hex_char_to_binary(nibble_byte).value() << (4 * i);
+                }
+                binary_data.push_back(byte);
+            });
+
+            ranges::reverse(binary_data);
+
+            return binary_data;
+        }
+    }
+
+public:
     class const_reference {
     protected:
         friend class hex_string;
@@ -69,7 +146,7 @@ public:
 
         constexpr operator char() const noexcept {
             assert(str_ != nullptr);
-            return lower_case_hex_digits[(str_->binary_data_[byte_index_] >> (static_cast<size_t>(high_) * 4)) & 0x0f];
+            return hex_utility::lower_case_hex_digits[(str_->binary_data_[byte_index_] >> (static_cast<size_t>(high_) * 4)) & 0x0f];
         }
     };
 
@@ -98,7 +175,7 @@ public:
             }
 
             assert((value >= '0' && value <= '9') || (value >= 'a' && value <= 'f') || (value >= 'A' && value <= 'F'));
-            hex_char_to_binary(value).transform([this](auto && byte) {
+            hex_utility::hex_char_to_binary(value).transform([this](auto byte) {
                 if (high_) {
                     const_cast<hex_string *>(str_)->binary_data_[byte_index_] = (str_->binary_data_[byte_index_] & 0x0f) | (byte << 4);
                 } else {
@@ -115,32 +192,10 @@ public:
     constexpr inline static auto lower_case = hex_string_format::lower_case;
     constexpr inline static auto upper_case = hex_string_format::upper_case;
 
-    /// @brief construct hex_string object from 0x... string or 0X... string.
-    /// @param input the input string in hex from and begin with 0x or 0X.
+    /// @brief construct hex_string object from a hex string.
+    /// @param input string in various forms even it's not a hex form.
     /// @return hex_string object or an error value.
-    constexpr static auto from(std::string_view input) -> expected<hex_string, errc> {
-        if (!input.starts_with(hex_prefix) && !input.starts_with(hex_prefix_uppercase)) {
-            return make_unexpected(errc::invalid_hex_string);
-        }
-
-        return hex_string_to_binary<std::endian::big>(input).transform([](auto && bytes) { ranges::reverse(bytes); return hex_string{ std::move(bytes) }; });
-    }
-
-    /// @brief construct hex_string object from a hex style string.
-    /// @param input the input string in hex from without 0x or 0X prefix.
-    /// @param bn the byte numbering of the input string.
-    /// @return hex_string object or an error value.
-    constexpr static auto from(std::string_view const input, byte_numbering const bn) -> expected<hex_string, errc> {
-        if (bn == byte_numbering::none) {
-            return make_unexpected(errc::invalid_byte_numbering);
-        }
-
-        if (bn == byte_numbering::msb0) {
-            return hex_string_to_binary<std::endian::big>(input).transform([](auto && bytes) { return hex_string{ std::move(bytes) }; });
-        } else {
-            return hex_string_to_binary<std::endian::little>(input).transform([](auto && bytes) { return hex_string{ std::move(bytes) }; });
-        }
-    }
+    static auto from(std::string_view input) -> expected<hex_string, std::error_code>;
 
     constexpr static auto from_bytes(std::span<byte const> const input, byte_numbering const bn) -> hex_string {
         return hex_string{input, bn};
@@ -156,16 +211,16 @@ public:
         std::array<char, 3> hex{0, 0, 0};
 
         if (abc::lower_case(fmt)) {
-            r.append(hex_prefix);
-            std::ranges::for_each(data_span | std::views::reverse | std::views::transform([&hex](auto const byte) mutable { assert(hex[2] == 0); hex[0] = lower_case_hex_digits[byte >> 4], hex[1] = lower_case_hex_digits[byte & 0x0f]; return hex.data(); }), [&r](auto const * c_str) { r.append(c_str); });
+            r.append(prefix);
+            std::ranges::for_each(data_span | std::views::reverse | std::views::transform([&hex](auto const byte) mutable { assert(hex[2] == 0); hex[0] = hex_utility::lower_case_hex_digits[byte >> 4], hex[1] = hex_utility::lower_case_hex_digits[byte & 0x0f]; return hex.data(); }), [&r](auto const * c_str) { r.append(c_str); });
         } else if (abc::upper_case(fmt)) {
-            r.append(hex_prefix_uppercase);
-            std::ranges::for_each(data_span | std::views::reverse | std::views::transform([&hex](auto const byte) mutable { assert(hex[2] == 0); hex[0] = upper_case_hex_digits[byte >> 4], hex[1] = upper_case_hex_digits[byte & 0x0f]; return hex.data(); }), [&r](auto const * c_str) { r.append(c_str); });
+            r.append(prefix_uppercase);
+            std::ranges::for_each(data_span | std::views::reverse | std::views::transform([&hex](auto const byte) mutable { assert(hex[2] == 0); hex[0] = hex_utility::upper_case_hex_digits[byte >> 4], hex[1] = hex_utility::upper_case_hex_digits[byte & 0x0f]; return hex.data(); }), [&r](auto const * c_str) { r.append(c_str); });
         } else {
             assert(false);
         }
 
-        if (r == hex_prefix || r == hex_prefix_uppercase) {
+        if (r == prefix || r == prefix_uppercase) {
             r.append("00");
         }
 
@@ -216,6 +271,22 @@ public:
 
     [[nodiscard]] constexpr auto most_significant_byte() const noexcept -> byte {
         return binary_data_.back();
+    }
+
+private:
+    [[nodiscard]] constexpr static auto is_hex_without_prefix(std::string_view const string_slice) noexcept -> bool {   // "0123456789abcdefABCDEF"
+        return std::ranges::all_of(string_slice,
+                                   [](auto const ch) {
+                                       return hex_utility::is_hex(ch);
+                                   });
+    }
+
+    [[nodiscard]] constexpr static auto is_hex_with_prefix(std::string_view const string_slice) noexcept -> bool { // "0x0123456789abcdefABCDEF" or "0X0123456789abcdefABCDEF"
+        if (!has_hex_prefix(string_slice)) {
+            return false;
+        }
+
+        return is_hex_without_prefix(string_slice.substr(2));
     }
 };
 

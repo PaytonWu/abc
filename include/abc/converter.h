@@ -16,7 +16,7 @@ namespace abc {
 
 template <typename OutputT, typename InputT>
 struct converter {
-    constexpr static auto from(InputT const & input) -> abc::expected<OutputT, std::error_code> {
+    static auto from(InputT const & input) -> abc::expected<OutputT, std::error_code> {
         return static_cast<OutputT>(input);
     }
 };
@@ -24,7 +24,7 @@ struct converter {
 template <typename OutputT>
 struct convert_to {
     template <typename InputT>
-    constexpr static auto from(InputT const & input) -> abc::expected<OutputT, std::error_code> {
+    static auto from(InputT const & input) -> abc::expected<OutputT, std::error_code> {
         return converter<OutputT, InputT>::from(input);
     }
 };

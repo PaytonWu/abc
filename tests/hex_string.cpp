@@ -125,3 +125,20 @@ TEST(hex_string, operator_index) {
     auto hex_string3 = hex_string::from("0x0123456789abcdefABCDEF").value();
     ASSERT_THROW(hex_string3[20] = 'g', abc::abc_error);
 }
+
+TEST(hex_string, from) {
+    auto const hex_string1 = hex_string::from("0123456789abcdefABCDEF").value();
+    ASSERT_FALSE(hex_string1.empty());
+    ASSERT_EQ(hex_string1.to_string(), "0x0123456789abcdefabcdef");
+    ASSERT_EQ(hex_string1.to_string(hex_string::lower_case), "0x0123456789abcdefabcdef");
+    ASSERT_EQ(hex_string1.to_string(hex_string::upper_case), "0X0123456789ABCDEFABCDEF");
+    ASSERT_EQ(hex_string1.size(), hex_string1.length());
+    ASSERT_EQ(hex_string1.size(), 22);
+    ASSERT_EQ(hex_string1.bytes_size(), 11);
+    ASSERT_EQ(hex_string1.to_bytes<byte_numbering::msb0>(), (bytes{ 0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef, 0xab, 0xcd, 0xef }));
+}
+
+TEST(hex_string, from_invalid) {
+    auto const result = hex_string::from("0123456789abcdefABCDEFX");
+    ASSERT_FALSE(result.has_value());
+}
