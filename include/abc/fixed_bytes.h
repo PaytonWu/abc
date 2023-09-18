@@ -10,9 +10,11 @@
 #include <abc/byte_bit_numbering.h>
 #include <abc/expected.h>
 
-// #include <range/v3/algorithm/transform.hpp>
-#include <range/v3/view/transform.hpp>
 #include <range/v3/algorithm/copy.hpp>
+#include <range/v3/algorithm/reverse.hpp>
+#include <range/v3/range/conversion.hpp>
+#include <range/v3/view/reverse.hpp>
+#include <range/v3/view/transform.hpp>
 
 #include <algorithm>
 #include <array>
@@ -46,9 +48,37 @@ public:
     using const_reverse_iterator = typename internal_type::const_reverse_iterator;
 
 private:
-    constexpr explicit fixed_bytes(std::span<byte const> bytes) requires(ByteNumbering == byte_numbering::none) {
+    constexpr explicit fixed_bytes(std::span<byte const> bytes) requires (ByteNumbering == byte_numbering::none) {
         assert(bytes.size() == N);
         ranges::copy(bytes, std::begin(data_));
+    }
+
+    template <byte_numbering DataByteNumbering> requires (DataByteNumbering == ByteNumbering)
+    constexpr explicit fixed_bytes(std::array<byte, N> const & data, byte_numbering_t<DataByteNumbering>) : data_{ data } {
+    }
+
+    template <byte_numbering DataByteNumbering> requires (DataByteNumbering != ByteNumbering && DataByteNumbering != byte_numbering::none && ByteNumbering != byte_numbering::none)
+    constexpr explicit fixed_bytes(std::array<byte, N> const & data, byte_numbering_t<DataByteNumbering>) {
+        // data | ranges::views::reverse | ranges::to(data_);
+        ranges::copy(data | ranges::views::reverse, std::begin(data_));
+    }
+
+    template <byte_numbering DataByteNumbering> requires (DataByteNumbering == ByteNumbering)
+    constexpr explicit fixed_bytes(std::array<std::byte, N> const & data, byte_numbering_t<DataByteNumbering>) {
+        ranges::copy(data | ranges::views::transform([](auto const byte) { return std::to_integer<byte>(byte); }), data_.begin());
+    }
+
+    template <byte_numbering DataByteNumbering> requires (DataByteNumbering != ByteNumbering && DataByteNumbering != byte_numbering::none && ByteNumbering != byte_numbering::none)
+    constexpr explicit fixed_bytes(std::array<std::byte, N> const & data, byte_numbering_t<DataByteNumbering>) : data_{ ranges::views::reverse(data) | ranges::views::transform([](auto const b) { return std::to_integer<byte>(b); }) | ranges::to<std::array<byte, N>>() } {
+    }
+
+    template <byte_numbering DataByteNumbering> requires (DataByteNumbering == ByteNumbering)
+    constexpr explicit fixed_bytes(std::span<byte const> const data, byte_numbering_t<DataByteNumbering>) {
+        ranges::copy(data, std::begin(data_));
+    }
+
+    template <byte_numbering DataByteNumbering> requires (DataByteNumbering != ByteNumbering && DataByteNumbering != byte_numbering::none && ByteNumbering != byte_numbering::none)
+    constexpr explicit fixed_bytes(std::span<byte const> const data, byte_numbering_t<DataByteNumbering>) : data_{ ranges::views::reverse(data) | ranges::to<std::array<byte, N>>() } {
     }
 
 public:
@@ -66,19 +96,39 @@ public:
         }
     }
 
-    constexpr explicit fixed_bytes(std::array<byte, N> const & data) : data_{ data } {
+    template <byte_numbering ByteNumberingRhs> requires (ByteNumberingRhs != byte_numbering::none && ByteNumberingRhs != ByteNumbering)
+    constexpr explicit fixed_bytes(fixed_bytes<N, ByteNumberingRhs> const & rhs) : data_{ rhs.data_ | ranges::views::reverse | ranges::to<std::array<byte, N>>() } {
     }
 
-    constexpr explicit fixed_bytes(std::array<std::byte, N> const & data) : fixed_bytes{} {
-        ranges::copy(data | ranges::views::transform([](auto const byte) { return std::to_integer<byte>(byte); }), data_.begin());
-    }
-
-    inline static auto from(std::span<byte const> bytes) -> expected<fixed_bytes, std::error_code> requires (ByteNumbering == byte_numbering::none) {
-        if (bytes.size() != N) {
-            return make_unexpected(make_error_code(errc::fix_bytes_invalid_argument));
+    template <byte_numbering DataByteNumbering>
+    inline static auto from(std::array<byte, N> data) -> expected<fixed_bytes, std::error_code> {
+        if constexpr (DataByteNumbering == ByteNumbering || (DataByteNumbering != byte_numbering::none && ByteNumbering != byte_numbering::none)) {
+            return fixed_bytes{ data, byte_numbering_t<DataByteNumbering>{} };
         }
 
-        return fixed_bytes{bytes};
+        return make_unexpected(make_error_code(std::errc::invalid_argument));
+    }
+
+    template <byte_numbering DataByteNumbering>
+    inline static auto from(std::array<std::byte, N> data) -> expected<fixed_bytes, std::error_code> {
+        if constexpr (DataByteNumbering == ByteNumbering || (DataByteNumbering != byte_numbering::none && ByteNumbering != byte_numbering::none)) {
+            return fixed_bytes{ data, byte_numbering_t<DataByteNumbering>{} };
+        }
+
+        return make_unexpected(make_error_code(std::errc::invalid_argument));
+    }
+
+    template <byte_numbering DataByteNumbering>
+    inline static auto from(std::span<byte const> data) -> expected<fixed_bytes, std::error_code> {
+        if (data.size() != N) {
+            return make_unexpected(make_error_code(std::errc::invalid_argument));
+        }
+
+        if constexpr (DataByteNumbering == ByteNumbering || (DataByteNumbering != byte_numbering::none && ByteNumbering != byte_numbering::none)) {
+            return fixed_bytes{ data, byte_numbering_t<DataByteNumbering>{} };
+        }
+
+        return make_unexpected(make_error_code(std::errc::invalid_argument));
     }
 
     friend auto operator==(fixed_bytes const &, fixed_bytes const &) noexcept -> bool = default;
@@ -237,20 +287,6 @@ public:
             return *this;
         }
     }
-
-//    constexpr auto operator++(int) -> fixed_bytes {
-//        fixed_bytes ret{*this};
-//
-//        if constexpr (ByteNumbering == byte_numbering::msb0) {
-//            for (auto i = N; i > 0 && !++data_[--i];) {}
-//            return ret;
-//        }
-//
-//        if constexpr (ByteNumbering == byte_numbering::lsb0) {
-//            for (auto i = 0u; i < N && !++data_[i++];) {}
-//            return ret;
-//        }
-//    }
 
     constexpr auto clear() -> void {
         data_.fill(0);

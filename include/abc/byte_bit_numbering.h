@@ -22,6 +22,11 @@ enum class bit_numbering {
     msb0
 };
 
+template <byte_numbering ByteNubmering>
+struct byte_numbering_t {
+    constexpr static byte_numbering value = ByteNubmering;
+};
+
 }
 
 #endif //ABC_BYTE_BIT_NUMBERING
