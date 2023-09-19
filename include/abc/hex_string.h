@@ -193,7 +193,7 @@ public:
     constexpr inline static auto lower_case = hex_string_format::lower_case;
     constexpr inline static auto upper_case = hex_string_format::upper_case;
 
-    /// @brief construct hex_string object from a hex string.
+    /// @brief construct hex_string object from a hex string. always treat the input hex string msb0.
     /// @param input string in various forms even it's not a hex form.
     /// @return hex_string object or an error value.
     static auto from(std::string_view input) -> expected<hex_string, std::error_code>;
@@ -257,6 +257,13 @@ public:
     template <byte_numbering ByteNumbering, std::enable_if_t<ByteNumbering == byte_numbering::msb0> * = nullptr>
     constexpr auto bytes() const -> abc::bytes {
         return binary_data_ | ranges::views::reverse | ranges::to<abc::bytes>();
+    }
+
+    template <byte_numbering ByteNumbering> requires (ByteNumbering == byte_numbering::none)
+    constexpr auto bytes() const -> abc::bytes {
+        // since it's hex string object and can be used to represent a hex number and a number presentation
+        // is always msb0. thus when converting a hex to bytes with out byte numbering, defaults to msb0.
+        return bytes<byte_numbering::msb0>();
     }
 
     constexpr auto operator[](size_t const index) noexcept -> reference {

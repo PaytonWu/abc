@@ -10,6 +10,8 @@
 #include <abc/fixed_bytes.h>
 #include <abc/hex_string.h>
 
+#include <range/v3/algorithm/copy.hpp>
+
 #include <system_error>
 
 namespace abc {
@@ -44,8 +46,8 @@ struct converter<fixed_bytes<N, ByteNumbering>, hex_string> {
         }
 
         std::array<byte, N> bytes{};
-        hex_str.to_bytes<ByteNumbering>() | std::ranges::copy(bytes.begin());
-        return fixed_bytes<N, ByteNumbering>{bytes};
+        ranges::copy(hex_str.bytes<ByteNumbering>(), std::begin(bytes));
+        return fixed_bytes<N, ByteNumbering>::template from<ByteNumbering>(bytes);
     }
 };
 
