@@ -70,7 +70,7 @@ public:
     }
 
     template <byte_numbering ByteNumbering>
-    static auto to_bytes(std::string_view string_slice) -> expected<bytes, std::error_code> {
+    static auto to_bytes(std::string_view string_slice) -> expected<abc::bytes, std::error_code> {
         if (has_hex_prefix(string_slice)) {
             string_slice = string_slice.substr(2);
         }
@@ -79,7 +79,7 @@ public:
             return make_unexpected(make_error_code(std::errc::invalid_argument));
         }
 
-        bytes binary_data;
+        abc::bytes binary_data;
         binary_data.reserve((string_slice.size() + 1) / 2);
         if constexpr (ByteNumbering == byte_numbering::msb0) {
             if (string_slice.size() & 1) {
@@ -248,13 +248,13 @@ public:
     }
 
     template <byte_numbering ByteNumbering, std::enable_if_t<ByteNumbering == byte_numbering::lsb0> * = nullptr>
-    [[nodiscard]] constexpr auto to_bytes() const -> bytes const & {
+    [[nodiscard]] constexpr auto bytes() const -> abc::bytes const & {
         return binary_data_;
     }
 
     template <byte_numbering ByteNumbering, std::enable_if_t<ByteNumbering == byte_numbering::msb0> * = nullptr>
-    constexpr auto to_bytes() const -> bytes {
-        return binary_data_ | ranges::views::reverse | ranges::to<bytes>();
+    constexpr auto bytes() const -> abc::bytes {
+        return binary_data_ | ranges::views::reverse | ranges::to<abc::bytes>();
     }
 
     constexpr auto operator[](size_t const index) noexcept -> reference {

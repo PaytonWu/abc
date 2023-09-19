@@ -16,7 +16,7 @@ TEST(hex_string, from_string_view) {
     ASSERT_EQ(hex_string1.size(), hex_string1.length());
     ASSERT_EQ(hex_string1.size(), 22);
     ASSERT_EQ(hex_string1.bytes_size(), 11);
-    ASSERT_EQ(hex_string1.to_bytes<byte_numbering::msb0>(), (bytes{ 0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef, 0xab, 0xcd, 0xef }));
+    ASSERT_EQ(hex_string1.bytes<byte_numbering::msb0>(), (bytes{ 0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef, 0xab, 0xcd, 0xef }));
 
     auto const hex_string2 = hex_string::from("0x0123456789abcdefabcdef").value();
     ASSERT_EQ(std::strong_ordering::equal, hex_string1 <=> hex_string2);
@@ -29,7 +29,7 @@ TEST(hex_string, from_string_view) {
     ASSERT_EQ(hex_string3.size(), hex_string3.length());
     ASSERT_EQ(hex_string3.size(), 22);
     ASSERT_EQ(hex_string3.bytes_size(), 11);
-    ASSERT_EQ(hex_string3.to_bytes<byte_numbering::msb0>(), (bytes{ 0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef, 0xab, 0xcd, 0xef }));
+    ASSERT_EQ(hex_string3.bytes<byte_numbering::msb0>(), (bytes{ 0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef, 0xab, 0xcd, 0xef }));
 }
 
 TEST(hex_string, from_bytes) {
@@ -42,7 +42,7 @@ TEST(hex_string, from_bytes) {
     ASSERT_EQ(hex_string4.size(), hex_string4.length());
     ASSERT_EQ(hex_string4.size(), 32);
     ASSERT_EQ(hex_string4.bytes_size(), 16);
-    ASSERT_EQ(hex_string4.to_bytes<byte_numbering::msb0>(), bytes);
+    ASSERT_EQ(hex_string4.bytes<byte_numbering::msb0>(), bytes);
 }
 
 TEST(hex_string, from_bytes_zero) {
@@ -55,7 +55,7 @@ TEST(hex_string, from_bytes_zero) {
     ASSERT_EQ(hex_string4.size(), hex_string4.length());
     ASSERT_EQ(hex_string4.size(), 4);
     ASSERT_EQ(hex_string4.bytes_size(), 2);
-    ASSERT_EQ(hex_string4.to_bytes<byte_numbering::msb0>(), bytes);
+    ASSERT_EQ(hex_string4.bytes<byte_numbering::msb0>(), bytes);
 }
 
 TEST(hex_string, from_empty) {
@@ -68,7 +68,7 @@ TEST(hex_string, from_empty) {
     ASSERT_EQ(hex_string4.size(), hex_string4.length());
     ASSERT_EQ(hex_string4.size(), 0);
     ASSERT_EQ(hex_string4.bytes_size(), 0);
-    ASSERT_EQ(hex_string4.to_bytes<byte_numbering::lsb0>(), bytes);
+    ASSERT_EQ(hex_string4.bytes<byte_numbering::lsb0>(), bytes);
 }
 
 TEST(hex_string, operator_index) {
@@ -135,7 +135,7 @@ TEST(hex_string, from) {
     ASSERT_EQ(hex_string1.size(), hex_string1.length());
     ASSERT_EQ(hex_string1.size(), 22);
     ASSERT_EQ(hex_string1.bytes_size(), 11);
-    ASSERT_EQ(hex_string1.to_bytes<byte_numbering::msb0>(), (bytes{ 0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef, 0xab, 0xcd, 0xef }));
+    ASSERT_EQ(hex_string1.bytes<byte_numbering::msb0>(), (bytes{ 0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef, 0xab, 0xcd, 0xef }));
 }
 
 TEST(hex_string, from_invalid) {

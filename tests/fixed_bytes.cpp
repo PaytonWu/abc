@@ -166,7 +166,7 @@ TEST(fixed_bytes_le, hex_string) {
 }
 
 TEST(fixed_bytes_none, from) {
-    auto bytes = hex_string::from("0x1234567890").transform([](auto && hexstr) { return hexstr.template to_bytes<byte_numbering::msb0>(); }).value();
+    auto bytes = hex_string::from("0x1234567890").transform([](auto && hexstr) { return hexstr.template bytes<byte_numbering::msb0>(); }).value();
     auto result = fixed_bytes<5, byte_numbering::none>::from<byte_numbering::none>(bytes);
     EXPECT_TRUE(result.has_value());
     auto const & fixed_bytes = result.value();
