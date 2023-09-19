@@ -840,7 +840,7 @@ constexpr static auto from_hex_prefixed(std::string_view input) -> abc::expected
 
     return hex_string_to_binary<std::endian::big>(input).transform([](auto && bytes) {
         ranges::reverse(bytes);
-        return abc::hex_string::from_bytes(std::move(bytes), abc::byte_numbering::msb0);
+        return abc::hex_string::from<abc::byte_numbering::msb0>(std::move(bytes));
     });
 }
 

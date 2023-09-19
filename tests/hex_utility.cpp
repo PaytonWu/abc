@@ -126,7 +126,7 @@ TEST(hex_utility, hex_string_to_binary) {
         byte = static_cast<abc::byte>(distribution(rd));
     }
 
-    auto const hex_string = abc::hex_string::from_bytes(bytes, abc::byte_numbering::lsb0);
+    auto const hex_string = abc::hex_string::from<abc::byte_numbering::lsb0>(bytes);
     EXPECT_EQ(abc::hex_string::to_bytes<abc::byte_numbering::lsb0>(hex_string.to_string()), bytes);
     EXPECT_EQ(abc::hex_string::to_bytes<abc::byte_numbering::lsb0>(hex_string.to_string().substr(2)), bytes);
 }

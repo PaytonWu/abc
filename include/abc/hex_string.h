@@ -44,9 +44,10 @@ private:
     constexpr explicit hex_string(bytes && input) noexcept : binary_data_{std::move(input)} {
     }
 
-    constexpr explicit hex_string(std::span<byte const> const input, byte_numbering const bn) : binary_data_{
+    template <byte_numbering ByteNumbering>
+    constexpr explicit hex_string(std::span<byte const> const input, byte_numbering_t<ByteNumbering>) : binary_data_{
         std::begin(input), std::end(input)} {
-        if (bn == byte_numbering::msb0) {
+        if constexpr (ByteNumbering == byte_numbering::msb0) {
             ranges::reverse(binary_data_);
         }
     }
@@ -197,8 +198,9 @@ public:
     /// @return hex_string object or an error value.
     static auto from(std::string_view input) -> expected<hex_string, std::error_code>;
 
-    constexpr static auto from_bytes(std::span<byte const> const input, byte_numbering const bn) -> hex_string {
-        return hex_string{input, bn};
+    template <byte_numbering ByteNumbering>
+    constexpr static auto from(std::span<byte const> const input) -> hex_string {
+        return hex_string{input, byte_numbering_t<ByteNumbering>{}};
     }
 
     [[nodiscard]] auto operator==(hex_string const &) const noexcept -> bool = default;

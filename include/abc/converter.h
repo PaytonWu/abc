@@ -32,7 +32,7 @@ struct convert_to {
 template <size_t N, byte_numbering ByteNumbering>
 struct converter<hex_string, fixed_bytes<N, ByteNumbering>> {
     static auto from(fixed_bytes<N, ByteNumbering> const & fixed_bytes) -> abc::expected<hex_string, std::error_code> {
-        return abc::expected<hex_string, std::error_code>{ hex_string::from_bytes(fixed_bytes, ByteNumbering) };
+        return hex_string::from<ByteNumbering>(fixed_bytes);
     }
 };
 
@@ -40,12 +40,12 @@ template <size_t N, byte_numbering ByteNumbering>
 struct converter<fixed_bytes<N, ByteNumbering>, hex_string> {
     constexpr static auto from(hex_string const & hex_str) -> abc::expected<fixed_bytes<N, ByteNumbering>, std::error_code> {
         if (hex_str.size() != N * 2) {
-            return abc::unexpected{ make_error_code(std::errc::invalid_argument) };
+            return abc::make_unexpected(make_error_code(std::errc::invalid_argument));
         }
 
         std::array<byte, N> bytes{};
         hex_str.to_bytes<ByteNumbering>() | std::ranges::copy(bytes.begin());
-        return abc::expected<fixed_bytes<N, ByteNumbering>, std::error_code>{ fixed_bytes<N, ByteNumbering>{bytes} };
+        return fixed_bytes<N, ByteNumbering>{bytes};
     }
 };
 
