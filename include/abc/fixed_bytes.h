@@ -14,6 +14,7 @@
 #include <range/v3/algorithm/reverse.hpp>
 #include <range/v3/range/conversion.hpp>
 #include <range/v3/view/reverse.hpp>
+#include <range/v3/view/subrange.hpp>
 #include <range/v3/view/transform.hpp>
 
 #include <algorithm>
@@ -59,7 +60,6 @@ private:
 
     template <byte_numbering DataByteNumbering> requires (DataByteNumbering != ByteNumbering && DataByteNumbering != byte_numbering::none && ByteNumbering != byte_numbering::none)
     constexpr explicit fixed_bytes(std::array<byte, N> const & data, byte_numbering_t<DataByteNumbering>) {
-        // data | ranges::views::reverse | ranges::to(data_);
         ranges::copy(data | ranges::views::reverse, std::begin(data_));
     }
 
@@ -69,16 +69,20 @@ private:
     }
 
     template <byte_numbering DataByteNumbering> requires (DataByteNumbering != ByteNumbering && DataByteNumbering != byte_numbering::none && ByteNumbering != byte_numbering::none)
-    constexpr explicit fixed_bytes(std::array<std::byte, N> const & data, byte_numbering_t<DataByteNumbering>) : data_{ ranges::views::reverse(data) | ranges::views::transform([](auto const b) { return std::to_integer<byte>(b); }) | ranges::to<std::array<byte, N>>() } {
+    constexpr explicit fixed_bytes(std::array<std::byte, N> const & data, byte_numbering_t<DataByteNumbering>) {
+        ranges::copy(data | ranges::views::reverse | ranges::views::transform([](auto const b) { return std::to_integer<byte>(b); }), data_.begin());
     }
 
     template <byte_numbering DataByteNumbering> requires (DataByteNumbering == ByteNumbering)
     constexpr explicit fixed_bytes(std::span<byte const> const data, byte_numbering_t<DataByteNumbering>) {
+        assert(data.size() == N);
         ranges::copy(data, std::begin(data_));
     }
 
     template <byte_numbering DataByteNumbering> requires (DataByteNumbering != ByteNumbering && DataByteNumbering != byte_numbering::none && ByteNumbering != byte_numbering::none)
-    constexpr explicit fixed_bytes(std::span<byte const> const data, byte_numbering_t<DataByteNumbering>) : data_{ ranges::views::reverse(data) | ranges::to<std::array<byte, N>>() } {
+    constexpr explicit fixed_bytes(std::span<byte const> const data, byte_numbering_t<DataByteNumbering>) {
+        assert(data.size() == N);
+        ranges::copy(data | ranges::views::reverse, std::begin(data_));
     }
 
 public:
@@ -97,7 +101,8 @@ public:
     }
 
     template <byte_numbering ByteNumberingRhs> requires (ByteNumberingRhs != byte_numbering::none && ByteNumberingRhs != ByteNumbering)
-    constexpr explicit fixed_bytes(fixed_bytes<N, ByteNumberingRhs> const & rhs) : data_{ rhs.data_ | ranges::views::reverse | ranges::to<std::array<byte, N>>() } {
+    constexpr explicit fixed_bytes(fixed_bytes<N, ByteNumberingRhs> const & rhs) {
+        ranges::copy(rhs | ranges::views::reverse, data_.begin());
     }
 
     template <byte_numbering DataByteNumbering>

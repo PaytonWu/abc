@@ -27,6 +27,16 @@ TEST(fixed_bytes, copy_constructor) {
     EXPECT_EQ(bytes2[15], 2);
 }
 
+TEST(fixed_bytes, copy_constructor2) {
+    bytes16_msb0_t bytes;
+    bytes[0] = 1;
+    bytes[15] = 2;
+    bytes16_lsb0_t bytes2{ bytes };
+    EXPECT_EQ(bytes2.size(), 16);
+    EXPECT_EQ(bytes2[15], 1);
+    EXPECT_EQ(bytes2[0], 2);
+}
+
 TEST(fixed_bytes, move_constructor) {
     bytes16_msb0_t bytes;
     bytes[0] = 1;
