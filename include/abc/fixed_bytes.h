@@ -147,6 +147,26 @@ public:
         return data_[index];
     }
 
+    [[nodiscard]]
+    constexpr auto front() const noexcept -> const_reference {
+        return data_.front();
+    }
+
+    [[nodiscard]]
+    constexpr auto front() noexcept -> reference {
+        return data_.front();
+    }
+
+    [[nodiscard]]
+    constexpr auto back() const noexcept -> const_reference {
+        return data_.back();
+    }
+
+    [[nodiscard]]
+    constexpr auto back() noexcept -> reference {
+        return data_.back();
+    }
+
     constexpr auto begin() noexcept -> iterator {
         return data_.begin();
     }
