@@ -322,7 +322,7 @@ public:
     }
 
     [[nodiscard]]
-    constexpr auto subbytes(size_type pos, size_type n = static_cast<size_t>(-1)) -> bytes {
+    constexpr auto subbytes(size_type pos, size_type n = static_cast<size_t>(-1)) const -> bytes {
         size_type offset = (n < size() - pos) ? n : size() - pos;
 
         auto start = std::next(std::begin(data_), pos);
