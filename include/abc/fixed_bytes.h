@@ -6,9 +6,9 @@
 
 #pragma once
 
-#include <abc/byte.h>
-#include <abc/byte_bit_numbering.h>
-#include <abc/expected.h>
+#include "bytes.h"
+#include "byte_bit_numbering.h"
+#include "expected.h"
 
 #include <range/v3/algorithm/copy.hpp>
 #include <range/v3/algorithm/reverse.hpp>
@@ -125,6 +125,10 @@ public:
 
     template <byte_numbering DataByteNumbering>
     inline static auto from(std::span<byte const> data) -> expected<fixed_bytes, std::error_code> {
+        // TODO:
+        //  1. same size
+        //      1.1 byte numbering same
+        //      1.2 byte numbering different
         if (data.size() != N) {
             return make_unexpected(make_error_code(std::errc::invalid_argument));
         }
@@ -317,7 +321,18 @@ public:
         data_.fill(0);
     }
 
+    [[nodiscard]]
+    constexpr auto subbytes(size_type pos, size_type n = static_cast<size_t>(-1)) -> bytes {
+        size_type offset = (n < size() - pos) ? n : size() - pos;
+
+        auto start = std::next(std::begin(data_), pos);
+        auto end = std::next(start, offset);
+
+        return bytes{start, end};
+    }
+
 private:
+
     template <std::unsigned_integral T>
     constexpr static void to_little_endian(T value, internal_type & data) requires ((ByteNumbering == byte_numbering::lsb0) || (ByteNumbering == byte_numbering::msb0)) {
         for (auto i = 0u; i < std::min(sizeof(T), data.size()); value >>= 8, ++i) {

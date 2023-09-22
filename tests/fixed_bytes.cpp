@@ -176,3 +176,19 @@ TEST(fixed_bytes_none, from) {
     EXPECT_EQ(static_cast<byte>(0x78), fixed_bytes[3]);
     EXPECT_EQ(static_cast<byte>(0x90), fixed_bytes[4]);
 }
+
+TEST(fixed_bytes, subbytes) {
+    auto bytes15 = hex_string::from("0x123456789012345678901234567890").transform([](auto && hex) { return hex.template bytes<byte_numbering::msb0>(); })
+                                                                                           .and_then([](auto && bytes) { return fixed_bytes<15, byte_numbering::msb0>::from<byte_numbering::msb0>(bytes); })
+                                                                                           .value();
+    auto bytes8 = bytes15.subbytes(7);
+    // 5678901234567890
+    EXPECT_EQ(0x56, bytes8[0]);
+    EXPECT_EQ(0x78, bytes8[1]);
+    EXPECT_EQ(0x90, bytes8[2]);
+    EXPECT_EQ(0x12, bytes8[3]);
+    EXPECT_EQ(0x34, bytes8[4]);
+    EXPECT_EQ(0x56, bytes8[5]);
+    EXPECT_EQ(0x78, bytes8[6]);
+    EXPECT_EQ(0x90, bytes8[7]);
+}
