@@ -49,40 +49,56 @@ public:
     using const_reverse_iterator = typename internal_type::const_reverse_iterator;
 
 private:
-    constexpr explicit fixed_bytes(std::span<byte const> bytes) requires (ByteNumbering == byte_numbering::none) {
-        assert(bytes.size() == N);
-        ranges::copy(bytes, std::begin(data_));
+    template <byte_numbering SrcByteNumbering> requires (SrcByteNumbering == ByteNumbering)
+    constexpr explicit fixed_bytes(std::array<byte, N> const & src, byte_numbering_t<SrcByteNumbering>) : data_{ src } {
     }
 
-    template <byte_numbering DataByteNumbering> requires (DataByteNumbering == ByteNumbering)
-    constexpr explicit fixed_bytes(std::array<byte, N> const & data, byte_numbering_t<DataByteNumbering>) : data_{ data } {
+    template <byte_numbering SrcByteNumbering> requires (SrcByteNumbering != ByteNumbering && SrcByteNumbering != byte_numbering::none && ByteNumbering != byte_numbering::none)
+    constexpr explicit fixed_bytes(std::array<byte, N> const & src, byte_numbering_t<SrcByteNumbering>) {
+        ranges::copy(src | ranges::views::reverse, std::begin(data_));
     }
 
-    template <byte_numbering DataByteNumbering> requires (DataByteNumbering != ByteNumbering && DataByteNumbering != byte_numbering::none && ByteNumbering != byte_numbering::none)
-    constexpr explicit fixed_bytes(std::array<byte, N> const & data, byte_numbering_t<DataByteNumbering>) {
-        ranges::copy(data | ranges::views::reverse, std::begin(data_));
+    template <byte_numbering SrcByteNumbering> requires (SrcByteNumbering == ByteNumbering)
+    constexpr explicit fixed_bytes(std::array<std::byte, N> const & src, byte_numbering_t<SrcByteNumbering>) {
+        ranges::copy(src | ranges::views::transform([](auto const byte) { return std::to_integer<byte>(byte); }), data_.begin());
     }
 
-    template <byte_numbering DataByteNumbering> requires (DataByteNumbering == ByteNumbering)
-    constexpr explicit fixed_bytes(std::array<std::byte, N> const & data, byte_numbering_t<DataByteNumbering>) {
-        ranges::copy(data | ranges::views::transform([](auto const byte) { return std::to_integer<byte>(byte); }), data_.begin());
+    template <byte_numbering SrcByteNumbering> requires (SrcByteNumbering != ByteNumbering && SrcByteNumbering != byte_numbering::none && ByteNumbering != byte_numbering::none)
+    constexpr explicit fixed_bytes(std::array<std::byte, N> const & src, byte_numbering_t<SrcByteNumbering>) {
+        ranges::copy(src | ranges::views::reverse | ranges::views::transform([](auto const b) { return std::to_integer<byte>(b); }), data_.begin());
     }
 
-    template <byte_numbering DataByteNumbering> requires (DataByteNumbering != ByteNumbering && DataByteNumbering != byte_numbering::none && ByteNumbering != byte_numbering::none)
-    constexpr explicit fixed_bytes(std::array<std::byte, N> const & data, byte_numbering_t<DataByteNumbering>) {
-        ranges::copy(data | ranges::views::reverse | ranges::views::transform([](auto const b) { return std::to_integer<byte>(b); }), data_.begin());
+    template <byte_numbering SrcByteNumbering> requires (SrcByteNumbering == ByteNumbering)
+    constexpr explicit fixed_bytes(std::span<byte const> const src, byte_numbering_t<SrcByteNumbering>) : fixed_bytes{} {
+        if constexpr (ByteNumbering == byte_numbering::msb0) {
+            if (src.size() == N) {
+                ranges::copy(src, std::begin(data_));
+            } else if (src.size() > N) {
+                auto const bytes_begin = std::next(std::begin(src), static_cast<difference_type>(src.size() - N));
+                ranges::copy(bytes_begin, std::end(src), std::begin(data_));
+            } else {
+                assert(src.size() < N);
+                auto const data_begin = std::next(std::begin(data_), static_cast<difference_type>(N - src.size()));
+                ranges::copy(src, data_begin);
+            }
+        } else {
+            auto const end_pos = std::min(src.size(), N);
+            ranges::copy(std::begin(src), std::next(std::begin(src), static_cast<difference_type>(end_pos)), std::begin(data_));
+        }
     }
 
-    template <byte_numbering DataByteNumbering> requires (DataByteNumbering == ByteNumbering)
-    constexpr explicit fixed_bytes(std::span<byte const> const data, byte_numbering_t<DataByteNumbering>) {
-        assert(data.size() == N);
-        ranges::copy(data, std::begin(data_));
-    }
-
-    template <byte_numbering DataByteNumbering> requires (DataByteNumbering != ByteNumbering && DataByteNumbering != byte_numbering::none && ByteNumbering != byte_numbering::none)
-    constexpr explicit fixed_bytes(std::span<byte const> const data, byte_numbering_t<DataByteNumbering>) {
-        assert(data.size() == N);
-        ranges::copy(data | ranges::views::reverse, std::begin(data_));
+    template <byte_numbering SrcByteNumbering> requires (SrcByteNumbering != ByteNumbering && SrcByteNumbering != byte_numbering::none && ByteNumbering != byte_numbering::none)
+    constexpr explicit fixed_bytes(std::span<byte const> const src, byte_numbering_t<SrcByteNumbering>) : fixed_bytes{} {
+        if constexpr (ByteNumbering == byte_numbering::lsb0) {
+            auto const end_pos = std::min(src.size(), N);
+            auto src_reverse_view = src | ranges::views::reverse;
+            ranges::copy(std::begin(src_reverse_view), std::next(std::begin(src_reverse_view), static_cast<difference_type>(end_pos)), std::begin(data_));
+        } else {
+            assert(ByteNumbering == byte_numbering::msb0);
+            auto const end_pos = std::min(src.size(), N);
+            ranges::copy(std::begin(src), std::next(std::begin(src), static_cast<difference_type>(end_pos)), std::begin(data_));
+            ranges::reverse(data_);
+        }
     }
 
 public:
@@ -125,19 +141,42 @@ public:
 
     template <byte_numbering DataByteNumbering>
     inline static auto from(std::span<byte const> data) -> expected<fixed_bytes, std::error_code> {
-        // TODO:
-        //  1. same size
-        //      1.1 byte numbering same
-        //      1.2 byte numbering different
-        if (data.size() != N) {
+        if constexpr (DataByteNumbering != ByteNumbering && (DataByteNumbering == byte_numbering::none || ByteNumbering == byte_numbering::none)) {
             return make_unexpected(make_error_code(std::errc::invalid_argument));
         }
 
-        if constexpr (DataByteNumbering == ByteNumbering || (DataByteNumbering != byte_numbering::none && ByteNumbering != byte_numbering::none)) {
-            return fixed_bytes{ data, byte_numbering_t<DataByteNumbering>{} };
+        return fixed_bytes{ data, byte_numbering_t<DataByteNumbering>{} };
+    }
+
+    template <byte_numbering DataByteNumbering>
+    inline static auto from(std::span<byte const> data, int) -> expected<fixed_bytes, std::error_code> {
+        if constexpr (DataByteNumbering == ByteNumbering) {
+            if (data.size() == N) {
+                return fixed_bytes{ data, byte_numbering_t<DataByteNumbering>{} };
+            }
+
+            assert(data.size() != N);
+            if (data.size() < N) {
+
+            }
+            if (DataByteNumbering == byte_numbering::msb0) {
+
+            }
         }
 
-        return make_unexpected(make_error_code(std::errc::invalid_argument));
+
+        if (data.size() == N) {
+            if constexpr (DataByteNumbering == ByteNumbering || (DataByteNumbering != byte_numbering::none && ByteNumbering != byte_numbering::none)) {
+                return fixed_bytes{ data, byte_numbering_t<DataByteNumbering>{} };
+            }
+
+            return make_unexpected(make_error_code(std::errc::invalid_argument));
+        }
+
+        assert(data.size() != N);
+        if (data.size() < N) {
+
+        }
     }
 
     friend auto operator==(fixed_bytes const &, fixed_bytes const &) noexcept -> bool = default;
@@ -322,13 +361,15 @@ public:
     }
 
     [[nodiscard]]
-    constexpr auto subbytes(size_type pos, size_type n = static_cast<size_t>(-1)) const -> bytes {
-        size_type offset = (n < size() - pos) ? n : size() - pos;
+    inline auto subbytes(size_type pos, size_type n = static_cast<size_t>(-1)) const -> expected<std::span<byte const>, std::error_code> {
+        if (pos >= size()) {
+            return make_unexpected(make_error_code(std::errc::result_out_of_range));
+        }
 
         auto start = std::next(std::begin(data_), pos);
-        auto end = std::next(start, offset);
+        size_type offset = (n < size() - pos) ? n : size() - pos;
 
-        return bytes{start, end};
+        return std::span{start, offset};
     }
 
 private:
