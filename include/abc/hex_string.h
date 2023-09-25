@@ -35,8 +35,19 @@ namespace abc {
 ///        byte is `12`. If the hex string is "0xabc", then the beginning byte is
 ///        `bc` and the ending byte is `0a`.
 class [[nodiscard]] hex_string {
+public:
+    constexpr inline static auto prefix = "0x";
+    constexpr inline static auto prefix_uppercase = "0X";
+
+    using format = hex_string_format;
+    constexpr inline static auto default_format = hex_string_format::default_format;
+    constexpr inline static auto lower_case = hex_string_format::lower_case;
+    constexpr inline static auto upper_case = hex_string_format::upper_case;
+
+private:
     bytes binary_data_;
 
+    // constructors
 public:
     hex_string() = default;
 
@@ -45,19 +56,18 @@ private:
     }
 
     template <byte_numbering ByteNumbering>
-    constexpr explicit hex_string(std::span<byte const> const input, byte_numbering_t<ByteNumbering>) : binary_data_{
-        std::begin(input), std::end(input)} {
+    constexpr explicit hex_string(std::span<byte const> const input, byte_numbering_t<ByteNumbering>)
+        : binary_data_{ std::begin(input), std::end(input) } {
         if constexpr (ByteNumbering == byte_numbering::msb0) {
             ranges::reverse(binary_data_);
         }
     }
 
 public:
-    constexpr inline static auto prefix = "0x";
-    constexpr inline static auto prefix_uppercase = "0X";
-
-public:
     // utilities
+    /// @brief check if the input string is a valid hex string.
+    /// @param string_slice input string slice to check.
+    /// @return true if the input string is a valid hex string, otherwise false.
     [[nodiscard]] constexpr static auto is_hex(std::string_view string_slice) noexcept -> bool {
         if (has_hex_prefix(string_slice)) {
             string_slice = string_slice.substr(2);
@@ -66,10 +76,17 @@ public:
         return is_hex_without_prefix(string_slice);
     }
 
+    /// @brief check if the input string has the prefix. this function doesn't check if the input string is a valid hex string, it only checks the prefix.
+    /// @param string_slice input string slice to check.
+    /// @return true if the input string has the prefix, otherwise false.
     [[nodiscard]] constexpr static auto has_hex_prefix(std::string_view const string_slice) noexcept -> bool {
         return string_slice.starts_with(prefix) || string_slice.starts_with(prefix_uppercase);
     }
 
+    /// @brief convert a hex string to binary bytes.
+    /// @tparam ByteNumbering specify the byte numbering of the output bytes.
+    /// @param string_slice input hex string slice.
+    /// @return bytes object or an error code object.
     template <byte_numbering ByteNumbering>
     static auto to_bytes(std::string_view string_slice) -> expected<abc::bytes, std::error_code> {
         if (has_hex_prefix(string_slice)) {
@@ -122,7 +139,7 @@ public:
     }
 
 public:
-    class const_reference {
+    class [[nodiscard]] const_reference {
     protected:
         friend class hex_string;
 
@@ -139,19 +156,13 @@ public:
     public:
         constexpr const_reference() noexcept = delete;
 
-        constexpr const_reference(const_reference const &) noexcept = default;
-        constexpr const_reference(const_reference &&) noexcept = default;
-        constexpr auto operator=(const_reference const &) noexcept -> const_reference & = default;
-        constexpr auto operator=(const_reference &&) noexcept -> const_reference & = default;
-        constexpr ~const_reference() noexcept = default;
-
         constexpr operator char() const noexcept {
             assert(str_ != nullptr);
             return hex_utility::lower_case_hex_digits[(str_->binary_data_[byte_index_] >> (static_cast<size_t>(high_) * 4)) & 0x0f];
         }
     };
 
-    class reference : public const_reference {
+    class [[nodiscard]] reference : public const_reference {
         friend class hex_string;
 
         constexpr reference(hex_string * str, size_t const nibble_index) noexcept
@@ -160,12 +171,6 @@ public:
 
     public:
         constexpr reference() noexcept = delete;
-
-        constexpr reference(reference const &) noexcept = default;
-        constexpr reference(reference &&) noexcept = default;
-        constexpr auto operator=(reference const &) noexcept -> reference & = default;
-        constexpr auto operator=(reference &&) noexcept -> reference & = default;
-        constexpr ~reference() noexcept = default;
 
         constexpr auto operator=(char const value) -> reference & {
             assert(str_ != nullptr);
@@ -188,16 +193,15 @@ public:
         }
     };
 
-    using format = hex_string_format;
-    constexpr inline static auto default_format = hex_string_format::default_format;
-    constexpr inline static auto lower_case = hex_string_format::lower_case;
-    constexpr inline static auto upper_case = hex_string_format::upper_case;
-
     /// @brief construct hex_string object from a hex string. always treat the input hex string msb0.
     /// @param input string in various forms even it's not a hex form.
     /// @return hex_string object or an error value.
     static auto from(std::string_view input) -> expected<hex_string, std::error_code>;
 
+    /// @brief construct hex_string object from a byte buffer.
+    /// @tparam ByteNumbering specify the byte numbering of the input bytes.
+    /// @param input input byte buffer.
+    /// @return the constructed hex_string object.
     template <byte_numbering ByteNumbering>
     constexpr static auto from(std::span<byte const> const input) -> hex_string {
         return hex_string{input, byte_numbering_t<ByteNumbering>{}};
@@ -206,6 +210,9 @@ public:
     [[nodiscard]] auto operator==(hex_string const &) const noexcept -> bool = default;
     [[nodiscard]] auto operator<=>(hex_string const &) const noexcept -> std::strong_ordering = default;
 
+    /// @brief convert the hex string to a standard string with prefix 0x or 0X.
+    /// @param fmt the output format.
+    /// @return a standard string with proper prefix.
     [[nodiscard]] constexpr auto to_string(hex_string_format const fmt = default_format) const -> std::string {
         std::span data_span{binary_data_};
         std::string r;
@@ -229,56 +236,82 @@ public:
         return r;
     }
 
+    /// @brief check if the hex string is empty.
+    /// @return true if the hex string is empty, otherwise false.
     [[nodiscard]] constexpr auto empty() const noexcept -> bool {
         return binary_data_.empty();
     }
 
+    /// @brief get the size of the hex string in bytes.
+    /// @return the byte size of the hex string.
     [[nodiscard]] constexpr auto bytes_size() const noexcept -> size_t {
         return binary_data_.size();
     }
 
+    /// @brief get the size of the hex string in nibbles.
+    /// @return the nibble size of the hex string.
     [[nodiscard]] constexpr auto size() const noexcept -> size_t {
         return (binary_data_.size() << 1);
     }
 
+    /// @brief get the length of the hex string in nibbles.
     [[nodiscard]] constexpr auto length() const noexcept -> size_t {
         return size();
     }
 
-    constexpr void swap(hex_string & other) noexcept {
-        binary_data_.swap(other.binary_data_);
+    /// @brief swap the content of two hex string objects.
+    /// @param rhs the other hex string object.
+    constexpr auto swap(hex_string & rhs) noexcept {
+        binary_data_.swap(rhs.binary_data_);
     }
 
+    /// @brief get the byte buffer of the hex string in little endian format.
     template <byte_numbering ByteNumbering, std::enable_if_t<ByteNumbering == byte_numbering::lsb0> * = nullptr>
     [[nodiscard]] constexpr auto bytes() const -> abc::bytes const & {
         return binary_data_;
     }
 
-    template <byte_numbering ByteNumbering, std::enable_if_t<ByteNumbering == byte_numbering::msb0> * = nullptr>
+    /// @brief get the byte buffer of the hex string in big endian format.
+    template <byte_numbering ByteNumbering, std::enable_if_t<(ByteNumbering == byte_numbering::msb0 || ByteNumbering == byte_numbering::none)> * = nullptr>
     constexpr auto bytes() const -> abc::bytes {
         return binary_data_ | ranges::views::reverse | ranges::to<abc::bytes>();
     }
 
-    template <byte_numbering ByteNumbering> requires (ByteNumbering == byte_numbering::none)
-    constexpr auto bytes() const -> abc::bytes {
-        // since it's hex string object and can be used to represent a hex number and a number presentation
-        // is always msb0. thus when converting a hex to bytes with out byte numbering, defaults to msb0.
-        return bytes<byte_numbering::msb0>();
-    }
-
+    /// @brief get the modifiable nibble at the specified index.
+    /// @param index the nibble index.
+    /// @return reference to the nibble.
     constexpr auto operator[](size_t const index) noexcept -> reference {
         return reference{this, index};
     }
 
+    /// @brief get the non-modifiable nibble at the specified index.
+    /// @param index the nibble index.
+    /// @return const reference to the nibble.
     constexpr auto operator[](size_t const index) const noexcept -> const_reference {
         return const_reference{this, index};
     }
 
+    /// @brief get the least significant byte.
+    /// @return the byte value of the least significant byte.
     [[nodiscard]] constexpr auto least_significant_byte() const noexcept -> byte {
         return binary_data_.front();
     }
 
+    /// @brief get the least significant byte.
+    /// @return the byte reference of the least significant byte.
+    [[nodiscard]] constexpr auto least_significant_byte() noexcept -> byte & {
+        return binary_data_.front();
+    }
+
+    /// @brief get the most significant byte.
+    /// @return the byte value of the most significant byte.
     [[nodiscard]] constexpr auto most_significant_byte() const noexcept -> byte {
+        return binary_data_.back();
+    }
+
+    /// @brief get the most significant byte.
+    /// @return the byte reference of the most significant byte.
+    [[nodiscard]] constexpr auto most_significant_byte() noexcept -> byte & {
         return binary_data_.back();
     }
 
