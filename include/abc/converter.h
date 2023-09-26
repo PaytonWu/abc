@@ -12,6 +12,7 @@
 
 #include <range/v3/algorithm/copy.hpp>
 
+#include <concepts>
 #include <system_error>
 
 namespace abc {
@@ -48,6 +49,20 @@ struct converter<fixed_bytes<N, ByteNumbering>, hex_string> {
         std::array<byte, N> bytes{};
         ranges::copy(hex_str.bytes<ByteNumbering>(), std::begin(bytes));
         return fixed_bytes<N, ByteNumbering>::template from<ByteNumbering>(bytes);
+    }
+};
+
+template <byte_numbering ByteNumbering, std::integral T>
+struct converter<bytes_with<ByteNumbering>, T> {
+    constexpr static auto from(T const & num) -> abc::expected<bytes_with<ByteNumbering>, std::error_code> {
+        return bytes_with<ByteNumbering>::from(num);
+    }
+};
+
+template <std::integral T, byte_numbering ByteNumbering>
+struct converter<T, bytes_with<ByteNumbering>> {
+    constexpr static auto from(bytes_with<ByteNumbering> const & number_bytes) -> abc::expected<T, std::error_code> {
+        return number_bytes.to<T>();
     }
 };
 
