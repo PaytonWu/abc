@@ -57,7 +57,7 @@ if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang" OR "${CMAKE_CXX_COMPILER_ID}" MAT
 
     if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU")
         add_compile_options(-Wsuggest-final-methods -Wsuggest-final-types -Wsuggest-override)
-        add_compile_definitions($<$<CONFIG:Debug>:_GLIBCXX_DEBUG>)
+        add_compile_definitions($<$<CONFIG:Debug>:_GLIBCXX_ASSERTIONS>)
         add_compile_definitions($<$<CONFIG:Debug>:_GLIBCXX_DEBUG_PEDANTIC>)
     endif()
 

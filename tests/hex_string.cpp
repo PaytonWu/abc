@@ -1,7 +1,9 @@
 // Copyright(c) 2023 - present, Payton Wu (payton.wu@outlook.com) & abc contributors.
 // Distributed under the MIT License (http://opensource.org/licenses/MIT)
 
-#include "abc/hex_string.h"
+#include <abc/converter.h>
+#include <abc/fixed_bytes.h>
+#include <abc/hex_string.h>
 
 #include <gtest/gtest.h>
 
@@ -141,4 +143,11 @@ TEST(hex_string, from) {
 TEST(hex_string, from_invalid) {
     auto const result = hex_string::from("0123456789abcdefABCDEFX");
     ASSERT_FALSE(result.has_value());
+}
+
+TEST(hex_string, from_private_key) {
+    auto const & hex_string = abc::hex_string::from("c67a31aca1e2bad8469003930c6d08f80f5087720d2276d3c85ad74d3297adec");
+    ASSERT_TRUE(hex_string.has_value());
+    auto const & private_key_bytes_or_error = hex_string.and_then([](auto && hex_str) { return abc::convert_to<abc::bytes32_be_t>::from(hex_str); });
+    ASSERT_TRUE(private_key_bytes_or_error.has_value());
 }
