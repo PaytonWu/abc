@@ -106,6 +106,12 @@ abc_category() noexcept -> std::error_category const & {
 
                 case errc::fix_bytes_invalid_argument:
                     return "invalid argument for constructing fix_bytes";
+
+                case errc::span_built_from_rvalue:
+                    return "span built from rvalue";
+
+                default:
+                    return "unknown error";
             }
 
             abc::unreachable();

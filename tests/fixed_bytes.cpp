@@ -178,10 +178,11 @@ TEST(fixed_bytes_none, from) {
 }
 
 TEST(fixed_bytes, subbytes) {
-    auto bytes15 = hex_string::from("0x123456789012345678901234567890").transform([](auto && hex) { return hex.template bytes<byte_numbering::msb0>(); })
-                                                                       .and_then([](auto && bytes) { return fixed_bytes<15, byte_numbering::msb0>::from<byte_numbering::msb0>(bytes); });
-    ASSERT_TRUE(bytes15.has_value());
-    auto bytes8 = bytes15.and_then([](auto && bytes) { return bytes.subbytes(7); }).value();
+    auto const & result = hex_string::from("0x123456789012345678901234567890").transform([](auto && hex) { return hex.template bytes<byte_numbering::msb0>(); })
+                                                                       .and_then([](auto && bytes) { return fixed_bytes<15, byte_numbering::msb0>::from<byte_numbering::msb0>(bytes); })
+                                                                       .and_then([](auto && bytes) { return bytes.subbytes(7); });
+    ASSERT_TRUE(result.has_value());
+    auto const & bytes8 = result.value();
     // 5678901234567890
     EXPECT_EQ(0x56, bytes8[0]);
     EXPECT_EQ(0x78, bytes8[1]);
@@ -194,11 +195,10 @@ TEST(fixed_bytes, subbytes) {
 }
 
 TEST(fixed_bytes, subbytes_error) {
-    auto bytes15 = hex_string::from("0x123456789012345678901234567890").transform([](auto && hex) { return hex.template bytes<byte_numbering::msb0>(); })
-                                                                       .and_then([](auto && bytes) { return fixed_bytes<15, byte_numbering::msb0>::from<byte_numbering::msb0>(bytes); });
-    ASSERT_TRUE(bytes15.has_value());
-    auto bytes8 = bytes15.and_then([](auto && bytes) { return bytes.subbytes(15); });
-    ASSERT_TRUE(bytes8.is_err());
+    auto result = hex_string::from("0x123456789012345678901234567890").transform([](auto && hex) { return hex.template bytes<byte_numbering::msb0>(); })
+                                                                       .and_then([](auto && bytes) { return fixed_bytes<15, byte_numbering::msb0>::from<byte_numbering::msb0>(bytes); })
+                                                                       .and_then([](auto && bytes) { return bytes.subbytes(15); });
+    ASSERT_TRUE(result.is_err());
 }
 
 TEST(fixed_bytes, be_from_be) {
@@ -277,4 +277,52 @@ TEST(fixed_bytes, le_from_le) {
     EXPECT_EQ(0x12, bytes32[14]);
     EXPECT_EQ(0x00, bytes32[15]);
     EXPECT_EQ(0x00, bytes32[16]);
+}
+
+TEST(fixed_bytes, subspan_lvalue) {
+    auto bytes15 = hex_string::from("0x123456789012345678901234567890").transform([](auto && hex) { return hex.template bytes<byte_numbering::msb0>(); })
+                                                                       .and_then([](auto && bytes) { return fixed_bytes<15, byte_numbering::msb0>::from<byte_numbering::msb0>(bytes); });
+    ASSERT_TRUE(bytes15.has_value());
+    auto const span8 = bytes15.and_then([](auto && bytes) { return bytes.subspan(7); }).value();
+    // 5678901234567890
+    EXPECT_EQ(0x56, span8[0]);
+    EXPECT_EQ(0x78, span8[1]);
+    EXPECT_EQ(0x90, span8[2]);
+    EXPECT_EQ(0x12, span8[3]);
+    EXPECT_EQ(0x34, span8[4]);
+    EXPECT_EQ(0x56, span8[5]);
+    EXPECT_EQ(0x78, span8[6]);
+    EXPECT_EQ(0x90, span8[7]);
+}
+
+bytes8_be_t get_bytes8() {
+    return bytes8_be_t{ 0x0102030405060708U };
+}
+
+TEST(fixed_bytes, subspan_rvalue) {
+    {
+        auto result = hex_string::from("0x123456789012345678901234567890").transform([](auto && hex) { return hex.template bytes<byte_numbering::msb0>(); })
+                                                                          .and_then([](auto && bytes) { return fixed_bytes<15, byte_numbering::msb0>::from<byte_numbering::msb0>(bytes); })
+                                                                          .and_then([](auto && bytes) { return std::forward<std::remove_reference_t<decltype(bytes)>>(bytes).subspan(7); });
+        ASSERT_TRUE(result.is_err());
+    }
+
+    {
+        auto result = hex_string::from("0x123456789012345678901234567890").transform([](auto const && hex) { return hex.template bytes<byte_numbering::msb0>(); })
+                                                                          .and_then([](auto const && bytes) { return fixed_bytes<15, byte_numbering::msb0>::from<byte_numbering::msb0>(bytes); })
+                                                                          .and_then([](auto const && bytes) { return std::forward<std::remove_reference_t<decltype(bytes)> const>(bytes).subspan(7); });
+        ASSERT_TRUE(result.is_err());
+    }
+
+    {
+        auto result = hex_string::from("0x123456789012345678901234567890").transform([](auto && hex) { return hex.template bytes<byte_numbering::msb0>(); })
+                                                                          .and_then([](auto && bytes) { return fixed_bytes<15, byte_numbering::msb0>::from<byte_numbering::msb0>(bytes); })
+                                                                          .and_then([](auto && bytes) { return std::forward<std::remove_reference_t<decltype(bytes)>>(bytes).subspan(7); });
+        ASSERT_TRUE(result.is_err());
+    }
+
+    {
+        auto result = get_bytes8().subspan(1);
+        ASSERT_TRUE(result.is_err());
+    }
 }

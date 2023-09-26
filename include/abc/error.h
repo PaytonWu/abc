@@ -49,6 +49,7 @@ enum class errc {
     invalid_bit_numbering,
     bad_expected_access,
     fix_bytes_invalid_argument,
+    span_built_from_rvalue,
 };
 
 auto make_error_code(errc ec) noexcept -> std::error_code;

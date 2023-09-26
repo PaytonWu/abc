@@ -360,8 +360,20 @@ public:
         data_.fill(0);
     }
 
-    [[nodiscard]]
-    inline auto subbytes(size_type pos, size_type n = static_cast<size_t>(-1)) const -> expected<std::span<byte const>, std::error_code> {
+    inline auto subbytes(size_type pos, size_type n = static_cast<size_t>(-1)) const -> expected<bytes, std::error_code> {
+        if (pos >= size()) {
+            return make_unexpected(make_error_code(std::errc::result_out_of_range));
+        }
+
+        size_type offset = (n < size() - pos) ? n : size() - pos;
+
+        auto start = std::next(std::begin(data_), pos);
+        auto end = std::next(start, offset);
+
+        return abc::bytes{start, end};
+    }
+
+    inline auto subspan(size_type pos, size_type n = static_cast<size_t>(-1)) & -> expected<std::span<byte>, std::error_code> {
         if (pos >= size()) {
             return make_unexpected(make_error_code(std::errc::result_out_of_range));
         }
@@ -370,6 +382,29 @@ public:
         size_type offset = (n < size() - pos) ? n : size() - pos;
 
         return std::span{start, offset};
+    }
+
+    /// @brief make span from rvalue fixed_bytes. not allowed.
+    /// @return an std::error_code with errc::span_built_from_rvalue.
+    inline auto subspan(size_type, size_type = static_cast<size_t>(-1)) && -> expected<std::span<byte>, std::error_code> {
+        return make_unexpected(make_error_code(errc::span_built_from_rvalue));
+    }
+
+    inline auto subspan(size_type pos, size_type n = static_cast<size_t>(-1)) const & -> expected<std::span<byte const>, std::error_code> {
+        if (pos >= size()) {
+            return make_unexpected(make_error_code(std::errc::result_out_of_range));
+        }
+
+        auto start = std::next(std::begin(data_), pos);
+        size_type offset = (n < size() - pos) ? n : size() - pos;
+
+        return std::span{start, offset};
+    }
+
+    /// @brief make span from rvalue fixed_bytes. not allowed.
+    /// @return an std::error_code with errc::span_built_from_rvalue.
+    inline auto subspan(size_type, size_type = static_cast<size_t>(-1)) const && -> expected<std::span<byte const>, std::error_code> {
+        return make_unexpected(make_error_code(errc::span_built_from_rvalue));
     }
 
 private:
