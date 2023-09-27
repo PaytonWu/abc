@@ -736,7 +736,7 @@ public:
 
     constexpr auto
     operator=(expected && other) noexcept(std::conjunction_v<std::is_nothrow_move_constructible<T>, std::is_nothrow_move_assignable<T>, std::is_nothrow_move_constructible<E>, std::is_nothrow_move_assignable<E>>) -> expected &
-                               requires std::is_move_constructible_v<T> && std::is_move_assignable_v<T> && std::is_move_constructible_v<E> && std::is_move_assignable_v<E> && (std::is_nothrow_move_constructible_v<T> || std::is_nothrow_move_constructible_v<E>) {
+                                 requires std::is_move_constructible_v<T> && std::is_move_assignable_v<T> && std::is_move_constructible_v<E> && std::is_move_assignable_v<E> && (std::is_nothrow_move_constructible_v<T> || std::is_nothrow_move_constructible_v<E>) {
         if (other.has_value_) {
             this->assign_value(std::move(other.val_));
         } else {

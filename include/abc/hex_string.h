@@ -14,8 +14,10 @@
 #include <abc/hex_utility.h>
 
 #include <fmt/format.h>
-#include <range/v3/range/conversion.hpp>
 #include <range/v3/algorithm/reverse.hpp>
+#include <range/v3/range/conversion.hpp>
+#include <range/v3/view/reverse.hpp>
+#include <range/v3/view/transform.hpp>
 
 #include <bit>
 #include <cassert>
@@ -45,22 +47,19 @@ public:
     constexpr inline static auto upper_case = hex_string_format::upper_case;
 
 private:
-    bytes binary_data_;
+    bytes_le_t binary_data_;
 
     // constructors
 public:
     hex_string() = default;
 
-private:
-    constexpr explicit hex_string(bytes && input) noexcept : binary_data_{std::move(input)} {
+    constexpr explicit hex_string(bytes_le_t && input) noexcept : binary_data_{std::move(input)} {
     }
 
+private:
     template <byte_numbering ByteNumbering>
-    constexpr explicit hex_string(std::span<byte const> const input, byte_numbering_t<ByteNumbering>)
-        : binary_data_{ std::begin(input), std::end(input) } {
-        if constexpr (ByteNumbering == byte_numbering::msb0) {
-            ranges::reverse(binary_data_);
-        }
+    constexpr explicit hex_string(std::span<byte const> const input, byte_numbering_type<ByteNumbering>)
+        : binary_data_{ bytes_le_t::from<ByteNumbering>(std::begin(input), std::end(input)) } {
     }
 
 public:
@@ -88,7 +87,7 @@ public:
     /// @param string_slice input hex string slice.
     /// @return bytes object or an error code object.
     template <byte_numbering ByteNumbering>
-    static auto to_bytes(std::string_view string_slice) -> expected<abc::bytes, std::error_code> {
+    static auto to_bytes(std::string_view string_slice) -> expected<bytes<ByteNumbering>, std::error_code> {
         if (has_hex_prefix(string_slice)) {
             string_slice = string_slice.substr(2);
         }
@@ -97,7 +96,7 @@ public:
             return make_unexpected(make_error_code(std::errc::invalid_argument));
         }
 
-        abc::bytes binary_data;
+        abc::bytes<ByteNumbering> binary_data;
         binary_data.reserve((string_slice.size() + 1) / 2);
         if constexpr (ByteNumbering == byte_numbering::msb0) {
             if (string_slice.size() & 1) {
@@ -204,7 +203,15 @@ public:
     /// @return the constructed hex_string object.
     template <byte_numbering ByteNumbering>
     constexpr static auto from(std::span<byte const> const input) -> hex_string {
-        return hex_string{input, byte_numbering_t<ByteNumbering>{}};
+        return hex_string{ input, byte_numbering_type<ByteNumbering>{} };
+    }
+
+    constexpr static auto from(bytes_be_t const & input) -> hex_string {
+        return hex_string{ bytes_le_t{ input } };
+    }
+
+    constexpr static auto from(bytes_le_t input) -> hex_string {
+        return hex_string{ std::move(input) };
     }
 
     [[nodiscard]] auto operator==(hex_string const &) const noexcept -> bool = default;
@@ -221,10 +228,10 @@ public:
 
         if (abc::lower_case(fmt)) {
             r.append(prefix);
-            std::ranges::for_each(data_span | std::views::reverse | std::views::transform([&hex](auto const byte) mutable { assert(hex[2] == 0); hex[0] = hex_utility::lower_case_hex_digits[byte >> 4], hex[1] = hex_utility::lower_case_hex_digits[byte & 0x0f]; return hex.data(); }), [&r](auto const * c_str) { r.append(c_str); });
+            std::ranges::for_each(data_span | ranges::views::reverse | ranges::views::transform([&hex](auto const byte) mutable { assert(hex[2] == 0); hex[0] = hex_utility::lower_case_hex_digits[byte >> 4], hex[1] = hex_utility::lower_case_hex_digits[byte & 0x0f]; return hex.data(); }), [&r](auto const * c_str) { r.append(c_str); });
         } else if (abc::upper_case(fmt)) {
             r.append(prefix_uppercase);
-            std::ranges::for_each(data_span | std::views::reverse | std::views::transform([&hex](auto const byte) mutable { assert(hex[2] == 0); hex[0] = hex_utility::upper_case_hex_digits[byte >> 4], hex[1] = hex_utility::upper_case_hex_digits[byte & 0x0f]; return hex.data(); }), [&r](auto const * c_str) { r.append(c_str); });
+            std::ranges::for_each(data_span | ranges::views::reverse | ranges::views::transform([&hex](auto const byte) mutable { assert(hex[2] == 0); hex[0] = hex_utility::upper_case_hex_digits[byte >> 4], hex[1] = hex_utility::upper_case_hex_digits[byte & 0x0f]; return hex.data(); }), [&r](auto const * c_str) { r.append(c_str); });
         } else {
             assert(false);
         }
@@ -266,15 +273,15 @@ public:
     }
 
     /// @brief get the byte buffer of the hex string in little endian format.
-    template <byte_numbering ByteNumbering, std::enable_if_t<ByteNumbering == byte_numbering::lsb0> * = nullptr>
-    [[nodiscard]] constexpr auto bytes() const -> abc::bytes const & {
+    template <byte_numbering ByteNumbering> requires(ByteNumbering == byte_numbering::lsb0)
+    [[nodiscard]] constexpr auto bytes() const -> abc::bytes<ByteNumbering> const & {
         return binary_data_;
     }
 
     /// @brief get the byte buffer of the hex string in big endian format.
-    template <byte_numbering ByteNumbering, std::enable_if_t<(ByteNumbering == byte_numbering::msb0 || ByteNumbering == byte_numbering::none)> * = nullptr>
-    constexpr auto bytes() const -> abc::bytes {
-        return binary_data_ | ranges::views::reverse | ranges::to<abc::bytes>();
+    template <byte_numbering ByteNumbering> requires(ByteNumbering == byte_numbering::msb0)
+    constexpr auto bytes() const -> abc::bytes<ByteNumbering> {
+        return abc::bytes<ByteNumbering>{ binary_data_ };
     }
 
     /// @brief get the modifiable nibble at the specified index.

@@ -11,7 +11,7 @@ using namespace abc;
 
 TEST(xbytes_endian_t, constructor_il) {
     {
-        bytes_msb0_t bytes{ 0x01, 0x02, 0x03, 0x04 };
+        bytes_msb0_t bytes = bytes_be_t::from<byte_numbering::msb0>({ 0x01, 0x02, 0x03, 0x04 });
         EXPECT_EQ(bytes[0], 0x01);
         EXPECT_EQ(bytes[1], 0x02);
         EXPECT_EQ(bytes[2], 0x03);
@@ -134,4 +134,13 @@ TEST(xbytes_endian_t, construct_uint) {
         EXPECT_EQ(bytes[7], 0x01);
         EXPECT_EQ(bytes.size(), 8);
     }
+}
+
+TEST(xbytes_endian_t, from_negtive_int) {
+    bytes_lsb0_t bytes = bytes_lsb0_t::from(-1);
+    EXPECT_EQ(bytes[0], 0xff);
+    EXPECT_EQ(bytes[1], 0xff);
+    EXPECT_EQ(bytes[2], 0xff);
+    EXPECT_EQ(bytes[3], 0xff);
+    EXPECT_EQ(bytes.size(), 4);
 }

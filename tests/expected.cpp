@@ -1,14 +1,13 @@
 // Copyright(c) 2023 - present, Payton Wu (payton.wu@outlook.com) & abc contributors.
 // Distributed under the MIT License (http://opensource.org/licenses/MIT)
 
-#include "abc/expected.h"
-#include "abc/bytes.h"
-#include "abc/hex_utility.h"
-#include "abc/hex_string.h"
+#include <abc/byte_bit_numbering.h>
+#include <abc/bytes.h>
+#include <abc/expected.h>
+#include <abc/hex_string.h>
+#include <abc/hex_utility.h>
 
 #include <gtest/gtest.h>
-
-#include <bit>
 
 TEST(expected, default_constructor) {
     enum class errc{};
@@ -780,7 +779,7 @@ TEST(expected, err) {
 
 namespace wrapper {
 template <std::endian Endian>
-constexpr auto hex_string_to_binary(std::string_view string_slice) -> abc::expected<abc::bytes, abc::errc> {
+constexpr auto hex_string_to_binary(std::string_view string_slice) -> abc::expected<abc::bytes<abc::endian_type<Endian>::byte_numbering>, abc::errc> {
     if (abc::hex_string::has_hex_prefix(string_slice)) {
         string_slice.remove_prefix(2);
     }
@@ -789,7 +788,7 @@ constexpr auto hex_string_to_binary(std::string_view string_slice) -> abc::expec
         return abc::unexpected{abc::errc::invalid_hex_char};
     }
 
-    abc::bytes binary_data;
+    abc::bytes<abc::endian_type<Endian>::byte_numbering> binary_data;
     binary_data.reserve((string_slice.size() + 1) / 2);
     if constexpr (Endian == std::endian::big) {
         if (string_slice.size() & 1) {
@@ -846,10 +845,10 @@ constexpr static auto from_hex_prefixed(std::string_view input) -> abc::expected
 
 }  // namespace wrapper
 
-inline auto func(std::string_view) -> abc::expected<abc::bytes, abc::errc> {
-    abc::bytes bytes{1, 2, 3};
-    return bytes;
-}
+//inline auto func(std::string_view) -> abc::expected<abc::bytes, abc::errc> {
+//    abc::bytes bytes{1, 2, 3};
+//    return bytes;
+//}
 
 TEST(expected, transform_lambda) {
     {

@@ -119,7 +119,7 @@ TEST(hex_utility, hex_char) {
 TEST(hex_utility, hex_string_to_binary) {
     std::random_device rd;
     std::uniform_int_distribution distribution{ 0, 255 };
-    abc::bytes bytes;
+    abc::bytes_le_t bytes;
 
     bytes.resize(std::uniform_int_distribution<size_t>{0u, 5000u}(rd));
     for (auto & byte : bytes) {

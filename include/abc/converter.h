@@ -19,7 +19,7 @@ namespace abc {
 
 template <typename OutputT, typename InputT>
 struct converter {
-    static auto from(InputT const & input) -> abc::expected<OutputT, std::error_code> {
+    inline static auto from(InputT const & input) -> abc::expected<OutputT, std::error_code> {
         return static_cast<OutputT>(input);
     }
 };
@@ -27,21 +27,21 @@ struct converter {
 template <typename OutputT>
 struct convert_to {
     template <typename InputT>
-    static auto from(InputT const & input) -> abc::expected<OutputT, std::error_code> {
+    inline static auto from(InputT const & input) -> abc::expected<OutputT, std::error_code> {
         return converter<OutputT, InputT>::from(input);
     }
 };
 
 template <size_t N, byte_numbering ByteNumbering>
 struct converter<hex_string, fixed_bytes<N, ByteNumbering>> {
-    static auto from(fixed_bytes<N, ByteNumbering> const & fixed_bytes) -> abc::expected<hex_string, std::error_code> {
+    inline static auto from(fixed_bytes<N, ByteNumbering> const & fixed_bytes) -> abc::expected<hex_string, std::error_code> {
         return hex_string::from<ByteNumbering>(fixed_bytes);
     }
 };
 
 template <size_t N, byte_numbering ByteNumbering>
 struct converter<fixed_bytes<N, ByteNumbering>, hex_string> {
-    constexpr static auto from(hex_string const & hex_str) -> abc::expected<fixed_bytes<N, ByteNumbering>, std::error_code> {
+    inline static auto from(hex_string const & hex_str) -> abc::expected<fixed_bytes<N, ByteNumbering>, std::error_code> {
         if (hex_str.size() != N * 2) {
             return abc::make_unexpected(make_error_code(std::errc::invalid_argument));
         }
@@ -53,16 +53,16 @@ struct converter<fixed_bytes<N, ByteNumbering>, hex_string> {
 };
 
 template <byte_numbering ByteNumbering, std::integral T>
-struct converter<bytes_with<ByteNumbering>, T> {
-    constexpr static auto from(T const & num) -> abc::expected<bytes_with<ByteNumbering>, std::error_code> {
-        return bytes_with<ByteNumbering>::from(num);
+struct converter<bytes<ByteNumbering>, T> {
+    inline static auto from(T const & num) -> abc::expected<bytes<ByteNumbering>, std::error_code> {
+        return bytes<ByteNumbering>::from(num);
     }
 };
 
 template <std::integral T, byte_numbering ByteNumbering>
-struct converter<T, bytes_with<ByteNumbering>> {
-    constexpr static auto from(bytes_with<ByteNumbering> const & number_bytes) -> abc::expected<T, std::error_code> {
-        return number_bytes.to<T>();
+struct converter<T, bytes<ByteNumbering>> {
+    inline static auto from(bytes<ByteNumbering> const & number_bytes) -> abc::expected<T, std::error_code> {
+        return number_bytes.template to<T>();
     }
 };
 
