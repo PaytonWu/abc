@@ -392,6 +392,17 @@ public:
         return bytes{ start, std::next(start, static_cast<ptrdiff_t>(count)), byte_numbering_type<ByteNumbering>{} };
     }
 
+    constexpr auto operator+(bytes const & other) const -> bytes {
+        auto result = *this;
+        return result += other;
+    }
+
+    constexpr auto operator+=(bytes const & other) const -> bytes {
+        data_.reserve(size() + other.size());
+        ranges::copy(other, std::back_inserter(data_));
+        return *this;
+    }
+    
     constexpr auto operator+(std::span<byte const> const other) const -> bytes requires(ByteNumbering == byte_numbering::none) {
         auto data = *this;
         return data += other;
