@@ -397,9 +397,20 @@ public:
         return result += other;
     }
 
-    constexpr auto operator+=(bytes const & other) const -> bytes {
+    constexpr auto operator+=(bytes const & other) -> bytes {
         data_.reserve(size() + other.size());
         ranges::copy(other, std::back_inserter(data_));
+        return *this;
+    }
+
+    constexpr auto operator+(byte const other) const -> bytes {
+        auto result = *this;
+        return result += other;
+    }
+
+    constexpr auto operator+=(byte const other) -> bytes {
+        data_.reserve(size() + 1);
+        data_.push_back(other);
         return *this;
     }
     
@@ -453,10 +464,11 @@ constexpr auto operator==(bytes<byte_numbering::none> const & lhs, std::vector<b
 //constexpr auto operator+(std::span<byte const> const lhs, bytes const& rhs) -> bytes {
 //    return bytes{ lhs } + rhs;
 //}
-//
-//constexpr auto operator+(byte const lhs, std::span<byte const> const rhs) -> bytes {
-//    return bytes{ lhs } + rhs;
-//}
+
+template <byte_numbering ByteNumbering>
+constexpr auto operator+(byte const lhs, bytes<ByteNumbering> const & rhs) -> bytes<ByteNumbering> {
+    return bytes<ByteNumbering>{ lhs } + rhs;
+}
 
 template <byte_numbering ByteNumbering>
 constexpr void swap(bytes<ByteNumbering> & lhs, bytes<ByteNumbering> & rhs) noexcept {
