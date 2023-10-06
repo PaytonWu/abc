@@ -57,13 +57,21 @@ public:
     bytes() = default;
 
     template <byte_numbering RhsByteNumbering> requires(RhsByteNumbering != ByteNumbering && RhsByteNumbering != byte_numbering::none && ByteNumbering != byte_numbering::none)
-    constexpr explicit bytes(bytes<RhsByteNumbering> const & rhs) noexcept : data_{ rhs.data_ } {
+    constexpr explicit bytes(bytes<RhsByteNumbering> const & rhs) : data_{ rhs.data_ } {
         ranges::reverse(data_);
     }
 
     template <byte_numbering RhsByteNumbering> requires(RhsByteNumbering != ByteNumbering && RhsByteNumbering != byte_numbering::none && ByteNumbering != byte_numbering::none)
     constexpr explicit bytes(bytes<RhsByteNumbering> && rhs) noexcept : data_{ std::move(rhs.data_) } {
         ranges::reverse(data_);
+    }
+
+    template <byte_numbering RhsByteNumbering> requires(RhsByteNumbering != ByteNumbering && RhsByteNumbering == byte_numbering::none)
+    constexpr explicit bytes(bytes<RhsByteNumbering> const & rhs) : data_{ rhs.data_ } {
+    }
+
+    template <byte_numbering RhsByteNumbering> requires(RhsByteNumbering != ByteNumbering && RhsByteNumbering == byte_numbering::none)
+    constexpr explicit bytes(bytes<RhsByteNumbering> && rhs) noexcept : data_{ std::move(rhs.data_) } {
     }
 
     constexpr explicit bytes(std::vector<byte> raw) noexcept requires(ByteNumbering == byte_numbering::none)
@@ -175,6 +183,16 @@ public:
         }
 
         return value;
+    }
+
+    template <byte_numbering ToByteNumbering> requires (ByteNumbering != ToByteNumbering)
+    constexpr auto to() const & -> bytes<ToByteNumbering> {
+        return bytes<ToByteNumbering>{ *this };
+    }
+
+    template <byte_numbering ToByteNumbering> requires (ByteNumbering != ToByteNumbering)
+    constexpr auto to() && -> bytes<ToByteNumbering> {
+        return bytes<ToByteNumbering>{ std::move(*this) };
     }
 
     constexpr void assign(size_type const count, byte const & value) {

@@ -177,5 +177,96 @@ TEST(bytes, operator_plus_span) {
     for (uint8_t i = 0u; i < static_cast<uint8_t>(lhs.size()); ++i) {
         ASSERT_EQ(i, lhs[i]);
     }
-}j
+}
 
+TEST(bytes, to) {
+    {
+        bytes_be_t bytes_be{ 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07 };
+        auto bytes_le = bytes_be.to<byte_numbering::lsb0>();
+        for (uint8_t i = 0u; i < static_cast<uint8_t>(bytes_be.size()); ++i) {
+            ASSERT_EQ(i, bytes_le[bytes_be.size() - i - 1]);
+        }
+    }
+
+    {
+        auto bytes_le = bytes_be_t{ 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07 }.to<byte_numbering::lsb0>();
+        for (uint8_t i = 0u; i < static_cast<uint8_t>(8); ++i) {
+            ASSERT_EQ(i, bytes_le[8 - i - 1]);
+        }
+    }
+
+    {
+        bytes_be_t bytes_be{ 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07 };
+        auto bytes = bytes_be.to<byte_numbering::none>();
+        for (uint8_t i = 0u; i < static_cast<uint8_t>(bytes_be.size()); ++i) {
+            ASSERT_EQ(i, bytes[i]);
+        }
+    }
+
+    {
+        auto bytes = bytes_be_t{ 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07 }.to<byte_numbering::none>();
+        for (uint8_t i = 0u; i < static_cast<uint8_t>(8); ++i) {
+            ASSERT_EQ(i, bytes[i]);
+        }
+    }
+
+    {
+        bytes_le_t bytes_le{ 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07 };
+        auto bytes_be = bytes_le.to<byte_numbering::msb0>();
+        for (uint8_t i = 0u; i < static_cast<uint8_t>(bytes_le.size()); ++i) {
+            ASSERT_EQ(i, bytes_be[bytes_be.size() - i - 1]);
+        }
+    }
+
+    {
+        auto bytes_be = bytes_le_t{ 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07 }.to<byte_numbering::msb0>();
+        for (uint8_t i = 0u; i < static_cast<uint8_t>(8); ++i) {
+            ASSERT_EQ(i, bytes_be[8 - i - 1]);
+        }
+    }
+
+    {
+        bytes_le_t bytes_le{ 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07 };
+        auto bytes = bytes_le.to<byte_numbering::none>();
+        for (uint8_t i = 0u; i < static_cast<uint8_t>(bytes_le.size()); ++i) {
+            ASSERT_EQ(i, bytes[i]);
+        }
+    }
+
+    {
+        auto bytes = bytes_le_t{ 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07 }.to<byte_numbering::none>();
+        for (uint8_t i = 0u; i < static_cast<uint8_t>(8); ++i) {
+            ASSERT_EQ(i, bytes[i]);
+        }
+    }
+
+    {
+        bytes_t bytes{ 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07 };
+        auto bytes_be = bytes.to<byte_numbering::msb0>();
+        for (uint8_t i = 0u; i < static_cast<uint8_t>(bytes.size()); ++i) {
+            ASSERT_EQ(i, bytes_be[i]);
+        }
+    }
+
+    {
+        auto bytes_be = bytes_t{ 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07 }.to<byte_numbering::msb0>();
+        for (uint8_t i = 0u; i < static_cast<uint8_t>(8); ++i) {
+            ASSERT_EQ(i, bytes_be[i]);
+        }
+    }
+
+    {
+        bytes_t bytes{ 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07 };
+        auto bytes_le = bytes.to<byte_numbering::lsb0>();
+        for (uint8_t i = 0u; i < static_cast<uint8_t>(bytes.size()); ++i) {
+            ASSERT_EQ(i, bytes_le[i]);
+        }
+    }
+
+    {
+        auto bytes_le = bytes_t{ 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07 }.to<byte_numbering::lsb0>();
+        for (uint8_t i = 0u; i < static_cast<uint8_t>(8); ++i) {
+            ASSERT_EQ(i, bytes_le[i]);
+        }
+    }
+}
