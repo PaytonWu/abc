@@ -167,3 +167,15 @@ TEST(bytes, operator_plus_byte_before) {
     lhs = static_cast<abc::byte>(1) + lhs;
     ASSERT_EQ(abc::hex_string::from("0x11234567890").transform([](auto const & hex_string) { return hex_string.template bytes<abc::byte_numbering::msb0>(); }).value(), lhs);
 }
+
+TEST(bytes, operator_plus_span) {
+    bytes_be_t lhs{0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07};
+    std::vector<abc::byte> bytes{0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f};
+
+    lhs = lhs + std::span{bytes};
+
+    for (uint8_t i = 0u; i < static_cast<uint8_t>(lhs.size()); ++i) {
+        ASSERT_EQ(i, lhs[i]);
+    }
+}j
+

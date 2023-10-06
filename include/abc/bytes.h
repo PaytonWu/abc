@@ -414,25 +414,14 @@ public:
         return *this;
     }
     
-    constexpr auto operator+(std::span<byte const> const other) const -> bytes requires(ByteNumbering == byte_numbering::none) {
+    constexpr auto operator+(std::span<byte const> const other) const -> bytes {
         auto data = *this;
         return data += other;
     }
 
-    constexpr auto operator+=(std::span<byte const> const other) -> bytes & requires(ByteNumbering == byte_numbering::none) {
+    constexpr auto operator+=(std::span<byte const> const other) -> bytes & {
         data_.reserve(size() + other.size());
-        std::copy(std::begin(other), std::end(other), std::back_inserter(data_));
-        return *this;
-    }
-
-    constexpr auto operator+(byte const byte) const -> bytes requires(ByteNumbering == byte_numbering::none) {
-        auto bytes = *this;
-        bytes += byte;
-        return bytes;
-    }
-
-    constexpr auto operator+=(byte const byte) -> bytes & requires(ByteNumbering == byte_numbering::none) {
-        data_.push_back(byte);
+        ranges::copy(other, std::back_inserter(data_));
         return *this;
     }
 
