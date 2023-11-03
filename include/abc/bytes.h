@@ -8,6 +8,7 @@
 
 #include "byte.h"
 #include "byte_bit_numbering.h"
+#include "bytes_view.h"
 #include "expected.h"
 #include "utility.h"
 
@@ -66,12 +67,10 @@ public:
         ranges::reverse(data_);
     }
 
-    template <byte_numbering RhsByteNumbering> requires(RhsByteNumbering != ByteNumbering && RhsByteNumbering == byte_numbering::none)
-    constexpr explicit bytes(bytes<RhsByteNumbering> const & rhs) : data_{ rhs.data_ } {
+    constexpr explicit bytes(bytes<byte_numbering::none> const & rhs) requires(ByteNumbering != byte_numbering::none) : data_{ rhs.data_ } {
     }
 
-    template <byte_numbering RhsByteNumbering> requires(RhsByteNumbering != ByteNumbering && RhsByteNumbering == byte_numbering::none)
-    constexpr explicit bytes(bytes<RhsByteNumbering> && rhs) noexcept : data_{ std::move(rhs.data_) } {
+    constexpr explicit bytes(bytes<byte_numbering::none> && rhs) noexcept requires(ByteNumbering != byte_numbering::none) : data_{ std::move(rhs.data_) } {
     }
 
     constexpr explicit bytes(std::vector<byte> raw) noexcept requires(ByteNumbering == byte_numbering::none)
@@ -84,7 +83,22 @@ public:
     }
 
     constexpr explicit bytes(std::span<byte const> const span) requires(ByteNumbering == byte_numbering::none)
-        : bytes{ std::begin(span), std::end(span) } {
+        : data_{ std::begin(span), std::end(span) } {
+    }
+
+    template <std::size_t Extent>
+    constexpr explicit bytes(bytes_view<ByteNumbering, Extent> const view)
+        : data_{ std::begin(view), std::end(view) } {
+    }
+
+    template <std::size_t Extent>
+    constexpr explicit bytes(bytes_view<byte_numbering::none, Extent> const view) requires (ByteNumbering != byte_numbering::none)
+        : data_{ std::begin(view), std::end(view) } {
+    }
+
+    template <byte_numbering ViewByteNumbering, std::size_t Extent> requires(ByteNumbering != ViewByteNumbering && ByteNumbering != byte_numbering::none && ViewByteNumbering != byte_numbering::none)
+    constexpr explicit bytes(bytes_view<ViewByteNumbering, Extent> const view) : data_{ std::begin(view), std::end(view) } {
+        ranges::reverse(data_);
     }
 
     constexpr bytes(std::initializer_list<value_type> const il) : data_{ il } {
@@ -366,18 +380,18 @@ public:
     }
 
     [[nodiscard]]
-    constexpr auto first(size_t const count) const noexcept -> std::span<byte const> {
+    constexpr auto first(size_t const count) const noexcept -> bytes_view<ByteNumbering> {
         assert(count <= data_.size());
-        return std::span{ std::begin(data_), count };
+        return bytes_view<ByteNumbering>{ std::begin(data_), count };
     }
 
     [[nodiscard]]
-    constexpr auto last(size_t const count) const noexcept -> std::span<byte const> {
+    constexpr auto last(size_t const count) const noexcept -> bytes_view<ByteNumbering> {
         assert(count <= data_.size());
-        return std::span{ std::next(std::begin(data_), static_cast<std::ptrdiff_t>(size() - count)), count };
+        return bytes_view<ByteNumbering>{ std::next(std::begin(data_), static_cast<std::ptrdiff_t>(size() - count)), count };
     }
 
-    inline auto subspan(size_type const pos, size_type const n = static_cast<size_type>(-1)) const -> expected<std::span<byte const>, std::error_code> {
+    inline auto subview(size_type const pos, size_type const n = static_cast<size_type>(-1)) const -> expected<bytes_view<ByteNumbering>, std::error_code> {
         if (pos >= data_.size()) {
             return make_unexpected(make_error_code(std::errc::result_out_of_range));
         }
@@ -385,7 +399,7 @@ public:
         auto start = std::next(std::begin(data_), static_cast<ptrdiff_t>(pos));
         size_type count = (n < size() - pos) ? n : size() - pos;
 
-        return std::span{start, count};
+        return bytes_view<ByteNumbering>{ start, count };
     }
 
     inline auto subspan(size_type const pos, size_type const n = static_cast<size_type>(-1)) -> expected<std::span<byte>, std::error_code> {
@@ -431,16 +445,22 @@ public:
         data_.push_back(other);
         return *this;
     }
-    
-    constexpr auto operator+(std::span<byte const> const other) const -> bytes {
+
+    template <std::size_t Extent>
+    constexpr auto operator+(bytes_view<ByteNumbering, Extent> const other) const -> bytes {
         auto data = *this;
         return data += other;
     }
 
-    constexpr auto operator+=(std::span<byte const> const other) -> bytes & {
+    template <std::size_t Extent>
+    constexpr auto operator+=(bytes_view<ByteNumbering, Extent> const other) -> bytes & {
         data_.reserve(size() + other.size());
         ranges::copy(other, std::back_inserter(data_));
         return *this;
+    }
+
+    constexpr operator bytes_view<ByteNumbering>() const noexcept {
+        return { data(), size() };
     }
 
 private:
