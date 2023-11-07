@@ -55,7 +55,7 @@ public:
     template <typename Range, typename DRange = std::remove_cvref_t<Range>> requires (!std::is_same_v<DRange, bytes_view>) &&
                                                                                      std::ranges::contiguous_range<Range> &&
                                                                                      std::ranges::sized_range<Range> &&
-                                                                                     std::is_same_v<std::remove_const_t<std::ranges::range_value_t<Range>>, abc::byte> &&
+                                                                                     std::is_same_v<std::ranges::range_value_t<Range>, abc::byte> &&
                                                                                      (!std::is_convertible_v<Range, abc::byte const *>) &&
                                                                                      (!requires (DRange & d) { d.operator ::abc::bytes_view<ByteNumbering, Extent>(); })
     constexpr explicit bytes_view(Range && r) noexcept(noexcept(std::ranges::size(r)) && noexcept(std::ranges::data(r)))
@@ -170,11 +170,38 @@ public:
 template <std::size_t Extent = std::dynamic_extent>
 using bytes_be_view_t = bytes_view<byte_numbering::msb0, Extent>;
 
+using bytes4_be_view_t = bytes_be_view_t<4>;
+using bytes8_be_view_t = bytes_be_view_t<8>;
+using bytes16_be_view_t = bytes_be_view_t<16>;
+using bytes32_be_view_t = bytes_be_view_t<32>;
+using bytes48_be_view_t = bytes_be_view_t<48>;
+using bytes64_be_view_t = bytes_be_view_t<64>;
+using bytes96_be_view_t = bytes_be_view_t<96>;
+using bytes128_be_view_t = bytes_be_view_t<128>;
+
 template <std::size_t Extent = std::dynamic_extent>
 using bytes_le_view_t = bytes_view<byte_numbering::lsb0, Extent>;
 
+using bytes4_le_view_t = bytes_le_view_t<4>;
+using bytes8_le_view_t = bytes_le_view_t<8>;
+using bytes16_le_view_t = bytes_le_view_t<16>;
+using bytes32_le_view_t = bytes_le_view_t<32>;
+using bytes48_le_view_t = bytes_le_view_t<48>;
+using bytes64_le_view_t = bytes_le_view_t<64>;
+using bytes96_le_view_t = bytes_le_view_t<96>;
+using bytes128_le_view_t = bytes_le_view_t<128>;
+
 template <std::size_t Extent = std::dynamic_extent>
 using bytes_view_t = bytes_view<byte_numbering::none, Extent>;
+
+using bytes4_view_t = bytes_view_t<4>;
+using bytes8_view_t = bytes_view_t<8>;
+using bytes16_view_t = bytes_view_t<16>;
+using bytes32_view_t = bytes_view_t<32>;
+using bytes48_view_t = bytes_view_t<48>;
+using bytes64_view_t = bytes_view_t<64>;
+using bytes96_view_t = bytes_view_t<96>;
+using bytes128_view_t = bytes_view_t<128>;
 
 }
 
