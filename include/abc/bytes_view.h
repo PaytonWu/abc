@@ -42,6 +42,12 @@ public:
 
     static constexpr std::size_t extent = container_type::extent;
 
+private:
+    constexpr bytes_view(container_type view) noexcept : view_{ view } {
+    }
+
+public:
+
     constexpr bytes_view() noexcept = default;
 
     template <typename It>
