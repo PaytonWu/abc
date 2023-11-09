@@ -86,18 +86,16 @@ public:
         : data_{ std::begin(span), std::end(span) } {
     }
 
-    template <std::size_t Extent>
-    constexpr explicit bytes(bytes_view<ByteNumbering, Extent> const view)
+    constexpr explicit bytes(bytes_view<ByteNumbering> const view)
         : data_{ std::begin(view), std::end(view) } {
     }
 
-    template <std::size_t Extent>
-    constexpr explicit bytes(bytes_view<byte_numbering::none, Extent> const view) requires (ByteNumbering != byte_numbering::none)
+    constexpr explicit bytes(bytes_view_t const view) requires (ByteNumbering != byte_numbering::none)
         : data_{ std::begin(view), std::end(view) } {
     }
 
-    template <byte_numbering ViewByteNumbering, std::size_t Extent> requires(ByteNumbering != ViewByteNumbering && ByteNumbering != byte_numbering::none && ViewByteNumbering != byte_numbering::none)
-    constexpr explicit bytes(bytes_view<ViewByteNumbering, Extent> const view) : data_{ std::begin(view), std::end(view) } {
+    template <byte_numbering ViewByteNumbering> requires(ByteNumbering != ViewByteNumbering && ByteNumbering != byte_numbering::none && ViewByteNumbering != byte_numbering::none)
+    constexpr explicit bytes(bytes_view<ViewByteNumbering> const view) : data_{ std::begin(view), std::end(view) } {
         ranges::reverse(data_);
     }
 
@@ -382,13 +380,13 @@ public:
     [[nodiscard]]
     constexpr auto first(size_t const count) const noexcept -> bytes_view<ByteNumbering> {
         assert(count <= data_.size());
-        return bytes_view<ByteNumbering>{ std::begin(data_), count };
+        return bytes_view<ByteNumbering>{ std::addressof(data_[0]), count };
     }
 
     [[nodiscard]]
     constexpr auto last(size_t const count) const noexcept -> bytes_view<ByteNumbering> {
         assert(count <= data_.size());
-        return bytes_view<ByteNumbering>{ std::next(std::begin(data_), static_cast<std::ptrdiff_t>(size() - count)), count };
+        return bytes_view<ByteNumbering>{ std::addressof(data_[size() - count]), count };
     }
 
     inline auto subview(size_type const pos, size_type const n = static_cast<size_type>(-1)) const -> expected<bytes_view<ByteNumbering>, std::error_code> {
@@ -396,10 +394,7 @@ public:
             return make_unexpected(make_error_code(std::errc::result_out_of_range));
         }
 
-        auto start = std::next(std::begin(data_), static_cast<ptrdiff_t>(pos));
-        size_type count = (n < size() - pos) ? n : size() - pos;
-
-        return bytes_view<ByteNumbering>{ start, count };
+        return bytes_view<ByteNumbering>{ std::addressof(data_[pos]), std::min(n, size() - pos) };
     }
 
     inline auto subspan(size_type const pos, size_type const n = static_cast<size_type>(-1)) -> expected<std::span<byte>, std::error_code> {
@@ -446,14 +441,12 @@ public:
         return *this;
     }
 
-    template <std::size_t Extent>
-    constexpr auto operator+(bytes_view<ByteNumbering, Extent> const other) const -> bytes {
+    constexpr auto operator+(bytes_view<ByteNumbering> const other) const -> bytes {
         auto data = *this;
         return data += other;
     }
 
-    template <std::size_t Extent>
-    constexpr auto operator+=(bytes_view<ByteNumbering, Extent> const other) -> bytes & {
+    constexpr auto operator+=(bytes_view<ByteNumbering> const other) -> bytes & {
         data_.reserve(size() + other.size());
         ranges::copy(other, std::back_inserter(data_));
         return *this;

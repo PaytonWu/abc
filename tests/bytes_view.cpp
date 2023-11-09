@@ -11,7 +11,7 @@ TEST(bytes_view, bytes) {
 
     {
         bytes_be_t bytes_be{ 'a', 'b', 'c', 'd' };
-        bytes_be_view_t<> bytes_be_view = bytes_be;
+        bytes_be_view_t bytes_be_view = bytes_be;
 
         ASSERT_EQ(bytes_be.size(), bytes_be_view.size());
         ASSERT_EQ('a', bytes_be_view[0]);
@@ -22,7 +22,7 @@ TEST(bytes_view, bytes) {
 
     {
         bytes_be_t bytes_be{ 'a', 'b', 'c', 'd' };
-        auto bytes_be_view = static_cast<bytes_be_view_t<>>(bytes_be);
+        auto bytes_be_view = static_cast<bytes_be_view_t>(bytes_be);
 
         ASSERT_EQ(bytes_be.size(), bytes_be_view.size());
         ASSERT_EQ('a', bytes_be_view[0]);
@@ -33,7 +33,7 @@ TEST(bytes_view, bytes) {
 
     {
         bytes_be_t bytes_be{ 'a', 'b', 'c', 'd' };
-        bytes_be_view_t<> bytes_be_view{bytes_be};
+        bytes_be_view_t bytes_be_view{bytes_be};
 
         ASSERT_EQ(bytes_be.size(), bytes_be_view.size());
         ASSERT_EQ('a', bytes_be_view[0]);
@@ -45,7 +45,7 @@ TEST(bytes_view, bytes) {
 
     {
         bytes_be_t bytes_be{ 'a', 'b', 'c', 'd' };
-        bytes_be_view_t<> bytes_be_view{ bytes_be.data(), bytes_be.size() };
+        bytes_be_view_t bytes_be_view{ bytes_be.data(), bytes_be.size() };
 
         ASSERT_EQ(bytes_be.size(), bytes_be_view.size());
         ASSERT_EQ('a', bytes_be_view[0]);
@@ -56,7 +56,7 @@ TEST(bytes_view, bytes) {
 
     {
         bytes_be_t bytes_be{ 'a', 'b', 'c', 'd' };
-        bytes_be_view_t<> bytes_be_view{bytes_be.data(), 2};
+        bytes_be_view_t bytes_be_view{bytes_be.data(), 2};
 
         ASSERT_EQ(2, bytes_be_view.size());
         ASSERT_EQ('a', bytes_be_view[0]);
@@ -65,7 +65,7 @@ TEST(bytes_view, bytes) {
 
     {
         bytes_be_t bytes_be{ 'a', 'b', 'c', 'd' };
-        bytes_be_view_t<> bytes_be_view{bytes_be.last(2)};
+        bytes_be_view_t bytes_be_view{bytes_be.last(2)};
 
         ASSERT_EQ(2, bytes_be_view.size());
         ASSERT_EQ('c', bytes_be_view[0]);
@@ -78,7 +78,7 @@ TEST(bytes_view, fixed_bytes) {
 
     {
         bytes4_be_t bytes_be = bytes4_be_t::from<byte_numbering::msb0>({ 'a', 'b', 'c', 'd' }).value();
-        bytes4_be_view_t bytes_be_view{bytes_be};
+        bytes_be_view_t bytes_be_view{bytes_be};
 
         ASSERT_EQ(bytes_be.size(), bytes_be_view.size());
         ASSERT_EQ('a', bytes_be_view[0]);

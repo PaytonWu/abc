@@ -172,7 +172,7 @@ TEST(bytes, operator_plus_span) {
     bytes_be_t lhs{0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07};
     std::vector<abc::byte> bytes{0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f};
 
-    lhs = lhs + bytes_be_view_t<>{bytes};
+    lhs = lhs + bytes_be_view_t{bytes};
 
     for (uint8_t i = 0u; i < static_cast<uint8_t>(lhs.size()); ++i) {
         ASSERT_EQ(i, lhs[i]);

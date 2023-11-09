@@ -66,9 +66,9 @@ struct converter<T, bytes<ByteNumbering>> {
     }
 };
 
-template <std::integral T, byte_numbering ByteNumbering, std::size_t Extent>
-struct converter<T, bytes_view<ByteNumbering, Extent>> {
-    inline static auto from(bytes_view<ByteNumbering, Extent> const & number_bytes) -> abc::expected<T, std::error_code> {
+template <std::integral T, byte_numbering ByteNumbering>
+struct converter<T, bytes_view<ByteNumbering>> {
+    inline static auto from(bytes_view<ByteNumbering> const & number_bytes) -> abc::expected<T, std::error_code> {
         T r{};
         if constexpr (ByteNumbering == byte_numbering::lsb0 || (ByteNumbering == byte_numbering::none && std::endian::native == std::endian::little)) {
             for (auto i = 0zu; i < number_bytes.size(); ++i) {
