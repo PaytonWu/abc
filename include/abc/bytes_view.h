@@ -43,6 +43,16 @@ private:
     constexpr bytes_view(container_type view) noexcept : view_{ view } {
     }
 
+    template <byte_numbering RhsByteNumbering> requires (RhsByteNumbering == ByteNumbering)
+    constexpr bytes_view(bytes_view<RhsByteNumbering> rhs, byte_numbering_type<RhsByteNumbering>) noexcept
+        : view_{ rhs.view_ } {
+    }
+
+    template <byte_numbering RhsByteNumbering> requires (ByteNumbering != RhsByteNumbering && (ByteNumbering == byte_numbering::none || RhsByteNumbering == byte_numbering::none))
+    constexpr bytes_view(bytes_view<RhsByteNumbering> rhs, byte_numbering_type<RhsByteNumbering>) noexcept
+        : view_{ rhs.view_ } {
+    }
+
 public:
 
     constexpr bytes_view() noexcept = default;
@@ -65,6 +75,11 @@ public:
                                                                                      (!requires (DRange & d) { d.operator ::abc::bytes_view<ByteNumbering>(); })
     constexpr explicit bytes_view(Range && r) noexcept(noexcept(std::ranges::size(r)) && noexcept(std::ranges::data(r)))
         : view_{ std::forward<Range>(r) } {
+    }
+
+    template <byte_numbering RhsByteNumbering>
+    constexpr static auto from(bytes_view<RhsByteNumbering> rhs) -> bytes_view {
+        return bytes_view{ rhs, byte_numbering_type<RhsByteNumbering>{} };
     }
 
     [[nodiscard]]
