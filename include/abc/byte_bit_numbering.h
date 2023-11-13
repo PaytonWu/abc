@@ -29,19 +29,19 @@ struct byte_numbering_type;
 
 template <>
 struct byte_numbering_type<byte_numbering::none> {
-    constexpr static byte_numbering value = byte_numbering::none;
+    constexpr static byte_numbering byte_numbering_value = byte_numbering::none;
 };
 
 template <>
 struct byte_numbering_type<byte_numbering::msb0> {
-    constexpr static byte_numbering value = byte_numbering::msb0;
-    constexpr static std::endian endian = std::endian::big;
+    constexpr static byte_numbering byte_numbering_value = byte_numbering::msb0;
+    constexpr static std::endian endian_value = std::endian::big;
 };
 
 template <>
 struct byte_numbering_type<byte_numbering::lsb0> {
-    constexpr static byte_numbering value = byte_numbering::lsb0;
-    constexpr static std::endian endian = std::endian::little;
+    constexpr static byte_numbering byte_numbering_value = byte_numbering::lsb0;
+    constexpr static std::endian endian_value = std::endian::little;
 };
 
 template <std::endian Endian>
@@ -49,14 +49,14 @@ struct endian_type;
 
 template <>
 struct endian_type<std::endian::big> {
-    constexpr static std::endian value = std::endian::big;
-    constexpr static byte_numbering byte_numbering = byte_numbering::msb0;
+    constexpr static std::endian endian_value = std::endian::big;
+    constexpr static byte_numbering byte_numbering_value = byte_numbering::msb0;
 };
 
 template <>
 struct endian_type<std::endian::little> {
-    constexpr static std::endian value = std::endian::little;
-    constexpr static byte_numbering byte_numbering = byte_numbering::lsb0;
+    constexpr static std::endian endian_value = std::endian::little;
+    constexpr static byte_numbering byte_numbering_value = byte_numbering::lsb0;
 };
 
 constexpr auto operator==(byte_numbering byte_numbering, std::endian endian) noexcept -> bool {

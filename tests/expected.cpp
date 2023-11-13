@@ -779,7 +779,7 @@ TEST(expected, err) {
 
 namespace wrapper {
 template <std::endian Endian>
-constexpr auto hex_string_to_binary(std::string_view string_slice) -> abc::expected<abc::bytes<abc::endian_type<Endian>::byte_numbering>, abc::errc> {
+constexpr auto hex_string_to_binary(std::string_view string_slice) -> abc::expected<abc::bytes<abc::endian_type<Endian>::byte_numbering_value>, abc::errc> {
     if (abc::hex_string::has_hex_prefix(string_slice)) {
         string_slice.remove_prefix(2);
     }
@@ -788,7 +788,7 @@ constexpr auto hex_string_to_binary(std::string_view string_slice) -> abc::expec
         return abc::unexpected{abc::errc::invalid_hex_char};
     }
 
-    abc::bytes<abc::endian_type<Endian>::byte_numbering> binary_data;
+    abc::bytes<abc::endian_type<Endian>::byte_numbering_value> binary_data;
     binary_data.reserve((string_slice.size() + 1) / 2);
     if constexpr (Endian == std::endian::big) {
         if (string_slice.size() & 1) {
