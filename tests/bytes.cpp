@@ -270,3 +270,24 @@ TEST(bytes, to) {
         }
     }
 }
+
+TEST(bytes, from_bytes_view) {
+    {
+        bytes_be_t bytes_be_src = bytes_be_t::from(0x01020304);
+        bytes_be_view_t bytes_be_view = bytes_be_src;
+
+        auto bytes = bytes_be_t::from(bytes_be_view);
+        ASSERT_EQ(bytes_be_src, bytes);
+    }
+
+    {
+        bytes_t src = abc::bytes_t::from(0x01020304);
+        bytes_view_t view = src;
+        auto bytes = bytes_be_t::from(view);
+
+        ASSERT_EQ(bytes[0], 0x04);
+        ASSERT_EQ(bytes[1], 0x03);
+        ASSERT_EQ(bytes[2], 0x02);
+        ASSERT_EQ(bytes[3], 0x01);
+    }
+}

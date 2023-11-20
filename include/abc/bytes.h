@@ -56,6 +56,11 @@ public:
     // public constructors
 
     bytes() = default;
+    bytes(bytes const &) = default;
+    auto operator=(bytes const &) -> bytes & = default;
+    bytes(bytes &&) = default;
+    auto operator=(bytes &&) -> bytes & = default;
+    ~bytes() = default;
 
     template <byte_numbering RhsByteNumbering> requires(RhsByteNumbering != ByteNumbering && RhsByteNumbering != byte_numbering::none && ByteNumbering != byte_numbering::none)
     constexpr explicit bytes(bytes<RhsByteNumbering> const & rhs) : data_{ rhs.data_ } {
@@ -162,6 +167,11 @@ public:
     template <byte_numbering DataByteNumbering>
     constexpr static auto from(std::span<byte const> const data) -> bytes {
         return bytes{ data, byte_numbering_type<DataByteNumbering>{} };
+    }
+
+    template <byte_numbering ViewByteNumbering>
+    constexpr static auto from(bytes_view<ViewByteNumbering> const view) -> bytes {
+        return bytes{ view };
     }
 
     template <byte_numbering DataByteNumbering>
