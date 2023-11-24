@@ -6,6 +6,8 @@
 
 #pragma once
 
+#include "byte.h"
+
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
@@ -25,19 +27,19 @@ constexpr auto aligned_size(std::size_t size, std::size_t alignment) noexcept ->
 }
 
 template <std::size_t Alignment>
-inline auto address_aligned_at(std::byte * ptr) noexcept -> std::byte * {
+inline auto address_aligned_at(byte * ptr) noexcept -> byte * {
     static_assert(std::has_single_bit(Alignment), "Alignment must be a power of 2");
-    return reinterpret_cast<std::byte *>((reinterpret_cast<std::uintptr_t>(ptr) + (Alignment - 1)) & -Alignment);
+    return reinterpret_cast<byte *>((reinterpret_cast<std::uintptr_t>(ptr) + (Alignment - 1)) & -Alignment);
 }
 
 template <typename T>
-inline auto address_aligned_at(std::byte * ptr) noexcept -> T * {
+inline auto address_aligned_at(byte * ptr) noexcept -> T * {
     return reinterpret_cast<T *>(address_aligned_at<alignof(T)>(ptr));
 }
 
-inline auto address_aligned_at(std::size_t alignment, std::byte * ptr) noexcept -> std::byte * {
+inline auto address_aligned_at(std::size_t alignment, byte * ptr) noexcept -> byte * {
     assert(std::has_single_bit(alignment));
-    return reinterpret_cast<std::byte *>((reinterpret_cast<std::uintptr_t>(ptr) + (alignment - 1)) & -alignment);
+    return reinterpret_cast<byte *>((reinterpret_cast<std::uintptr_t>(ptr) + (alignment - 1)) & -alignment);
 
 }
 
