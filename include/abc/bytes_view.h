@@ -77,6 +77,9 @@ public:
         : view_{ std::forward<Range>(r) } {
     }
 
+    constexpr explicit bytes_view(std::string_view sv) noexcept : view_{ reinterpret_cast<byte const *>(sv.data()), sv.size() } {
+    }
+
     template <byte_numbering RhsByteNumbering>
     constexpr static auto from(bytes_view<RhsByteNumbering> rhs) -> bytes_view {
         return bytes_view{ rhs, byte_numbering_type<RhsByteNumbering>{} };
