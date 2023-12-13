@@ -14,3 +14,24 @@ TEST(converters, hex_string_to_fixed_bytes) {
     EXPECT_EQ(0xad, key_data[30]);
     EXPECT_EQ(0x97, key_data[29]);
 }
+
+TEST(converters, uint128_to_bytes) {
+    abc::uint128_t value = 0x1234567890abcdef1234567890abcdef;
+    abc::bytes16_be_t bytes = abc::convert_to<abc::bytes16_be_t>::from(value).value();
+    EXPECT_EQ(0x12, bytes[0]);
+    EXPECT_EQ(0x34, bytes[1]);
+    EXPECT_EQ(0x56, bytes[2]);
+    EXPECT_EQ(0x78, bytes[3]);
+    EXPECT_EQ(0x90, bytes[4]);
+    EXPECT_EQ(0xab, bytes[5]);
+    EXPECT_EQ(0xcd, bytes[6]);
+    EXPECT_EQ(0xef, bytes[7]);
+    EXPECT_EQ(0x12, bytes[8]);
+    EXPECT_EQ(0x34, bytes[9]);
+    EXPECT_EQ(0x56, bytes[10]);
+    EXPECT_EQ(0x78, bytes[11]);
+    EXPECT_EQ(0x90, bytes[12]);
+    EXPECT_EQ(0xab, bytes[13]);
+    EXPECT_EQ(0xcd, bytes[14]);
+    EXPECT_EQ(0xef, bytes[15]);
+}

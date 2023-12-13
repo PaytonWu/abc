@@ -6,9 +6,10 @@
 
 #pragma once
 
-#include <abc/expected.h>
-#include <abc/fixed_bytes.h>
-#include <abc/hex_string.h>
+#include "expected.h"
+#include "fixed_bytes.h"
+#include "hex_string.h"
+#include "uint128.h"
 
 #include <range/v3/algorithm/copy.hpp>
 
@@ -73,6 +74,24 @@ struct converter<T, bytes_view<ByteNumbering>> {
         if constexpr (ByteNumbering == byte_numbering::lsb0 || (ByteNumbering == byte_numbering::none && std::endian::native == std::endian::little)) {
             for (auto i = 0zu; i < number_bytes.size(); ++i) {
                 r += (static_cast<T>(number_bytes[i]) << (i * 8));
+            }
+        } else if constexpr (ByteNumbering == byte_numbering::msb0 || (ByteNumbering == byte_numbering::none && std::endian::native == std::endian::big)) {
+            for (auto i = 0zu; i < number_bytes.size(); ++i) {
+                r = r << 8 | number_bytes[i];
+            }
+        }
+
+        return r;
+    }
+};
+
+template <byte_numbering ByteNumbering>
+struct converter<uint128_t, bytes_view<ByteNumbering>> {
+    inline static auto from(bytes_view<ByteNumbering> const & number_bytes) -> abc::expected<uint128_t, std::error_code> {
+        uint128_t r{};
+        if constexpr (ByteNumbering == byte_numbering::lsb0 || (ByteNumbering == byte_numbering::none && std::endian::native == std::endian::little)) {
+            for (auto i = 0zu; i < number_bytes.size(); ++i) {
+                r += (static_cast<uint8_t>(number_bytes[i]) << (i * 8));
             }
         } else if constexpr (ByteNumbering == byte_numbering::msb0 || (ByteNumbering == byte_numbering::none && std::endian::native == std::endian::big)) {
             for (auto i = 0zu; i < number_bytes.size(); ++i) {
