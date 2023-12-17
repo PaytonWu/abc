@@ -331,10 +331,6 @@ public:
         data_.pop_back();
     }
 
-    constexpr void erase(const_iterator first, const_iterator last) {
-        data_.erase(first, last);
-    }
-
     constexpr void swap(bytes & other) noexcept {
         data_.swap(other.data_);
     }

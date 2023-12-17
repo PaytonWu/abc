@@ -334,7 +334,7 @@ public:
 //        convert_to_span_big_endian(this->lower_, ret.subspan(8));
 //    }
 
-    template <byte_numbering ByteNumbering>
+    template <abc::byte_numbering ByteNumbering>
     constexpr void
     export_bits(bytes<ByteNumbering> & ret) const
     {
@@ -343,8 +343,8 @@ public:
 #if !defined(NDEBUG)
             auto const size_before_export = ret.size();
 #endif
-            convert_to_bytes_be(this->upper_, ret);
-            convert_to_bytes_be(this->lower_, ret);
+            convert_to_bytes<ByteNumbering>(this->upper_, ret);
+            convert_to_bytes<ByteNumbering>(this->lower_, ret);
 
             assert(ret.size() - size_before_export == 16);
         }
@@ -364,7 +364,7 @@ public:
         }
     }
 
-    template <byte_numbering ByteNumbering>
+    template <abc::byte_numbering ByteNumbering>
     [[nodiscard]] constexpr auto
     export_bits() const noexcept -> bytes<ByteNumbering>
     {
@@ -381,8 +381,8 @@ public:
 //        return tmp.size();
 //    }
 
-    template <byte_numbering ByteNumbering>
-    constexpr void
+    template <abc::byte_numbering ByteNumbering>
+    void
     export_bits_compact(bytes<ByteNumbering> & ret) const noexcept
     {
         auto leading_zeros_bits_count = std::countl_zero(this->upper_);
@@ -393,67 +393,27 @@ public:
 
             ret.reserve(leading_zero_bytes_count);
 
-            if constexpr (ByteNumbering == byte_numbering::msb0)
-            {
-                convert_to_bytes_be(this->lower_, leading_zero_bytes_count, ret);
-            }
-            else if constexpr (ByteNumbering == byte_numbering::lsb0)
-            {
-                convert_to_bytes_le(this->lower_, leading_zero_bytes_count, ret);
-            }
-            else
-            {
-                unreachable();
-            }
+            convert_to_bytes<ByteNumbering>(this->lower_, leading_zero_bytes_count, ret);
+        }
+        else
+        {
+            std::size_t const leading_zero_bytes_count = (leading_zeros_bits_count / 8);
+            ret.reserve(leading_zero_bytes_count + 8);
+
+            convert_to_bytes<ByteNumbering>(this->upper_, leading_zero_bytes_count, ret);
+            convert_to_bytes<ByteNumbering>(this->lower_, ret);
         }
     }
 
+    template <abc::byte_numbering ByteNumbering>
     [[nodiscard]] constexpr auto
-    export_bits_compact() const -> bytes_be_t
+    export_bits_compact() const -> bytes<ByteNumbering>
     {
-        bytes_be_t ret;
+        bytes<ByteNumbering> ret;
         ret.reserve(16);
-        export_bits(ret);
-        assert(ret.size() == 16);
-
-        int i = 0;
-        while (i < 16 && ret[i] == 0)
-        {
-            ++i;
-        }
-        ret.erase(std::begin(ret), std::next(std::begin(ret), i));
+        export_bits_compact(ret);
 
         return ret;
-    }
-
-    constexpr auto
-    export_bits_compact(std::endian const endian, std::span<uint8_t> ret) const noexcept -> size_t
-    {
-        assert(ret.size() >= 16);
-
-        auto tmp = export_bits_compact(endian);
-        std::ranges::copy(tmp, std::begin(ret));
-
-        return tmp.size();
-    }
-
-    constexpr void
-    export_bits_compact(std::endian const endian, std::vector<uint8_t> & ret) const noexcept
-    {
-        auto tmp = export_bits_compact(endian);
-        std::ranges::copy(tmp, std::back_inserter(ret));
-    }
-
-    [[nodiscard]] constexpr auto
-    export_bits_compact(std::endian const endian) const -> std::vector<uint8_t>
-    {
-        auto res = export_bits_compact();
-        if (endian == std::endian::little)
-        {
-            std::ranges::reverse(res);
-        }
-
-        return res;
     }
 
     // Bit Shift Operators
@@ -936,138 +896,156 @@ private:
 //        ret[7] = static_cast<uint8_t>(val);
 //    }
 
+    template <abc::byte_numbering ByteNumbering>
     constexpr static void
-    convert_to_bytes_be(uint64_t const val, bytes_be_t & ret)
+    convert_to_bytes(uint64_t const val, bytes<ByteNumbering> & ret)
     {
-        ret.push_back(static_cast<uint8_t>(val >> 56));
-        ret.push_back(static_cast<uint8_t>(val >> 48));
-        ret.push_back(static_cast<uint8_t>(val >> 40));
-        ret.push_back(static_cast<uint8_t>(val >> 32));
-        ret.push_back(static_cast<uint8_t>(val >> 24));
-        ret.push_back(static_cast<uint8_t>(val >> 16));
-        ret.push_back(static_cast<uint8_t>(val >> 8));
-        ret.push_back(static_cast<uint8_t>(val));
-    }
-
-    constexpr static void
-    convert_to_bytes_be(uint64_t const val, std::size_t leading_zero_bytes_count, bytes_le_t & ret)
-    {
-        assert(leading_zero_bytes_count <= 8);
-        switch (leading_zero_bytes_count)
+        if constexpr (ByteNumbering == abc::byte_numbering::msb0)
         {
-            case 0:
-                ret.push_back(static_cast<uint8_t>(val >> 56));
-                [[fallthrough]];
-            case 1:
-                ret.push_back(static_cast<uint8_t>(val >> 48));
-                [[fallthrough]];
-            case 2:
-                ret.push_back(static_cast<uint8_t>(val >> 40));
-                [[fallthrough]];
-            case 3:
-                ret.push_back(static_cast<uint8_t>(val >> 32));
-                [[fallthrough]];
-            case 4:
-                ret.push_back(static_cast<uint8_t>(val >> 24));
-                [[fallthrough]];
-            case 5:
-                ret.push_back(static_cast<uint8_t>(val >> 16));
-                [[fallthrough]];
-            case 6:
-                ret.push_back(static_cast<uint8_t>(val >> 8));
-                [[fallthrough]];
-            case 7:
-                ret.push_back(static_cast<uint8_t>(val));
-                [[fallthrough]];
-            default:
-                break;
+            ret.push_back(static_cast<uint8_t>(val >> 56));
+            ret.push_back(static_cast<uint8_t>(val >> 48));
+            ret.push_back(static_cast<uint8_t>(val >> 40));
+            ret.push_back(static_cast<uint8_t>(val >> 32));
+            ret.push_back(static_cast<uint8_t>(val >> 24));
+            ret.push_back(static_cast<uint8_t>(val >> 16));
+            ret.push_back(static_cast<uint8_t>(val >> 8));
+            ret.push_back(static_cast<uint8_t>(val));
+
+            return;
         }
-    }
 
-    constexpr static void
-    convert_to_bytes_le(uint64_t const val, bytes_le_t & ret)
-    {
-        ret.push_back(static_cast<uint8_t>(val));
-        ret.push_back(static_cast<uint8_t>(val >> 8));
-        ret.push_back(static_cast<uint8_t>(val >> 16));
-        ret.push_back(static_cast<uint8_t>(val >> 24));
-        ret.push_back(static_cast<uint8_t>(val >> 32));
-        ret.push_back(static_cast<uint8_t>(val >> 40));
-        ret.push_back(static_cast<uint8_t>(val >> 48));
-        ret.push_back(static_cast<uint8_t>(val >> 56));
-    }
-
-    constexpr static void
-    convert_to_bytes_le(std::uint64_t const value, std::size_t const leading_zero_bytes_count, bytes_le_t & ret)
-    {
-        assert(leading_zero_bytes_count <= 8);
-        std::size_t const tail_non_zero_bytes_count = 8 - leading_zero_bytes_count;
-
-        switch (tail_non_zero_bytes_count)
+        if constexpr (ByteNumbering == abc::byte_numbering::lsb0)
         {
-            case 8:
-                ret.push_back(static_cast<uint8_t>(value));
-                ret.push_back(static_cast<uint8_t>(value >> 8));
-                ret.push_back(static_cast<uint8_t>(value >> 16));
-                ret.push_back(static_cast<uint8_t>(value >> 24));
-                ret.push_back(static_cast<uint8_t>(value >> 32));
-                ret.push_back(static_cast<uint8_t>(value >> 40));
-                ret.push_back(static_cast<uint8_t>(value >> 48));
-                ret.push_back(static_cast<uint8_t>(value >> 56));
-                break;
+            ret.push_back(static_cast<uint8_t>(val));
+            ret.push_back(static_cast<uint8_t>(val >> 8));
+            ret.push_back(static_cast<uint8_t>(val >> 16));
+            ret.push_back(static_cast<uint8_t>(val >> 24));
+            ret.push_back(static_cast<uint8_t>(val >> 32));
+            ret.push_back(static_cast<uint8_t>(val >> 40));
+            ret.push_back(static_cast<uint8_t>(val >> 48));
+            ret.push_back(static_cast<uint8_t>(val >> 56));
 
-            case 7:
-                ret.push_back(static_cast<uint8_t>(value));
-                ret.push_back(static_cast<uint8_t>(value >> 8));
-                ret.push_back(static_cast<uint8_t>(value >> 16));
-                ret.push_back(static_cast<uint8_t>(value >> 24));
-                ret.push_back(static_cast<uint8_t>(value >> 32));
-                ret.push_back(static_cast<uint8_t>(value >> 40));
-                ret.push_back(static_cast<uint8_t>(value >> 48));
-                break;
-
-            case 6:
-                ret.push_back(static_cast<uint8_t>(value));
-                ret.push_back(static_cast<uint8_t>(value >> 8));
-                ret.push_back(static_cast<uint8_t>(value >> 16));
-                ret.push_back(static_cast<uint8_t>(value >> 24));
-                ret.push_back(static_cast<uint8_t>(value >> 32));
-                ret.push_back(static_cast<uint8_t>(value >> 40));
-                break;
-
-            case 5:
-                ret.push_back(static_cast<uint8_t>(value));
-                ret.push_back(static_cast<uint8_t>(value >> 8));
-                ret.push_back(static_cast<uint8_t>(value >> 16));
-                ret.push_back(static_cast<uint8_t>(value >> 24));
-                ret.push_back(static_cast<uint8_t>(value >> 32));
-                break;
-
-            case 4:
-                ret.push_back(static_cast<uint8_t>(value));
-                ret.push_back(static_cast<uint8_t>(value >> 8));
-                ret.push_back(static_cast<uint8_t>(value >> 16));
-                ret.push_back(static_cast<uint8_t>(value >> 24));
-                break;
-
-            case 3:
-                ret.push_back(static_cast<uint8_t>(value));
-                ret.push_back(static_cast<uint8_t>(value >> 8));
-                ret.push_back(static_cast<uint8_t>(value >> 16));
-                break;
-
-            case 2:
-                ret.push_back(static_cast<uint8_t>(value));
-                ret.push_back(static_cast<uint8_t>(value >> 8));
-                break;
-
-            case 1:
-                ret.push_back(static_cast<uint8_t>(value));
-                break;
-
-            default:
-                break;
+            return;
         }
+
+        unreachable();
+    }
+
+    template <abc::byte_numbering ByteNumbering>
+    constexpr static void
+    convert_to_bytes(uint64_t const value, std::size_t leading_zero_bytes_count, bytes<ByteNumbering> & ret)
+    {
+        if (ByteNumbering == abc::byte_numbering::msb0)
+        {
+            assert(leading_zero_bytes_count <= 8);
+            switch (leading_zero_bytes_count)
+            {
+                case 0:
+                    ret.push_back(static_cast<uint8_t>(value >> 56));
+                    [[fallthrough]];
+                case 1:
+                    ret.push_back(static_cast<uint8_t>(value >> 48));
+                    [[fallthrough]];
+                case 2:
+                    ret.push_back(static_cast<uint8_t>(value >> 40));
+                    [[fallthrough]];
+                case 3:
+                    ret.push_back(static_cast<uint8_t>(value >> 32));
+                    [[fallthrough]];
+                case 4:
+                    ret.push_back(static_cast<uint8_t>(value >> 24));
+                    [[fallthrough]];
+                case 5:
+                    ret.push_back(static_cast<uint8_t>(value >> 16));
+                    [[fallthrough]];
+                case 6:
+                    ret.push_back(static_cast<uint8_t>(value >> 8));
+                    [[fallthrough]];
+                case 7:
+                    ret.push_back(static_cast<uint8_t>(value));
+                    [[fallthrough]];
+                default:
+                    break;
+            }
+
+            return;
+        }
+
+        if (ByteNumbering == abc::byte_numbering::lsb0)
+        {
+            assert(leading_zero_bytes_count <= 8);
+            std::size_t const tail_non_zero_bytes_count = 8 - leading_zero_bytes_count;
+
+            switch (tail_non_zero_bytes_count)
+            {
+                case 8:
+                    ret.push_back(static_cast<uint8_t>(value));
+                    ret.push_back(static_cast<uint8_t>(value >> 8));
+                    ret.push_back(static_cast<uint8_t>(value >> 16));
+                    ret.push_back(static_cast<uint8_t>(value >> 24));
+                    ret.push_back(static_cast<uint8_t>(value >> 32));
+                    ret.push_back(static_cast<uint8_t>(value >> 40));
+                    ret.push_back(static_cast<uint8_t>(value >> 48));
+                    ret.push_back(static_cast<uint8_t>(value >> 56));
+                    break;
+
+                case 7:
+                    ret.push_back(static_cast<uint8_t>(value));
+                    ret.push_back(static_cast<uint8_t>(value >> 8));
+                    ret.push_back(static_cast<uint8_t>(value >> 16));
+                    ret.push_back(static_cast<uint8_t>(value >> 24));
+                    ret.push_back(static_cast<uint8_t>(value >> 32));
+                    ret.push_back(static_cast<uint8_t>(value >> 40));
+                    ret.push_back(static_cast<uint8_t>(value >> 48));
+                    break;
+
+                case 6:
+                    ret.push_back(static_cast<uint8_t>(value));
+                    ret.push_back(static_cast<uint8_t>(value >> 8));
+                    ret.push_back(static_cast<uint8_t>(value >> 16));
+                    ret.push_back(static_cast<uint8_t>(value >> 24));
+                    ret.push_back(static_cast<uint8_t>(value >> 32));
+                    ret.push_back(static_cast<uint8_t>(value >> 40));
+                    break;
+
+                case 5:
+                    ret.push_back(static_cast<uint8_t>(value));
+                    ret.push_back(static_cast<uint8_t>(value >> 8));
+                    ret.push_back(static_cast<uint8_t>(value >> 16));
+                    ret.push_back(static_cast<uint8_t>(value >> 24));
+                    ret.push_back(static_cast<uint8_t>(value >> 32));
+                    break;
+
+                case 4:
+                    ret.push_back(static_cast<uint8_t>(value));
+                    ret.push_back(static_cast<uint8_t>(value >> 8));
+                    ret.push_back(static_cast<uint8_t>(value >> 16));
+                    ret.push_back(static_cast<uint8_t>(value >> 24));
+                    break;
+
+                case 3:
+                    ret.push_back(static_cast<uint8_t>(value));
+                    ret.push_back(static_cast<uint8_t>(value >> 8));
+                    ret.push_back(static_cast<uint8_t>(value >> 16));
+                    break;
+
+                case 2:
+                    ret.push_back(static_cast<uint8_t>(value));
+                    ret.push_back(static_cast<uint8_t>(value >> 8));
+                    break;
+
+                case 1:
+                    ret.push_back(static_cast<uint8_t>(value));
+                    break;
+
+                default:
+                    break;
+            }
+
+            return;
+        }
+
+        unreachable();
     }
 
 public:

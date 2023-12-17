@@ -40,9 +40,6 @@ namespace abc
 class [[nodiscard]] hex_string
 {
 public:
-    constexpr inline static auto prefix = "0x";
-    constexpr inline static auto prefix_uppercase = "0X";
-
     using format = hex_string_format;
     constexpr inline static auto default_format = hex_string_format::default_format;
     constexpr inline static auto lower_case = hex_string_format::lower_case;
@@ -84,7 +81,7 @@ public:
             string_slice = string_slice.substr(2);
         }
 
-        return is_hex_without_prefix(string_slice);
+        return hex_utility::is_hex_without_prefix(string_slice);
     }
 
     /// @brief check if the input string has the prefix. this function doesn't check if the input string is a valid hex string, it only checks the prefix.
@@ -93,80 +90,7 @@ public:
     [[nodiscard]] constexpr static auto
     has_hex_prefix(std::string_view const string_slice) noexcept -> bool
     {
-        return string_slice.starts_with(prefix) || string_slice.starts_with(prefix_uppercase);
-    }
-
-    /// @brief convert a hex string to binary bytes.
-    /// @tparam ByteNumbering specify the byte numbering of the output bytes.
-    /// @param string_slice input hex string slice.
-    /// @return bytes object or an error code object.
-    template <byte_numbering ByteNumbering>
-    static auto
-    bytes(std::string_view string_slice) -> expected<bytes<ByteNumbering>, std::error_code>
-    {
-        if (has_hex_prefix(string_slice))
-        {
-            string_slice = string_slice.substr(2);
-        }
-
-        if (!is_hex_without_prefix(string_slice))
-        {
-            return make_unexpected(make_error_code(std::errc::invalid_argument));
-        }
-
-        abc::bytes<ByteNumbering> binary_data;
-        binary_data.reserve((string_slice.size() + 1) / 2);
-        if constexpr (ByteNumbering == byte_numbering::msb0)
-        {
-            if (string_slice.size() & 1)
-            {
-                [[maybe_unused]] auto r = hex_utility::hex_char_to_binary(string_slice.front()).transform([&binary_data, &string_slice](auto const b) mutable {
-                    binary_data.push_back(b);
-                    string_slice.remove_prefix(1);
-                });
-                assert(r.has_value());
-            }
-
-            auto const & chunks = string_slice | ranges::views::chunk(2);
-            ranges::for_each(chunks, [&binary_data](ranges::viewable_range auto && compound_byte) mutable {
-                byte byte{};
-                for (auto const [i, nibble_byte]: compound_byte | ranges::views::reverse | ranges::views::enumerate)
-                {
-                    byte |= hex_char_to_binary(nibble_byte).value() << (4 * i);
-                }
-                binary_data.push_back(byte);
-            });
-
-            return binary_data;
-        }
-
-        if constexpr (ByteNumbering == byte_numbering::lsb0)
-        {
-            if (string_slice.size() & 1)
-            {
-                [[maybe_unused]] auto r = hex_utility::hex_char_to_binary(string_slice.front()).transform([&binary_data, &string_slice](auto const b) mutable {
-                    binary_data.push_back(b);
-                    string_slice.remove_prefix(1);
-                });
-                assert(r.has_value());
-            }
-
-            auto const & chunks = string_slice | ranges::views::chunk(2);
-            ranges::for_each(chunks, [&binary_data](ranges::viewable_range auto && compound_byte) mutable {
-                byte byte{};
-                for (auto const [i, nibble_byte]: compound_byte | ranges::views::reverse | ranges::views::enumerate)
-                {
-                    byte |= hex_utility::hex_char_to_binary(nibble_byte).value() << (4 * i);
-                }
-                binary_data.push_back(byte);
-            });
-
-            ranges::reverse(binary_data);
-
-            return binary_data;
-        }
-
-        unreachable();
+        return string_slice.starts_with(hex_utility::prefix) || string_slice.starts_with(hex_utility::prefix_uppercase);
     }
 
 public:
@@ -281,7 +205,7 @@ public:
 
         if (abc::lower_case(fmt))
         {
-            r.append(prefix);
+            r.append(hex_utility::prefix);
             std::ranges::for_each(data_span | ranges::views::reverse | ranges::views::transform([&hex](auto const byte) mutable {
                 assert(hex[2] == 0);
                 hex[0] = hex_utility::lower_case_hex_digits[byte >> 4], hex[1] = hex_utility::lower_case_hex_digits[byte & 0x0f];
@@ -290,7 +214,7 @@ public:
         }
         else if (abc::upper_case(fmt))
         {
-            r.append(prefix_uppercase);
+            r.append(hex_utility::prefix_uppercase);
             std::ranges::for_each(data_span | ranges::views::reverse | ranges::views::transform([&hex](auto const byte) mutable {
                 assert(hex[2] == 0);
                 hex[0] = hex_utility::upper_case_hex_digits[byte >> 4], hex[1] = hex_utility::upper_case_hex_digits[byte & 0x0f];
@@ -302,7 +226,7 @@ public:
             assert(false);
         }
 
-        if (r == prefix || r == prefix_uppercase)
+        if (r == hex_utility::prefix || r == hex_utility::prefix_uppercase)
         {
             r.append("00");
         }
@@ -415,27 +339,6 @@ public:
     most_significant_byte() noexcept -> byte &
     {
         return binary_data_.back();
-    }
-
-private:
-    [[nodiscard]] constexpr static auto
-    is_hex_without_prefix(std::string_view const string_slice) noexcept -> bool
-    {   // "0123456789abcdefABCDEF"
-        return std::ranges::all_of(string_slice,
-                                   [](auto const ch) {
-                                       return hex_utility::is_hex(ch);
-                                   });
-    }
-
-    [[nodiscard]] constexpr static auto
-    is_hex_with_prefix(std::string_view const string_slice) noexcept -> bool
-    { // "0x0123456789abcdefABCDEF" or "0X0123456789abcdefABCDEF"
-        if (!has_hex_prefix(string_slice))
-        {
-            return false;
-        }
-
-        return is_hex_without_prefix(string_slice.substr(2));
     }
 };
 
