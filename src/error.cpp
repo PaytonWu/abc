@@ -6,23 +6,27 @@
 
 #include <fmt/core.h>
 
-namespace abc::details {
+namespace abc::details
+{
 
 template <typename ExceptionT>
 [[noreturn]] void
-throw_exception(ExceptionT eh) {
+throw_exception(ExceptionT eh)
+{
     throw std::move(eh);
 }
 
 [[noreturn]] static void
-do_throw_error(std::error_code const & ec) {
+do_throw_error(std::error_code const & ec)
+{
     assert(ec);
     abc_error eh{ ec };
     throw_exception(std::move(eh));
 }
 
 [[noreturn]] static void
-do_throw_error(std::error_code const & ec, std::string_view const extra_msg) {
+do_throw_error(std::error_code const & ec, std::string_view const extra_msg)
+{
     assert(ec);
     abc_error eh{ ec, extra_msg };
     throw_exception(std::move(eh));
@@ -30,53 +34,70 @@ do_throw_error(std::error_code const & ec, std::string_view const extra_msg) {
 
 }
 
-namespace abc {
+namespace abc
+{
 
 abc_error::abc_error(std::error_code const & ec)
-    : std::exception{}, msg_{ ec.message() }, ec_{ ec } {
+    : std::exception{}, msg_{ ec.message() }, ec_{ ec }
+{
 }
 
 abc_error::abc_error(std::error_code const & ec, std::string_view const msg)
-    : std::exception{}, msg_{ fmt::format("{}:{}", msg, ec.message()) }, ec_{ ec } {
+    : std::exception{}, msg_{ fmt::format("{}:{}", msg, ec.message()) }, ec_{ ec }
+{
 }
 
 abc_error::abc_error(int const ec, std::error_category const & category)
-    : std::exception{}, msg_{ std::error_code{ec, category}.message() }, ec_{ ec, category } {
+    : std::exception{}, msg_{ std::error_code{ ec, category }.message() }, ec_{ ec, category }
+{
 }
 
 abc_error::abc_error(int const ec, std::error_category const & category, std::string_view const msg)
-    : std::exception{}, msg_{ fmt::format("{}:{}", msg, std::error_code{ec, category}.message()) }, ec_{ ec, category } {
+    : std::exception{}, msg_{ fmt::format("{}:{}", msg, std::error_code{ ec, category }.message()) }, ec_{ ec, category }
+{
 }
 
 auto
-abc_error::code() const noexcept -> std::error_code const & {
+abc_error::code() const noexcept -> std::error_code const &
+{
     return ec_;
 }
 
 auto
-abc_error::what() const noexcept -> char const * {
+abc_error::what() const noexcept -> char const *
+{
     return msg_.c_str();
 }
 
 auto
-make_error_code(errc const ec) noexcept -> std::error_code {
+make_error_code(errc const ec) noexcept -> std::error_code
+{
     return std::error_code{ static_cast<int>(ec), abc_category() };
 }
 
 auto
-make_error_condition(errc const ec) noexcept -> std::error_condition {
+make_error_condition(errc const ec) noexcept -> std::error_condition
+{
     return std::error_condition{ static_cast<int>(ec), abc_category() };
 }
 
 auto
-abc_category() noexcept -> std::error_category const & {
-    static struct : std::error_category {
-        [[nodiscard]] auto name() const noexcept -> char const * override {
+abc_category() noexcept -> std::error_category const &
+{
+    static struct
+        : std::error_category
+    {
+        [[nodiscard]] auto
+        name() const noexcept -> char const * override
+        {
             return "abc";
         }
 
-        [[nodiscard]] auto message(int const ec) const -> std::string override {
-            switch (static_cast<errc>(ec)) {
+        [[nodiscard]] auto
+        message(int const ec) const -> std::string override
+        {
+            switch (static_cast<errc>(ec))
+            {
                 case errc::success:
                     return "success";
 
@@ -110,6 +131,12 @@ abc_category() noexcept -> std::error_category const & {
                 case errc::span_built_from_rvalue:
                     return "span built from rvalue";
 
+                case errc::not_supported_byte_numbering:
+                    return "not supported byte numbering";
+
+                case errc::not_supported_byte_order:
+                    return "not supported byte order";
+
                 default:
                     return "unknown error";
             }
@@ -121,13 +148,21 @@ abc_category() noexcept -> std::error_category const & {
 }
 
 void
-throw_error(std::error_code const & ec) {
-    if (ec) { details::do_throw_error(ec); }
+throw_error(std::error_code const & ec)
+{
+    if (ec)
+    {
+        details::do_throw_error(ec);
+    }
 }
 
 void
-throw_error(std::error_code const & ec, std::string_view extra_msg) {
-    if (ec) { details::do_throw_error(ec, extra_msg); }
+throw_error(std::error_code const & ec, std::string_view extra_msg)
+{
+    if (ec)
+    {
+        details::do_throw_error(ec, extra_msg);
+    }
 }
 
 }

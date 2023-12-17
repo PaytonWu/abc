@@ -36,7 +36,7 @@ TEST(hex_string, from_string_view) {
 
 TEST(hex_string, from_bytes) {
     bytes_be_t const bytes{ 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10 };
-    auto const hex_string4 = hex_string::from(bytes);
+    auto const hex_string4 = hex_string::from<abc::byte_numbering::msb0>(bytes);
     ASSERT_FALSE(hex_string4.empty());
     ASSERT_EQ(hex_string4.to_string(), "0x0102030405060708090a0b0c0d0e0f10");
     ASSERT_EQ(hex_string4.to_string(hex_string::lower_case), "0x0102030405060708090a0b0c0d0e0f10");

@@ -8,10 +8,13 @@
 
 #include <utility>
 
-namespace abc {
+namespace abc
+{
 
 [[noreturn]]
-inline void unreachable() {
+inline void
+unreachable()
+{
 #if defined(__cpp_lib_unreachable) && (__cpp_lib_unreachable >= 202202L)
 
     std::unreachable();

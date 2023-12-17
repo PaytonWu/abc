@@ -7,9 +7,8 @@
 #pragma once
 
 #include "byte.h"
-#include "byte_bit_numbering.h"
+#include "bytes_view_decl.h"
 
-#include <range/v3/range_concepts.hpp>
 #include <range/v3/range_fwd.hpp>
 
 #include <concepts>
@@ -40,7 +39,7 @@ public:
     using const_reverse_iterator = typename container_type::const_reverse_iterator;
 
 private:
-    constexpr bytes_view(container_type view) noexcept : view_{ view } {
+    constexpr explicit bytes_view(container_type view) noexcept : view_{ view } {
     }
 
     template <byte_numbering RhsByteNumbering> requires (RhsByteNumbering == ByteNumbering)
@@ -208,20 +207,6 @@ public:
         return { view_.substr(offset, count) };
     }
 };
-
-using bytes_be_view_t = bytes_view<byte_numbering::msb0>;
-using bytes_le_view_t = bytes_view<byte_numbering::lsb0>;
-using bytes_view_t = bytes_view<byte_numbering::none>;
-
-}
-
-namespace ranges {
-
-template <abc::byte_numbering ByteNumbering>
-inline constexpr bool enable_borrowed_range<abc::bytes_view<ByteNumbering>> = true;
-
-template <abc::byte_numbering ByteNumbering>
-inline constexpr bool enable_view<abc::bytes_view<ByteNumbering>> = true;
 
 }
 

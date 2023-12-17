@@ -190,6 +190,10 @@ public:
         return data_[index];
     }
 
+    constexpr operator bytes_view<ByteNumbering>() const noexcept {
+        return abc::bytes_view<ByteNumbering>{ data_.data(), data_.size() };
+    }
+
     [[nodiscard]]
     constexpr auto front() const noexcept -> const_reference {
         return data_.front();

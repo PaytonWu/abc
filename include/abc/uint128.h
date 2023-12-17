@@ -41,7 +41,10 @@
 #   error "C++20 or above is required"
 #endif
 
+#include "bytes.h"
 #include "details/uint128_storage.h"
+#include "expected.h"
+#include "hex_string.h"
 
 #include <algorithm>
 #include <bit>
@@ -58,57 +61,141 @@
 #include <utility>
 #include <vector>
 
-namespace abc {
+namespace abc
+{
 
 class uint128_t;
 
-// Give uint128_t type traits
-//namespace std {
-//
-//// The behavior of a program that adds specializations for std::is_integral or std::is_integral_v is undefined.
-//// https://en.cppreference.com/w/cpp/types/is_integral
-//
-//template <>
-//struct is_integral<uint128_t> : true_type {
-//};
-//template <>
-//struct is_unsigned<uint128_t> : true_type {
-//};
-//template <>
-//struct is_arithmetic<uint128_t> : true_type {
-//};
-//
-//}
+// The behavior of a program that adds specializations for std::is_integral or std::is_integral_v is undefined.
+// https://en.cppreference.com/w/cpp/types/is_integral
+// remove is_integral<T>, is_unsigned<T>, is_arithmetic<T> specializations.
 
-class [[nodiscard]] uint128_t : private details::uint128_storage {
+class [[nodiscard]] uint128_t
+    : private details::uint128_storage
+{
 public:
     using details::uint128_storage::uint128_storage;
+    using details::uint128_storage::endian;
+    using details::uint128_storage::byte_numbering;
 
     uint128_t() = default;
 
     // do not use prefixes (0x, 0b, etc.)
     // if the input string is too long, only right most characters are read
-    constexpr uint128_t(std::string const & s, uint8_t const base) {
+    constexpr uint128_t(std::string const & s, uint8_t const base)
+    {
         init(s.c_str(), s.size(), base);
     }
 
-    constexpr uint128_t(char const * s, std::size_t const len, uint8_t const base) {
+    constexpr uint128_t(char const * s, std::size_t const len, uint8_t const base)
+    {
         init(s, len, base);
     }
 
-    constexpr explicit uint128_t(bool const b) : uint128_t{ static_cast<uint8_t>(b) } {
+    constexpr explicit uint128_t(bool const b) : uint128_t{ static_cast<uint8_t>(b) }
+    {
     }
 
     constexpr uint128_t(std::integral auto const upper_rhs, std::integral auto const lower_rhs) noexcept
-        : details::uint128_storage{ static_cast<std::uint64_t>(upper_rhs), static_cast<std::uint64_t>(lower_rhs) } {
+        : details::uint128_storage{ static_cast<std::uint64_t>(upper_rhs), static_cast<std::uint64_t>(lower_rhs) }
+    {
+    }
+
+    static auto from(hex_string const & hex_string) -> uint128_t
+    {
+        auto && bytes = hex_string.bytes<uint128_t::byte_numbering()>();
+        if constexpr (byte_numbering::lsb0 == uint128_t::byte_numbering())
+        {
+            uint128_t ret;
+            std::memcpy(&ret, bytes.data(), std::min(bytes.size(), sizeof(ret)));
+            return ret;
+        }
+
+        if constexpr (byte_numbering::msb0 == uint128_t::byte_numbering())
+        {
+            uint128_t ret;
+            if (bytes.size() >= sizeof(uint128_t))
+            {
+                std::memcpy(&ret, bytes.data() + bytes.size() - sizeof(uint128_t), sizeof(uint128_t));
+            }
+            else
+            {
+                byte * dst = reinterpret_cast<byte *>(&ret);
+                dst += (sizeof(uint128_t) - bytes.size());
+                std::memcpy(dst, bytes.data(), bytes.size());
+            }
+            return ret;
+        }
+
+        unreachable();
+    }
+
+    template <abc::byte_numbering ByteNumbering>
+    static auto from(bytes_view<ByteNumbering> const bytes) -> expected<uint128_t, std::error_code>
+    {
+        if (bytes.size() > sizeof(uint128_t))
+        {
+            return make_unexpected(std::make_error_code(std::errc::invalid_argument));
+        }
+
+        if constexpr (uint128_t::byte_numbering() == abc::byte_numbering::lsb0)
+        {
+            if constexpr (ByteNumbering == byte_numbering::lsb0)
+            {
+                uint128_t ret;
+                std::memcpy(&ret, bytes.data(), bytes.size());
+                return ret;
+            }
+
+            if constexpr (ByteNumbering == byte_numbering::msb0)
+            {
+                uint128_t ret;
+                byte * dst = reinterpret_cast<byte *>(&ret);
+
+                ranges::copy(bytes | ranges::views::reverse, dst);
+                return ret;
+            }
+
+            unreachable();
+        }
+
+        if constexpr (uint128_t::byte_numbering() == abc::byte_numbering::msb0)
+        {
+            if constexpr (ByteNumbering == byte_numbering::lsb0)
+            {
+                uint128_t ret;
+                byte * dst = reinterpret_cast<byte *>(&ret);
+                dst += sizeof(uint128_t);
+
+                ranges::copy_backward(bytes | ranges::views::reverse, dst);
+                return ret;
+            }
+
+            if constexpr (ByteNumbering == byte_numbering::msb0)
+            {
+                uint128_t ret;
+                byte * dst = reinterpret_cast<byte *>(&ret);
+                dst += (sizeof(uint128_t) - bytes.size());
+                std::memcpy(dst, bytes.data(), bytes.size());
+                return ret;
+            }
+
+            unreachable();
+        }
+
+        unreachable();
     }
 
     template <std::integral T>
-    constexpr auto operator=(T const rhs) -> uint128_t & {
+    constexpr auto
+    operator=(T const rhs) -> uint128_t &
+    {
         this->upper_ = 0;
 
-        if constexpr (std::is_signed_v<T>) {
-            if (rhs < 0) {
+        if constexpr (std::is_signed_v<T>)
+        {
+            if (rhs < 0)
+            {
                 this->upper_ = -1;
             }
         }
@@ -117,184 +204,245 @@ public:
         return *this;
     }
 
-    constexpr auto operator=(bool const rhs) -> uint128_t & {
+    constexpr auto
+    operator=(bool const rhs) -> uint128_t &
+    {
         this->upper_ = 0;
         this->lower_ = rhs;
         return *this;
     }
 
     // Typecast Operators
-    constexpr explicit operator bool() const noexcept {
+    constexpr explicit operator bool() const noexcept
+    {
         return static_cast<bool>(this->upper_ | this->lower_);
     }
 
-    constexpr operator uint8_t() const noexcept {
+    constexpr explicit operator uint8_t() const noexcept
+    {
         return static_cast<uint8_t>(this->lower_);
     }
 
-    constexpr operator uint16_t() const noexcept {
+    constexpr explicit operator uint16_t() const noexcept
+    {
         return static_cast<uint16_t>(this->lower_);
     }
 
-    constexpr operator uint32_t() const noexcept {
+    constexpr explicit operator uint32_t() const noexcept
+    {
         return static_cast<uint32_t>(this->lower_);
     }
 
-    constexpr operator uint64_t() const noexcept {
+    constexpr explicit operator uint64_t() const noexcept
+    {
         return this->lower_;
     }
 
     // Bitwise Operators
-    constexpr auto operator&(uint128_t const rhs) const noexcept -> uint128_t {
+    constexpr auto
+    operator&(uint128_t const rhs) const noexcept -> uint128_t
+    {
         return { this->upper_ & rhs.upper_, this->lower_ & rhs.lower_ };
     }
 
-    constexpr auto operator&(std::integral auto const rhs) const noexcept -> uint128_t {
+    constexpr auto
+    operator&(std::integral auto const rhs) const noexcept -> uint128_t
+    {
         return { 0, this->lower_ & static_cast<uint64_t>(rhs) };
     }
 
-    constexpr auto operator&=(uint128_t const rhs) noexcept -> uint128_t & {
+    constexpr auto
+    operator&=(uint128_t const rhs) noexcept -> uint128_t &
+    {
         this->upper_ &= rhs.upper_;
         this->lower_ &= rhs.lower_;
         return *this;
     }
 
-    constexpr auto operator&=(std::integral auto const rhs) noexcept -> uint128_t & {
+    constexpr auto
+    operator&=(std::integral auto const rhs) noexcept -> uint128_t &
+    {
         this->upper_ = 0;
         this->lower_ &= rhs;
         return *this;
     }
 
-    constexpr auto operator|(uint128_t const rhs) const noexcept -> uint128_t {
+    constexpr auto
+    operator|(uint128_t const rhs) const noexcept -> uint128_t
+    {
         return { this->upper_ | rhs.upper_, this->lower_ | rhs.lower_ };
     }
 
-    constexpr auto operator|(std::integral auto const rhs) const noexcept -> uint128_t {
+    constexpr auto
+    operator|(std::integral auto const rhs) const noexcept -> uint128_t
+    {
         return { this->upper_, this->lower_ | static_cast<uint64_t>(rhs) };
     }
 
-    constexpr auto operator|=(uint128_t const rhs) noexcept -> uint128_t & {
+    constexpr auto
+    operator|=(uint128_t const rhs) noexcept -> uint128_t &
+    {
         this->upper_ |= rhs.upper_;
         this->lower_ |= rhs.lower_;
         return *this;
     }
 
-    constexpr auto operator|=(std::integral auto const rhs) noexcept -> uint128_t & {
+    constexpr auto
+    operator|=(std::integral auto const rhs) noexcept -> uint128_t &
+    {
         this->lower_ |= static_cast<uint64_t>(rhs);
         return *this;
     }
 
-    constexpr auto operator^(uint128_t const rhs) const noexcept -> uint128_t {
+    constexpr auto
+    operator^(uint128_t const rhs) const noexcept -> uint128_t
+    {
         return { this->upper_ ^ rhs.upper_, this->lower_ ^ rhs.lower_ };
     }
 
-    constexpr auto operator^(std::integral auto const rhs) const noexcept -> uint128_t {
+    constexpr auto
+    operator^(std::integral auto const rhs) const noexcept -> uint128_t
+    {
         return { this->upper_, this->lower_ ^ static_cast<uint64_t>(rhs) };
     }
 
-    constexpr auto operator^=(uint128_t const rhs) noexcept -> uint128_t & {
+    constexpr auto
+    operator^=(uint128_t const rhs) noexcept -> uint128_t &
+    {
         this->upper_ ^= rhs.upper_;
         this->lower_ ^= rhs.lower_;
         return *this;
     }
 
-    constexpr auto operator^=(std::integral auto const rhs) noexcept -> uint128_t & {
+    constexpr auto
+    operator^=(std::integral auto const rhs) noexcept -> uint128_t &
+    {
         this->lower_ ^= static_cast<uint64_t>(rhs);
         return *this;
     }
 
-    constexpr auto operator~() const noexcept -> uint128_t {
+    constexpr auto
+    operator~() const noexcept -> uint128_t
+    {
         return { ~this->upper_, ~this->lower_ };
     }
 
-    constexpr void export_bits(std::span<uint8_t> const ret) const noexcept {
-        assert(ret.size() >= 16);
+//    constexpr void export_bits(std::span<uint8_t> const ret) const noexcept {
+//        assert(ret.size() >= 16);
+//
+//        convert_to_span_big_endian(this->upper_, ret);
+//        convert_to_span_big_endian(this->lower_, ret.subspan(8));
+//    }
 
-        convert_to_span_big_endian(this->upper_, ret);
-        convert_to_span_big_endian(this->lower_, ret.subspan(8));
+    template <abc::byte_numbering ByteNumbering>
+    constexpr void
+    export_bits(bytes<ByteNumbering> & ret) const
+    {
+        if constexpr (ByteNumbering == byte_numbering::msb0)
+        {
+#if !defined(NDEBUG)
+            auto const size_before_export = ret.size();
+#endif
+            convert_to_bytes<ByteNumbering>(this->upper_, ret);
+            convert_to_bytes<ByteNumbering>(this->lower_, ret);
+
+            assert(ret.size() - size_before_export == 16);
+        }
+        else if constexpr (ByteNumbering == byte_numbering::lsb0)
+        {
+#if !defined(NDEBUG)
+            auto const size_before_export = ret.size();
+#endif
+            convert_to_bytes_le(this->lower_, ret);
+            convert_to_bytes_le(this->upper_, ret);
+
+            assert(ret.size() - size_before_export == 16);
+        }
+        else
+        {
+            unreachable();
+        }
     }
 
-    constexpr void export_bits(std::vector<uint8_t> & ret) const noexcept {
-        convert_to_vector_big_endian(this->upper_, ret);
-        convert_to_vector_big_endian(this->lower_, ret);
-        assert(ret.size() == 16);
-    }
-
-    [[nodiscard]] constexpr auto export_bits() const noexcept -> std::vector<uint8_t> {
-        std::vector<uint8_t> ret;
+    template <abc::byte_numbering ByteNumbering>
+    [[nodiscard]] constexpr auto
+    export_bits() const noexcept -> bytes<ByteNumbering>
+    {
+        bytes<ByteNumbering> ret;
         ret.reserve(16);
         export_bits(ret);
         return ret;
     }
 
-    constexpr auto export_bits_compact(std::span<uint8_t> const ret) const noexcept -> size_t {
-        assert(ret.size() >= 16);
-        auto tmp = export_bits_compact();
-        std::ranges::copy(tmp, std::begin(ret));
-        return tmp.size();
-    }
+//    constexpr auto export_bits_compact(std::span<uint8_t> const ret) const noexcept -> size_t {
+//        assert(ret.size() >= 16);
+//        auto tmp = export_bits_compact();
+//        std::ranges::copy(tmp, std::begin(ret));
+//        return tmp.size();
+//    }
 
-    constexpr void export_bits_compact(std::vector<uint8_t> & ret) const noexcept {
-        auto tmp = export_bits_compact();
-        std::ranges::copy(tmp, std::back_inserter(ret));
-    }
+    template <abc::byte_numbering ByteNumbering>
+    void
+    export_bits_compact(bytes<ByteNumbering> & ret) const noexcept
+    {
+        auto leading_zeros_bits_count = std::countl_zero(this->upper_);
+        if (leading_zeros_bits_count == 64)
+        {
+            leading_zeros_bits_count = std::countl_zero(this->lower_);
+            std::size_t const leading_zero_bytes_count = (leading_zeros_bits_count / 8);
 
-    [[nodiscard]] constexpr auto export_bits_compact() const -> std::vector<uint8_t> {
-        std::vector<uint8_t> ret;
-        ret.reserve(16);
-        export_bits(ret);
-        assert(ret.size() == 16);
+            ret.reserve(leading_zero_bytes_count);
 
-        int i = 0;
-        while (i < 16 && ret[i] == 0) {
-            ++i;
+            convert_to_bytes<ByteNumbering>(this->lower_, leading_zero_bytes_count, ret);
         }
-        ret.erase(std::begin(ret), std::next(std::begin(ret), i));
+        else
+        {
+            std::size_t const leading_zero_bytes_count = (leading_zeros_bits_count / 8);
+            ret.reserve(leading_zero_bytes_count + 8);
+
+            convert_to_bytes<ByteNumbering>(this->upper_, leading_zero_bytes_count, ret);
+            convert_to_bytes<ByteNumbering>(this->lower_, ret);
+        }
+    }
+
+    template <abc::byte_numbering ByteNumbering>
+    [[nodiscard]] constexpr auto
+    export_bits_compact() const -> bytes<ByteNumbering>
+    {
+        bytes<ByteNumbering> ret;
+        ret.reserve(16);
+        export_bits_compact(ret);
 
         return ret;
-    }
-
-    constexpr auto export_bits_compact(std::endian const endian, std::span<uint8_t> ret) const noexcept -> size_t {
-        assert(ret.size() >= 16);
-
-        auto tmp = export_bits_compact(endian);
-        std::ranges::copy(tmp, std::begin(ret));
-
-        return tmp.size();
-    }
-
-    constexpr void export_bits_compact(std::endian const endian, std::vector<uint8_t> & ret) const noexcept {
-        auto tmp = export_bits_compact(endian);
-        std::ranges::copy(tmp, std::back_inserter(ret));
-    }
-
-    [[nodiscard]] constexpr auto export_bits_compact(std::endian const endian) const -> std::vector<uint8_t> {
-        auto res = export_bits_compact();
-        if (endian == std::endian::little) {
-            std::ranges::reverse(res);
-        }
-
-        return res;
     }
 
     // Bit Shift Operators
-    constexpr auto operator<<(uint128_t const rhs) const noexcept -> uint128_t {
-        if (uint64_t const shift = rhs.lower_; static_cast<bool>(rhs.upper_) || (shift >= 128)) {
+    constexpr auto
+    operator<<(uint128_t const rhs) const noexcept -> uint128_t
+    {
+        if (uint64_t const shift = rhs.lower_; static_cast<bool>(rhs.upper_) || (shift >= 128))
+        {
             return { 0 };
-        } else {
-            if (shift == 64) {
+        }
+        else
+        {
+            if (shift == 64)
+            {
                 return { this->lower_, 0u };
             }
 
-            if (shift == 0) {
+            if (shift == 0)
+            {
                 return *this;
             }
 
-            if (shift < 64) {
+            if (shift < 64)
+            {
                 return { (this->upper_ << shift) + (this->lower_ >> (64 - shift)), this->lower_ << shift };
             }
 
-            if ((128 > shift) && (shift > 64)) {
+            if ((128 > shift) && (shift > 64))
+            {
                 return { this->lower_ << (shift - 64), 0u };
             }
 
@@ -302,86 +450,124 @@ public:
         }
     }
 
-    constexpr auto operator<<(std::integral auto const rhs) const noexcept -> uint128_t {
+    constexpr auto
+    operator<<(std::integral auto const rhs) const noexcept -> uint128_t
+    {
         return *this << uint128_t{ rhs };
     }
 
-    constexpr auto operator<<=(uint128_t const rhs) noexcept -> uint128_t & {
+    constexpr auto
+    operator<<=(uint128_t const rhs) noexcept -> uint128_t &
+    {
         *this = *this << rhs;
         return *this;
     }
 
-    constexpr auto operator<<=(std::integral auto const rhs) noexcept -> uint128_t & {
+    constexpr auto
+    operator<<=(std::integral auto const rhs) noexcept -> uint128_t &
+    {
         *this = *this << uint128_t{ rhs };
         return *this;
     }
 
-    constexpr auto operator>>(uint128_t const rhs) const noexcept -> uint128_t {
-        if (uint64_t const shift = rhs.lower_; static_cast<bool>(rhs.upper_) || (shift >= 128)) {
+    constexpr auto
+    operator>>(uint128_t const rhs) const noexcept -> uint128_t
+    {
+        if (uint64_t const shift = rhs.lower_; static_cast<bool>(rhs.upper_) || (shift >= 128))
+        {
             return { 0 };
-        } else {
-            if (shift == 64) {
+        }
+        else
+        {
+            if (shift == 64)
+            {
                 return { 0u, this->upper_ };
             }
-            if (shift == 0) {
+            if (shift == 0)
+            {
                 return *this;
             }
-            if (shift < 64) {
+            if (shift < 64)
+            {
                 return { this->upper_ >> shift, (this->upper_ << (64 - shift)) + (this->lower_ >> shift) };
             }
-            if ((128 > shift) && (shift > 64)) {
+            if ((128 > shift) && (shift > 64))
+            {
                 return { 0u, (this->upper_ >> (shift - 64)) };
             }
             return { 0 };
         }
     }
 
-    constexpr auto operator>>(std::integral auto const rhs) const noexcept -> uint128_t {
+    constexpr auto
+    operator>>(std::integral auto const rhs) const noexcept -> uint128_t
+    {
         return *this >> uint128_t{ rhs };
     }
 
-    constexpr auto operator>>=(uint128_t const rhs) noexcept -> uint128_t & {
+    constexpr auto
+    operator>>=(uint128_t const rhs) noexcept -> uint128_t &
+    {
         *this = *this >> rhs;
         return *this;
     }
 
-    constexpr auto operator>>=(std::integral auto const rhs) noexcept -> uint128_t & {
+    constexpr auto
+    operator>>=(std::integral auto const rhs) noexcept -> uint128_t &
+    {
         *this = *this >> uint128_t{ rhs };
         return *this;
     }
 
     // Logical Operators
-    constexpr bool operator!() const noexcept {
+    constexpr bool
+    operator!() const noexcept
+    {
         return !static_cast<bool>(this->upper_ | this->lower_);
     }
 
-    constexpr bool operator&&(uint128_t const rhs) const noexcept {
+    constexpr bool
+    operator&&(uint128_t const rhs) const noexcept
+    {
         return (static_cast<bool>(*this) && rhs);
     }
 
-    constexpr bool operator||(uint128_t const rhs) const noexcept {
+    constexpr bool
+    operator||(uint128_t const rhs) const noexcept
+    {
         return (static_cast<bool>(*this) || rhs);
     }
 
-    constexpr bool operator&&(std::integral auto const rhs) const noexcept {
+    constexpr bool
+    operator&&(std::integral auto const rhs) const noexcept
+    {
         return static_cast<bool>(*this && rhs);
     }
 
-    constexpr bool operator||(std::integral auto const rhs) const noexcept {
+    constexpr bool
+    operator||(std::integral auto const rhs) const noexcept
+    {
         return static_cast<bool>(*this || rhs);
     }
 
     // Comparison Operators
-    constexpr auto operator==(uint128_t const & rhs) const noexcept -> bool = default;
+    constexpr auto
+    operator==(uint128_t const & rhs) const noexcept -> bool = default;
 
-    constexpr auto operator<=>(uint128_t const & rhs) const -> std::strong_ordering = default;
+    constexpr auto
+    operator<=>(uint128_t const & rhs) const -> std::strong_ordering = default;
 
-    constexpr bool operator==(std::integral auto const rhs) const noexcept {
+    constexpr bool
+    operator==(std::integral auto const rhs) const noexcept
+    {
         return !this->upper_ && this->lower_ == static_cast<uint64_t>(rhs);
     }
 
-    constexpr auto operator<=>(std::integral auto const rhs) const noexcept -> std::strong_ordering {
-        if (this->upper_ == 0) {
+    constexpr auto
+    operator<=>(std::integral auto const rhs) const noexcept -> std::strong_ordering
+    {
+        if (this->upper_ == 0)
+        {
             return this->lower_ <=> static_cast<uint64_t>(rhs);
         }
 
@@ -389,50 +575,70 @@ public:
     }
 
     // Arithmetic Operators
-    constexpr auto operator+(uint128_t const rhs) const noexcept -> uint128_t {
+    constexpr auto
+    operator+(uint128_t const rhs) const noexcept -> uint128_t
+    {
         return { this->upper_ + rhs.upper_ + ((this->lower_ + rhs.lower_) < this->lower_), this->lower_ + rhs.lower_ };
     }
 
-    constexpr auto operator+(std::integral auto const rhs) const noexcept -> uint128_t {
+    constexpr auto
+    operator+(std::integral auto const rhs) const noexcept -> uint128_t
+    {
         return { this->upper_ + ((this->lower_ + static_cast<uint64_t>(rhs)) < this->lower_), this->lower_ + static_cast<uint64_t>(rhs) };
     }
 
-    constexpr auto operator+=(uint128_t const rhs) noexcept -> uint128_t & {
+    constexpr auto
+    operator+=(uint128_t const rhs) noexcept -> uint128_t &
+    {
         this->upper_ += rhs.upper_ + ((this->lower_ + rhs.lower_) < this->lower_);
         this->lower_ += rhs.lower_;
         return *this;
     }
 
-    constexpr auto operator+=(std::integral auto const rhs) noexcept -> uint128_t & {
+    constexpr auto
+    operator+=(std::integral auto const rhs) noexcept -> uint128_t &
+    {
         return *this += uint128_t{ rhs };
     }
 
-    constexpr auto operator-(uint128_t const rhs) const noexcept -> uint128_t {
+    constexpr auto
+    operator-(uint128_t const rhs) const noexcept -> uint128_t
+    {
         return { this->upper_ - rhs.upper_ - ((this->lower_ - rhs.lower_) > this->lower_), this->lower_ - rhs.lower_ };
     }
 
-    constexpr auto operator-(std::integral auto const rhs) const noexcept -> uint128_t {
+    constexpr auto
+    operator-(std::integral auto const rhs) const noexcept -> uint128_t
+    {
         return { static_cast<uint64_t>(this->upper_ - ((this->lower_ - rhs) > this->lower_)), static_cast<uint64_t>(this->lower_ - rhs) };
     }
 
-    constexpr auto operator-=(uint128_t const rhs) noexcept -> uint128_t & {
+    constexpr auto
+    operator-=(uint128_t const rhs) noexcept -> uint128_t &
+    {
         *this = *this - rhs;
         return *this;
     }
 
-    constexpr auto operator-=(std::integral auto const rhs) noexcept -> uint128_t & {
+    constexpr auto
+    operator-=(std::integral auto const rhs) noexcept -> uint128_t &
+    {
         return *this = *this - uint128_t(rhs);
     }
 
-    constexpr auto operator*(uint128_t const rhs) const noexcept -> uint128_t {
+    constexpr auto
+    operator*(uint128_t const rhs) const noexcept -> uint128_t
+    {
         // split values into 4 32-bit parts
         uint64_t const top[4] = { this->upper_ >> 32, this->upper_ & 0xffffffff, this->lower_ >> 32, this->lower_ & 0xffffffff };
         uint64_t const bottom[4] = { rhs.upper_ >> 32, rhs.upper_ & 0xffffffff, rhs.lower_ >> 32, rhs.lower_ & 0xffffffff };
         uint64_t products[4][4];
 
         // multiply each component of the values
-        for (int y = 3; y > -1; y--) {
-            for (int x = 3; x > -1; x--) {
+        for (int y = 3; y > -1; y--)
+        {
+            for (int x = 3; x > -1; x--)
+            {
                 products[3 - x][y] = top[x] * bottom[y];
             }
         }
@@ -470,48 +676,63 @@ public:
         return { (first32 << 32) | second32, (third32 << 32) | fourth32 };
     }
 
-    constexpr auto operator*(std::integral auto const & rhs) const noexcept -> uint128_t {
+    constexpr auto
+    operator*(std::integral auto const & rhs) const noexcept -> uint128_t
+    {
         return *this * uint128_t{ rhs };
     }
 
-    constexpr auto operator*=(uint128_t const rhs) noexcept -> uint128_t & {
+    constexpr auto
+    operator*=(uint128_t const rhs) noexcept -> uint128_t &
+    {
         *this = *this * rhs;
         return *this;
     }
 
-    constexpr auto operator*=(std::integral auto const rhs) noexcept -> uint128_t & {
+    constexpr auto
+    operator*=(std::integral auto const rhs) noexcept -> uint128_t &
+    {
         return *this = *this * uint128_t(rhs);
     }
 
 private:
-    [[nodiscard]] constexpr static auto divmod(uint128_t const lhs, uint128_t const rhs) -> std::pair<uint128_t, uint128_t> {
+    [[nodiscard]] constexpr static auto
+    divmod(uint128_t const lhs, uint128_t const rhs) -> std::pair<uint128_t, uint128_t>
+    {
         // Save some calculations /////////////////////
-        if (rhs == uint128_t{ 0 }) {
+        if (rhs == uint128_t{ 0 })
+        {
             throw std::domain_error("Error: division or modulus by 0");
         }
 
-        if (rhs == uint128_t{ 1 }) {
+        if (rhs == uint128_t{ 1 })
+        {
             return { lhs, uint128_t{ 0 }};
         }
 
-        if (lhs == rhs) {
+        if (lhs == rhs)
+        {
             return { uint128_t{ 1 }, uint128_t{ 0 }};
         }
 
-        if ((lhs == uint128_t{ 0 }) || (lhs < rhs)) {
+        if ((lhs == uint128_t{ 0 }) || (lhs < rhs))
+        {
             return { uint128_t{ 0 }, lhs };
         }
 
         std::pair qr{ uint128_t{ 0 }, uint128_t{ 0 }};
-        for (uint8_t x = lhs.bits(); x > 0; x--) {
+        for (uint8_t x = lhs.bits(); x > 0; x--)
+        {
             qr.first <<= uint128_t{ 1 };
             qr.second <<= uint128_t{ 1 };
 
-            if ((lhs >> (x - 1U)) & 1) {
+            if ((lhs >> (x - 1U)) & 1)
+            {
                 ++qr.second;
             }
 
-            if (qr.second >= rhs) {
+            if (qr.second >= rhs)
+            {
                 qr.second -= rhs;
                 ++qr.first;
             }
@@ -521,19 +742,24 @@ private:
 
     // do not use prefixes (0x, 0b, etc.)
     // if the input string is too long, only right most characters are read
-    constexpr void init(char const * s, std::size_t len, uint8_t const base) {
-        if (s == nullptr || !len || s[0] == '\x00') {
+    constexpr void
+    init(char const * s, std::size_t len, uint8_t const base)
+    {
+        if (s == nullptr || !len || s[0] == '\x00')
+        {
             this->lower_ = this->upper_ = 0;
             return;
         }
 
-        while (len && *s && std::isspace(*s)) {
+        while (len && *s && std::isspace(*s))
+        {
             ++s;
             len--;
         }
 
         // no prefixes
-        switch (base) {
+        switch (base)
+        {
             case 16:
                 init_hex(s, len);
                 break;
@@ -552,12 +778,15 @@ private:
         }
     }
 
-    constexpr void init_hex(char const * s, std::size_t const len) {
+    constexpr void
+    init_hex(char const * s, std::size_t const len)
+    {
         // 2**128 = 0x100000000000000000000000000000000.
         constexpr std::size_t MAX_LEN = 32;
 
         this->lower_ = this->upper_ = 0;
-        if (!s || !len) {
+        if (!s || !len)
+        {
             return;
         }
 
@@ -576,12 +805,15 @@ private:
         lower_s >> this->lower_;
     }
 
-    constexpr void init_dec(char const * s, std::size_t const len) {
+    constexpr void
+    init_dec(char const * s, std::size_t const len)
+    {
         // 2**128 = 340282366920938463463374607431768211456.
         constexpr std::size_t MAX_LEN = 39;
 
         this->lower_ = this->upper_ = 0;
-        if (!s || !len) {
+        if (!s || !len)
+        {
             return;
         }
 
@@ -589,18 +821,22 @@ private:
         std::size_t const starting_index = (MAX_LEN < len) ? (len - MAX_LEN) : 0;
         s += starting_index;
 
-        for (std::size_t i = 0; *s && ('0' <= *s) && (*s <= '9') && (i < max_len); ++s, ++i) {
+        for (std::size_t i = 0; *s && ('0' <= *s) && (*s <= '9') && (i < max_len); ++s, ++i)
+        {
             *this *= 10;
             *this += *s - '0';
         }
     }
 
-    constexpr void init_oct(char const * s, std::size_t const len) {
+    constexpr void
+    init_oct(char const * s, std::size_t const len)
+    {
         // 2**128 = 0o4000000000000000000000000000000000000000000.
         constexpr std::size_t MAX_LEN = 43;
 
         this->lower_ = this->upper_ = 0;
-        if (!s || !len) {
+        if (!s || !len)
+        {
             return;
         }
 
@@ -608,18 +844,22 @@ private:
         std::size_t const starting_index = (MAX_LEN < len) ? (len - MAX_LEN) : 0;
         s += starting_index;
 
-        for (std::size_t i = 0; *s && ('0' <= *s) && (*s <= '7') && (i < max_len); ++s, ++i) {
+        for (std::size_t i = 0; *s && ('0' <= *s) && (*s <= '7') && (i < max_len); ++s, ++i)
+        {
             *this *= 8;
             *this += *s - '0';
         }
     }
 
-    constexpr void init_bin(char const * s, std::size_t const len) {
+    constexpr void
+    init_bin(char const * s, std::size_t const len)
+    {
         // 2**128 = 0x100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000.
         constexpr std::size_t MAX_LEN = 128;
 
         this->lower_ = this->upper_ = 0;
-        if (!s || !len) {
+        if (!s || !len)
+        {
             return;
         }
 
@@ -630,116 +870,296 @@ private:
         std::size_t const upper_len = (max_len >= eight_lower) ? (max_len - eight_lower) : 0;
         s += starting_index;
 
-        for (std::size_t i = 0; *s && ('0' <= *s) && (*s <= '1') && (i < upper_len); ++s, ++i) {
+        for (std::size_t i = 0; *s && ('0' <= *s) && (*s <= '1') && (i < upper_len); ++s, ++i)
+        {
             this->upper_ <<= 1;
             this->upper_ |= *s - '0';
         }
 
-        for (std::size_t i = 0; *s && ('0' <= *s) && (*s <= '1') && (i < lower_len); ++s, ++i) {
+        for (std::size_t i = 0; *s && ('0' <= *s) && (*s <= '1') && (i < lower_len); ++s, ++i)
+        {
             this->lower_ <<= 1;
             this->lower_ |= *s - '0';
         }
     }
 
-    constexpr static void convert_to_span_big_endian(uint64_t const val, std::span<uint8_t> ret) {
-        ret[0] = static_cast<uint8_t>(val >> 56);
-        ret[1] = static_cast<uint8_t>(val >> 48);
-        ret[2] = static_cast<uint8_t>(val >> 40);
-        ret[3] = static_cast<uint8_t>(val >> 32);
-        ret[4] = static_cast<uint8_t>(val >> 24);
-        ret[5] = static_cast<uint8_t>(val >> 16);
-        ret[6] = static_cast<uint8_t>(val >> 8);
-        ret[7] = static_cast<uint8_t>(val);
+//    constexpr static void
+//    convert_to_span_big_endian(uint64_t const val, std::span<uint8_t> ret)
+//    {
+//        ret[0] = static_cast<uint8_t>(val >> 56);
+//        ret[1] = static_cast<uint8_t>(val >> 48);
+//        ret[2] = static_cast<uint8_t>(val >> 40);
+//        ret[3] = static_cast<uint8_t>(val >> 32);
+//        ret[4] = static_cast<uint8_t>(val >> 24);
+//        ret[5] = static_cast<uint8_t>(val >> 16);
+//        ret[6] = static_cast<uint8_t>(val >> 8);
+//        ret[7] = static_cast<uint8_t>(val);
+//    }
+
+    template <abc::byte_numbering ByteNumbering>
+    constexpr static void
+    convert_to_bytes(uint64_t const val, bytes<ByteNumbering> & ret)
+    {
+        if constexpr (ByteNumbering == abc::byte_numbering::msb0)
+        {
+            ret.push_back(static_cast<uint8_t>(val >> 56));
+            ret.push_back(static_cast<uint8_t>(val >> 48));
+            ret.push_back(static_cast<uint8_t>(val >> 40));
+            ret.push_back(static_cast<uint8_t>(val >> 32));
+            ret.push_back(static_cast<uint8_t>(val >> 24));
+            ret.push_back(static_cast<uint8_t>(val >> 16));
+            ret.push_back(static_cast<uint8_t>(val >> 8));
+            ret.push_back(static_cast<uint8_t>(val));
+
+            return;
+        }
+
+        if constexpr (ByteNumbering == abc::byte_numbering::lsb0)
+        {
+            ret.push_back(static_cast<uint8_t>(val));
+            ret.push_back(static_cast<uint8_t>(val >> 8));
+            ret.push_back(static_cast<uint8_t>(val >> 16));
+            ret.push_back(static_cast<uint8_t>(val >> 24));
+            ret.push_back(static_cast<uint8_t>(val >> 32));
+            ret.push_back(static_cast<uint8_t>(val >> 40));
+            ret.push_back(static_cast<uint8_t>(val >> 48));
+            ret.push_back(static_cast<uint8_t>(val >> 56));
+
+            return;
+        }
+
+        unreachable();
     }
 
-    constexpr static void convert_to_vector_big_endian(uint64_t const val, std::vector<uint8_t> & ret) {
-        ret.push_back(static_cast<uint8_t>(val >> 56));
-        ret.push_back(static_cast<uint8_t>(val >> 48));
-        ret.push_back(static_cast<uint8_t>(val >> 40));
-        ret.push_back(static_cast<uint8_t>(val >> 32));
-        ret.push_back(static_cast<uint8_t>(val >> 24));
-        ret.push_back(static_cast<uint8_t>(val >> 16));
-        ret.push_back(static_cast<uint8_t>(val >> 8));
-        ret.push_back(static_cast<uint8_t>(val));
+    template <abc::byte_numbering ByteNumbering>
+    constexpr static void
+    convert_to_bytes(uint64_t const value, std::size_t leading_zero_bytes_count, bytes<ByteNumbering> & ret)
+    {
+        if (ByteNumbering == abc::byte_numbering::msb0)
+        {
+            assert(leading_zero_bytes_count <= 8);
+            switch (leading_zero_bytes_count)
+            {
+                case 0:
+                    ret.push_back(static_cast<uint8_t>(value >> 56));
+                    [[fallthrough]];
+                case 1:
+                    ret.push_back(static_cast<uint8_t>(value >> 48));
+                    [[fallthrough]];
+                case 2:
+                    ret.push_back(static_cast<uint8_t>(value >> 40));
+                    [[fallthrough]];
+                case 3:
+                    ret.push_back(static_cast<uint8_t>(value >> 32));
+                    [[fallthrough]];
+                case 4:
+                    ret.push_back(static_cast<uint8_t>(value >> 24));
+                    [[fallthrough]];
+                case 5:
+                    ret.push_back(static_cast<uint8_t>(value >> 16));
+                    [[fallthrough]];
+                case 6:
+                    ret.push_back(static_cast<uint8_t>(value >> 8));
+                    [[fallthrough]];
+                case 7:
+                    ret.push_back(static_cast<uint8_t>(value));
+                    [[fallthrough]];
+                default:
+                    break;
+            }
+
+            return;
+        }
+
+        if (ByteNumbering == abc::byte_numbering::lsb0)
+        {
+            assert(leading_zero_bytes_count <= 8);
+            std::size_t const tail_non_zero_bytes_count = 8 - leading_zero_bytes_count;
+
+            switch (tail_non_zero_bytes_count)
+            {
+                case 8:
+                    ret.push_back(static_cast<uint8_t>(value));
+                    ret.push_back(static_cast<uint8_t>(value >> 8));
+                    ret.push_back(static_cast<uint8_t>(value >> 16));
+                    ret.push_back(static_cast<uint8_t>(value >> 24));
+                    ret.push_back(static_cast<uint8_t>(value >> 32));
+                    ret.push_back(static_cast<uint8_t>(value >> 40));
+                    ret.push_back(static_cast<uint8_t>(value >> 48));
+                    ret.push_back(static_cast<uint8_t>(value >> 56));
+                    break;
+
+                case 7:
+                    ret.push_back(static_cast<uint8_t>(value));
+                    ret.push_back(static_cast<uint8_t>(value >> 8));
+                    ret.push_back(static_cast<uint8_t>(value >> 16));
+                    ret.push_back(static_cast<uint8_t>(value >> 24));
+                    ret.push_back(static_cast<uint8_t>(value >> 32));
+                    ret.push_back(static_cast<uint8_t>(value >> 40));
+                    ret.push_back(static_cast<uint8_t>(value >> 48));
+                    break;
+
+                case 6:
+                    ret.push_back(static_cast<uint8_t>(value));
+                    ret.push_back(static_cast<uint8_t>(value >> 8));
+                    ret.push_back(static_cast<uint8_t>(value >> 16));
+                    ret.push_back(static_cast<uint8_t>(value >> 24));
+                    ret.push_back(static_cast<uint8_t>(value >> 32));
+                    ret.push_back(static_cast<uint8_t>(value >> 40));
+                    break;
+
+                case 5:
+                    ret.push_back(static_cast<uint8_t>(value));
+                    ret.push_back(static_cast<uint8_t>(value >> 8));
+                    ret.push_back(static_cast<uint8_t>(value >> 16));
+                    ret.push_back(static_cast<uint8_t>(value >> 24));
+                    ret.push_back(static_cast<uint8_t>(value >> 32));
+                    break;
+
+                case 4:
+                    ret.push_back(static_cast<uint8_t>(value));
+                    ret.push_back(static_cast<uint8_t>(value >> 8));
+                    ret.push_back(static_cast<uint8_t>(value >> 16));
+                    ret.push_back(static_cast<uint8_t>(value >> 24));
+                    break;
+
+                case 3:
+                    ret.push_back(static_cast<uint8_t>(value));
+                    ret.push_back(static_cast<uint8_t>(value >> 8));
+                    ret.push_back(static_cast<uint8_t>(value >> 16));
+                    break;
+
+                case 2:
+                    ret.push_back(static_cast<uint8_t>(value));
+                    ret.push_back(static_cast<uint8_t>(value >> 8));
+                    break;
+
+                case 1:
+                    ret.push_back(static_cast<uint8_t>(value));
+                    break;
+
+                default:
+                    break;
+            }
+
+            return;
+        }
+
+        unreachable();
     }
 
 public:
-    constexpr auto operator/(uint128_t const rhs) const -> uint128_t {
+    constexpr auto
+    operator/(uint128_t const rhs) const -> uint128_t
+    {
         return divmod(*this, rhs).first;
     }
 
-    constexpr auto operator/(std::integral auto const rhs) const -> uint128_t {
+    constexpr auto
+    operator/(std::integral auto const rhs) const -> uint128_t
+    {
         return *this / uint128_t{ rhs };
     }
 
-    constexpr auto operator/=(uint128_t const rhs) -> uint128_t & {
+    constexpr auto
+    operator/=(uint128_t const rhs) -> uint128_t &
+    {
         return *this = *this / rhs;
     }
 
-    constexpr auto operator/=(std::integral auto const rhs) -> uint128_t & {
+    constexpr auto
+    operator/=(std::integral auto const rhs) -> uint128_t &
+    {
         return *this = *this / uint128_t(rhs);
     }
 
-    constexpr auto operator%(uint128_t const rhs) const -> uint128_t {
+    constexpr auto
+    operator%(uint128_t const rhs) const -> uint128_t
+    {
         return divmod(*this, rhs).second;
     }
 
-    constexpr auto operator%(std::integral auto const rhs) const -> uint128_t {
+    constexpr auto
+    operator%(std::integral auto const rhs) const -> uint128_t
+    {
         return *this % uint128_t(rhs);
     }
 
-    constexpr auto operator%=(uint128_t const rhs) -> uint128_t & {
+    constexpr auto
+    operator%=(uint128_t const rhs) -> uint128_t &
+    {
         return *this = *this % rhs;
     }
 
-    constexpr auto operator%=(std::integral auto const rhs) -> uint128_t & {
+    constexpr auto
+    operator%=(std::integral auto const rhs) -> uint128_t &
+    {
         return *this = *this % uint128_t{ rhs };
     }
 
     // Increment Operator
-    constexpr auto operator++() noexcept -> uint128_t & {
+    constexpr auto
+    operator++() noexcept -> uint128_t &
+    {
         return *this += uint128_t{ 1 };
     }
 
-    constexpr auto operator++(int) noexcept -> uint128_t {
+    constexpr auto
+    operator++(int) noexcept -> uint128_t
+    {
         uint128_t const temp{ *this };
         ++*this;
         return temp;
     }
 
     // Decrement Operator
-    constexpr auto operator--() noexcept -> uint128_t & {
+    constexpr auto
+    operator--() noexcept -> uint128_t &
+    {
         return *this -= uint128_t{ 1 };
     }
 
-    constexpr auto operator--(int) noexcept -> uint128_t {
+    constexpr auto
+    operator--(int) noexcept -> uint128_t
+    {
         uint128_t const temp{ *this };
         --*this;
         return temp;
     }
 
     // Nothing done since promotion doesn't work here
-    constexpr auto operator+() const noexcept -> uint128_t {
+    constexpr auto
+    operator+() const noexcept -> uint128_t
+    {
         return *this;
     }
 
     // two's complement
-    constexpr auto operator-() const noexcept -> uint128_t {
+    constexpr auto
+    operator-() const noexcept -> uint128_t
+    {
         return ~*this + uint128_t{ 1 };
     }
 
     // Get private values
-    [[nodiscard]] constexpr auto upper() const noexcept -> uint64_t {
+    [[nodiscard]] constexpr auto
+    upper() const noexcept -> uint64_t
+    {
         return this->upper_;
     }
 
-    [[nodiscard]] constexpr auto lower() const noexcept -> uint64_t {
+    [[nodiscard]] constexpr auto
+    lower() const noexcept -> uint64_t
+    {
         return this->lower_;
     }
 
     // Get bit size of value
-    [[nodiscard]] constexpr auto bits() const -> uint8_t {
-        if (this->upper_) {
+    [[nodiscard]] constexpr auto
+    bits() const -> uint8_t
+    {
+        if (this->upper_)
+        {
             return 64 + static_cast<uint8_t>(std::bit_width(this->upper_));
         }
 
@@ -747,22 +1167,30 @@ public:
     }
 
     // Get string representation of value
-    [[nodiscard]] constexpr auto str(uint8_t const base = 10, unsigned int const len = 0) const -> std::string {
-        if ((base < 2) || (base > 16)) {
+    [[nodiscard]] constexpr auto
+    str(uint8_t const base = 10, unsigned int const len = 0) const -> std::string
+    {
+        if ((base < 2) || (base > 16))
+        {
             throw std::invalid_argument("Base must be in the range [2, 16]");
         }
 
         std::string out;
-        if (!(*this)) {
+        if (!(*this))
+        {
             out = "0";
-        } else {
+        }
+        else
+        {
             std::pair qr{ *this, uint128_t{ 0 }};
-            do {
+            do
+            {
                 qr = divmod(qr.first, base);
                 out = "0123456789abcdef"[static_cast<uint8_t>(qr.second)] + out;
             } while (qr.first);
         }
-        if (out.size() < len) {
+        if (out.size() < len)
+        {
             out = std::string(len - out.size(), '0') + out;
         }
         return out;
@@ -777,105 +1205,152 @@ inline constexpr uint128_t uint128_1{ 1 };
 // If the output is not a bool, casts to type T
 
 // Bitwise Operators
-constexpr auto operator&(std::integral auto const lhs, uint128_t const rhs) noexcept -> uint128_t {
+constexpr auto
+operator&(std::integral auto const lhs, uint128_t const rhs) noexcept -> uint128_t
+{
     return rhs & lhs;
 }
 
 template <std::integral T>
-constexpr auto operator&=(T & lhs, uint128_t const rhs) noexcept -> T & {
+constexpr auto
+operator&=(T & lhs, uint128_t const rhs) noexcept -> T &
+{
     return lhs = static_cast<T>(rhs & lhs);
 }
 
-constexpr auto operator|(std::integral auto const lhs, uint128_t const rhs) noexcept -> uint128_t {
+constexpr auto
+operator|(std::integral auto const lhs, uint128_t const rhs) noexcept -> uint128_t
+{
     return rhs | lhs;
 }
 
 template <std::integral T>
-constexpr auto operator|=(T & lhs, uint128_t const rhs) noexcept -> T & {
+constexpr auto
+operator|=(T & lhs, uint128_t const rhs) noexcept -> T &
+{
     return lhs = static_cast<T>(rhs | lhs);
 }
 
-constexpr auto operator^(std::integral auto const lhs, uint128_t const rhs) noexcept -> uint128_t {
+constexpr auto
+operator^(std::integral auto const lhs, uint128_t const rhs) noexcept -> uint128_t
+{
     return rhs ^ lhs;
 }
 
 template <std::integral T>
-constexpr auto operator^=(T & lhs, uint128_t const rhs) noexcept -> T & {
+constexpr auto
+operator^=(T & lhs, uint128_t const rhs) noexcept -> T &
+{
     return lhs = static_cast<T>(rhs ^ lhs);
 }
 
 // Bit shift operators
-constexpr auto operator<<(std::integral auto const lhs, uint128_t const rhs) noexcept -> uint128_t {
+constexpr auto
+operator<<(std::integral auto const lhs, uint128_t const rhs) noexcept -> uint128_t
+{
     return uint128_t{ lhs } << rhs;
 }
 
 template <std::integral T>
-constexpr auto operator<<=(T & lhs, uint128_t const rhs) noexcept -> T & {
+constexpr auto
+operator<<=(T & lhs, uint128_t const rhs) noexcept -> T &
+{
     return lhs = static_cast<T>(uint128_t{ lhs } << rhs);
 }
 
-constexpr auto operator>>(std::integral auto const lhs, uint128_t const rhs) noexcept -> uint128_t {
+constexpr auto
+operator>>(std::integral auto const lhs, uint128_t const rhs) noexcept -> uint128_t
+{
     return uint128_t{ lhs } >> rhs;
 }
 
 template <std::integral T>
-constexpr auto operator>>=(T & lhs, uint128_t const rhs) noexcept -> T & {
+constexpr auto
+operator>>=(T & lhs, uint128_t const rhs) noexcept -> T &
+{
     return lhs = static_cast<T>(uint128_t{ lhs } >> rhs);
 }
 
 // Arithmetic Operators
-constexpr auto operator+(std::integral auto const lhs, uint128_t const rhs) -> uint128_t {
+constexpr auto
+operator+(std::integral auto const lhs, uint128_t const rhs) -> uint128_t
+{
     return rhs + lhs;
 }
 
 template <std::integral T>
-constexpr auto operator+=(T & lhs, uint128_t const rhs) -> T & {
+constexpr auto
+operator+=(T & lhs, uint128_t const rhs) -> T &
+{
     return lhs = static_cast<T>(rhs + lhs);
 }
 
-constexpr auto operator-(std::integral auto const lhs, uint128_t const rhs) -> uint128_t {
+constexpr auto
+operator-(std::integral auto const lhs, uint128_t const rhs) -> uint128_t
+{
     return -(rhs - lhs);
 }
 
 template <std::integral T>
-constexpr auto operator-=(T & lhs, uint128_t const rhs) -> T & {
+constexpr auto
+operator-=(T & lhs, uint128_t const rhs) -> T &
+{
     return lhs = static_cast<T>(-(rhs - lhs));
 }
 
-constexpr auto operator*(std::integral auto const lhs, uint128_t const rhs) -> uint128_t {
+constexpr auto
+operator*(std::integral auto const lhs, uint128_t const rhs) -> uint128_t
+{
     return rhs * lhs;
 }
 
 template <std::integral T>
-constexpr auto operator*=(T & lhs, uint128_t const rhs) -> T & {
+constexpr auto
+operator*=(T & lhs, uint128_t const rhs) -> T &
+{
     return lhs = static_cast<T>(rhs * lhs);
 }
 
-constexpr auto operator/(std::integral auto const lhs, uint128_t const rhs) -> uint128_t {
+constexpr auto
+operator/(std::integral auto const lhs, uint128_t const rhs) -> uint128_t
+{
     return uint128_t(lhs) / rhs;
 }
 
 template <std::integral T>
-constexpr auto operator/=(T & lhs, uint128_t const rhs) -> T & {
+constexpr auto
+operator/=(T & lhs, uint128_t const rhs) -> T &
+{
     return lhs = static_cast<T>(uint128_t(lhs) / rhs);
 }
 
-constexpr auto operator%(std::integral auto const lhs, uint128_t const rhs) -> uint128_t {
+constexpr auto
+operator%(std::integral auto const lhs, uint128_t const rhs) -> uint128_t
+{
     return uint128_t{ lhs } % rhs;
 }
 
 template <std::integral T>
-constexpr auto operator%=(T & lhs, uint128_t const rhs) -> T & {
+constexpr auto
+operator%=(T & lhs, uint128_t const rhs) -> T &
+{
     return lhs = static_cast<T>(uint128_t{ lhs } % rhs);
 }
 
 // IO Operator
-inline std::ostream & operator<<(std::ostream & stream, uint128_t const rhs) {
-    if (stream.flags() & std::ios_base::oct) {
+inline std::ostream &
+operator<<(std::ostream & stream, uint128_t const rhs)
+{
+    if (stream.flags() & std::ios_base::oct)
+    {
         stream << rhs.str(8);
-    } else if (stream.flags() & std::ios_base::dec) {
+    }
+    else if (stream.flags() & std::ios_base::dec)
+    {
         stream << rhs.str(10);
-    } else if (stream.flags() & std::ios_base::hex) {
+    }
+    else if (stream.flags() & std::ios_base::hex)
+    {
         stream << rhs.str(16);
     }
     return stream;

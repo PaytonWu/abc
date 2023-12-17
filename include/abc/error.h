@@ -50,6 +50,8 @@ enum class errc {
     bad_expected_access,
     fix_bytes_invalid_argument,
     span_built_from_rvalue,
+    not_supported_byte_numbering,
+    not_supported_byte_order,
 };
 
 auto make_error_code(errc ec) noexcept -> std::error_code;

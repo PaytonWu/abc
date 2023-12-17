@@ -1,8 +1,9 @@
-#include <map>
+#include <abc/bytes.h>
+#include <abc/uint128.h>
 
 #include <gtest/gtest.h>
 
-#include <abc/uint128.h>
+#include <map>
 
 static const std::map <uint32_t, std::string> tests = {
     std::make_pair(2,  "10000100000101011000010101101100"),
@@ -45,29 +46,17 @@ TEST(Function, export_bits){
 
     EXPECT_EQ(value, u64);
 
-    std::vector<uint8_t> const full{
+    abc::bytes_be_t const full{
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
         0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef
     };
 
-    std::vector<uint8_t> bits;
+    abc::bytes_be_t bits;
     value.export_bits(bits);
     EXPECT_EQ(bits, full);
 
-    auto const bits2 = value.export_bits();
+    auto const bits2 = value.export_bits<abc::byte_numbering::msb0>();
     EXPECT_EQ(bits2, full);
-
-    std::vector<uint8_t> bits3;
-    bits3.resize(32);
-    std::span const bits3_span{ std::next(std::begin(bits3), 16), std::end(bits3) };
-    value.export_bits(bits3_span);
-    EXPECT_TRUE(std::ranges::equal(bits3_span, full));
-
-    std::vector<uint8_t> bits4;
-    bits4.resize(16);
-    std::span const bits4_span{ std::begin(bits4), std::end(bits4) };
-    value.export_bits(bits4_span);
-    EXPECT_TRUE(std::ranges::equal(bits4_span, full));
 }
 
 TEST(Function, export_bits_compact){
@@ -76,28 +65,16 @@ TEST(Function, export_bits_compact){
 
     EXPECT_EQ(value, u64);
 
-    std::vector<uint8_t> const compact{
+    abc::bytes_be_t const compact{
         0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef
     };
 
-    std::vector<uint8_t> bits;
+    abc::bytes_be_t bits;
     value.export_bits_compact(bits);
     EXPECT_EQ(bits, compact);
 
-    auto const bits2 = value.export_bits_compact();
+    auto const bits2 = value.export_bits_compact<abc::byte_numbering::msb0>();
     EXPECT_EQ(bits2, compact);
-
-    std::vector<uint8_t> bits3;
-    bits3.resize(32);
-    std::span const bits3_span{ std::next(std::begin(bits3), 16), std::end(bits3) };
-    auto size = value.export_bits_compact(bits3_span);
-    EXPECT_TRUE(std::ranges::equal(bits3_span.subspan(0, size), compact));
-
-    std::vector<uint8_t> bits4;
-    bits4.resize(16);
-    std::span const bits4_span{ std::begin(bits4), std::end(bits4) };
-    size = value.export_bits_compact(bits4_span);
-    EXPECT_TRUE(std::ranges::equal(bits4_span.subspan(0, size), compact));
 }
 
 TEST(Function, export_bits_compact_zero){
@@ -106,23 +83,11 @@ TEST(Function, export_bits_compact_zero){
 
     EXPECT_EQ(value, u64);
 
-    std::vector<uint8_t> const compact{
+    abc::bytes_be_t const compact{
     };
 
-    auto const bits = value.export_bits_compact();
+    auto const bits = value.export_bits_compact<abc::byte_numbering::msb0>();
     EXPECT_EQ(bits, compact);
-
-    std::vector<uint8_t> bits3;
-    bits3.resize(32);
-    std::span const bits3_span{ std::next(std::begin(bits3), 16), std::end(bits3) };
-    auto size = value.export_bits_compact(bits3_span);
-    EXPECT_TRUE(std::ranges::equal(bits3_span.subspan(0, size), compact));
-
-    std::vector<uint8_t> bits4;
-    bits4.resize(16);
-    std::span const bits4_span{ std::begin(bits4), std::end(bits4) };
-    size = value.export_bits_compact(bits4_span);
-    EXPECT_TRUE(std::ranges::equal(bits4_span.subspan(0, size), compact));
 }
 
 TEST(Function, export_bits_compact_little){
@@ -131,24 +96,17 @@ TEST(Function, export_bits_compact_little){
 
     EXPECT_EQ(value, u64);
 
-    std::vector<uint8_t> const compact{
+    abc::bytes_le_t const compact{
         0xef, 0xcd, 0xab, 0x89, 0x67, 0x45, 0x23, 0x01
     };
 
-    auto const bits = value.export_bits_compact(std::endian::little);
+    auto const bits = value.export_bits_compact<abc::byte_numbering::lsb0>();
     EXPECT_EQ(bits, compact);
 
-    std::vector<uint8_t> bits3;
-    bits3.resize(32);
-    std::span const bits3_span{ std::next(std::begin(bits3), 16), std::end(bits3) };
-    auto size = value.export_bits_compact(std::endian::little, bits3_span);
-    EXPECT_TRUE(std::ranges::equal(bits3_span.subspan(0, size), compact));
-
-    std::vector<uint8_t> bits4;
-    bits4.resize(16);
-    std::span const bits4_span{ std::begin(bits4), std::end(bits4) };
-    size = value.export_bits_compact(std::endian::little, bits4_span);
-    EXPECT_TRUE(std::ranges::equal(bits4_span.subspan(0, size), compact));
+    abc::bytes_le_t bits3;
+    bits3.reserve(32);
+    value.export_bits_compact(bits3);
+    EXPECT_EQ(bits3, compact);
 }
 
 TEST(Function, export_bits_compact_zero_little){
@@ -157,23 +115,16 @@ TEST(Function, export_bits_compact_zero_little){
 
     EXPECT_EQ(value, u64);
 
-    std::vector<uint8_t> const compact{
+    abc::bytes_le_t const compact{
     };
 
-    auto const bits = value.export_bits_compact(std::endian::little);
+    auto const bits = value.export_bits_compact<abc::byte_numbering::lsb0>();
     EXPECT_EQ(bits, compact);
 
-    std::vector<uint8_t> bits3;
-    bits3.resize(32);
-    std::span const bits3_span{ std::next(std::begin(bits3), 16), std::end(bits3) };
-    auto size = value.export_bits_compact(std::endian::little, bits3_span);
-    EXPECT_TRUE(std::ranges::equal(bits3_span.subspan(0, size), compact));
-
-    std::vector<uint8_t> bits4;
-    bits4.resize(16);
-    std::span const bits4_span{ std::begin(bits4), std::end(bits4) };
-    size = value.export_bits_compact(std::endian::little, bits4_span);
-    EXPECT_TRUE(std::ranges::equal(bits4_span.subspan(0, size), compact));
+    abc::bytes_le_t bits3;
+    bits3.reserve(32);
+    value.export_bits_compact(bits3);
+    EXPECT_EQ(bits3, compact);
 }
 
 TEST(External, ostream){
