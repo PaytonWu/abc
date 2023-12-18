@@ -60,39 +60,6 @@ public:
     {
     }
 
-private:
-//    template <byte_numbering ByteNumbering>
-//    constexpr explicit
-//    hex_string(std::span<byte const> const input, byte_numbering_type<ByteNumbering>)
-//        : binary_data_{ bytes_le_t::from<ByteNumbering>(std::begin(input), std::end(input)) }
-//    {
-//    }
-
-public:
-    // utilities
-    /// @brief check if the input string is a valid hex string.
-    /// @param string_slice input string slice to check.
-    /// @return true if the input string is a valid hex string, otherwise false.
-    [[nodiscard]] constexpr static auto
-    is_hex(std::string_view string_slice) noexcept -> bool
-    {
-        if (has_hex_prefix(string_slice))
-        {
-            string_slice = string_slice.substr(2);
-        }
-
-        return hex_utility::is_hex_without_prefix(string_slice);
-    }
-
-    /// @brief check if the input string has the prefix. this function doesn't check if the input string is a valid hex string, it only checks the prefix.
-    /// @param string_slice input string slice to check.
-    /// @return true if the input string has the prefix, otherwise false.
-    [[nodiscard]] constexpr static auto
-    has_hex_prefix(std::string_view const string_slice) noexcept -> bool
-    {
-        return string_slice.starts_with(hex_utility::prefix) || string_slice.starts_with(hex_utility::prefix_uppercase);
-    }
-
 public:
     class [[nodiscard]] const_reference
     {
