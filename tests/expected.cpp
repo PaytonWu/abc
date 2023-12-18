@@ -780,11 +780,11 @@ TEST(expected, err) {
 namespace wrapper {
 template <std::endian Endian>
 constexpr auto hex_string_to_binary(std::string_view string_slice) -> abc::expected<abc::bytes<abc::endian_type<Endian>::byte_numbering_value>, abc::errc> {
-    if (abc::hex_string::has_hex_prefix(string_slice)) {
+    if (abc::hex_utility::has_hex_prefix(string_slice)) {
         string_slice.remove_prefix(2);
     }
 
-    if (!abc::hex_string::is_hex(string_slice)) {
+    if (!abc::hex_utility::is_hex(string_slice)) {
         return abc::unexpected{abc::errc::invalid_hex_char};
     }
 
