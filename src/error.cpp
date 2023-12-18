@@ -137,6 +137,9 @@ abc_category() noexcept -> std::error_category const &
                 case errc::not_supported_byte_order:
                     return "not supported byte order";
 
+                case errc::view_built_from_rvalue:
+                    return "view built from rvalue";
+
                 default:
                     return "unknown error";
             }
