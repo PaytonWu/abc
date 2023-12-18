@@ -39,7 +39,7 @@ public:
     using const_reverse_iterator = typename container_type::const_reverse_iterator;
 
 private:
-    constexpr explicit bytes_view(container_type view) noexcept : view_{ view } {
+    constexpr bytes_view(std::basic_string_view<byte> view) noexcept : view_{ view } {
     }
 
     template <byte_numbering RhsByteNumbering> requires (RhsByteNumbering == ByteNumbering)
