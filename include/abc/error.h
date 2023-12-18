@@ -52,6 +52,7 @@ enum class errc {
     span_built_from_rvalue,
     not_supported_byte_numbering,
     not_supported_byte_order,
+    view_built_from_rvalue,
 };
 
 auto make_error_code(errc ec) noexcept -> std::error_code;

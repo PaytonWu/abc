@@ -19,7 +19,6 @@
 #include <range/v3/view/reverse.hpp>
 
 #include <algorithm>
-#include <array>
 #include <cassert>
 #include <cstring>
 #include <span>
