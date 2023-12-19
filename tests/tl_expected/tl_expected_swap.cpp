@@ -112,7 +112,8 @@ TEST(expected, tl_swap) {
 
 #ifdef _MSC_VER
     //this seems to break catch on GCC and Clang
-    REQUIRE_THROWS(swap(a, b));
+    // REQUIRE_THROWS(swap(a, b));
+    ASSERT_ANY_THROW(swap(a, b));
 #endif
 
     ASSERT_TRUE(a->i == s1);

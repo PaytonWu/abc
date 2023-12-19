@@ -53,6 +53,9 @@ if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang" OR "${CMAKE_CXX_COMPILER_ID}" MAT
 
     if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
         add_compile_options(-Wabstract-final-class -Wshift-overflow -Wint-to-void-pointer-cast)
+
+        add_compile_options($<$<CONFIG:Debug>:-fsanitize=address>)
+        link_libraries($<$<CONFIG:Debug>:-fsanitize=address>)
     endif()
 
     if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU")
@@ -69,8 +72,8 @@ if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang" OR "${CMAKE_CXX_COMPILER_ID}" MAT
     add_compile_options($<$<CONFIG:Release>:-fdata-sections>)
 
     # options for RelWithDebInfo
-    add_compile_options($<$<CONFIG:Release>:-ffunction-sections>)
-    add_compile_options($<$<CONFIG:Release>:-fdata-sections>)
+    add_compile_options($<$<CONFIG:RelWithDebInfo>:-ffunction-sections>)
+    add_compile_options($<$<CONFIG:RelWithDebInfo>:-fdata-sections>)
 
 elseif ("${CMAKE_CXX_COMPILER_ID}" MATCHES "MSVC")
     # common compile options
@@ -99,6 +102,9 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" MATCHES "MSVC")
         /WL                   # https://docs.microsoft.com/en-us/cpp/build/reference/wl-enable-one-line-diagnostics
     )
 
+    # options for Debug
+    add_compile_options($<$<CONFIG:Debug>:/fsanitize=address>)
+
     if (CMAKE_CXX_FLAGS MATCHES "/W[0-3]")
         string(REGEX REPLACE "/W[0-3]" "/W4" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
     else()
@@ -110,12 +116,15 @@ endif()
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     add_definitions(-D_SCL_SECURE_NO_WARNINGS -D_CRT_SECURE_NO_WARNINGS -DNOMINMAX -D_WIN32_WINNT=0x0600 -DWIN32_LEAN_AND_MEAN)
-endif ()
+endif()
 
 find_package(Threads REQUIRED)
-find_package(Boost REQUIRED)
+#find_package(Boost REQUIRED)
 find_package(fmt CONFIG REQUIRED)
-find_package(xxHash CONFIG REQUIRED)
+if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "MSVC")
+    find_package(asio CONFIG REQUIRED)
+    find_package(range-v3 CONFIG REQUIRED)
+endif()
 
 include_directories(include)
 aux_source_directory(src SRCS)

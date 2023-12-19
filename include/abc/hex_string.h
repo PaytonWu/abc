@@ -100,7 +100,7 @@ public:
     public:
         constexpr reference() noexcept = delete;
 
-        constexpr auto
+        inline auto
         operator=(char const value) -> reference &
         {
             assert(str_ != nullptr);
