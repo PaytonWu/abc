@@ -8,7 +8,7 @@
 
 #include "bytes_view_fwd_decl.h"
 
-#include <range/v3/range_concepts.hpp>
+#include <range/v3/range/concepts.hpp>
 
 namespace abc {
 

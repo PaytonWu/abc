@@ -47,3 +47,6 @@ cmake-build*
 
 # CMakeUserPresets.json
 CMakeUserPresets.json
+
+#vcpkg
+vcpkg_installed/
