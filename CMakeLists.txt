@@ -53,9 +53,6 @@ if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang" OR "${CMAKE_CXX_COMPILER_ID}" MAT
 
     if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
         add_compile_options(-Wabstract-final-class -Wshift-overflow -Wint-to-void-pointer-cast)
-
-        add_compile_options($<$<CONFIG:Debug>:-fsanitize=address>)
-        link_libraries($<$<CONFIG:Debug>:-fsanitize=address>)
     endif()
 
     if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU")
@@ -66,6 +63,8 @@ if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang" OR "${CMAKE_CXX_COMPILER_ID}" MAT
 
     # options for Debug
     add_compile_options($<$<CONFIG:Debug>:-fno-omit-frame-pointer>)
+    # add_compile_options($<$<CONFIG:Debug>:-fsanitize=address>)
+    # add_compile_options($<$<CONFIG:Debug>:-static-libasan>)
 
     # options for Release
     add_compile_options($<$<CONFIG:Release>:-ffunction-sections>)
