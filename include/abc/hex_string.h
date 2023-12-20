@@ -48,7 +48,6 @@ public:
 private:
     bytes_le_t binary_data_;
 
-    // constructors
 public:
     hex_string() = default;
 
@@ -137,20 +136,18 @@ public:
     /// @tparam ByteNumbering specify the byte numbering of the input bytes.
     /// @param input input byte buffer.
     /// @return the constructed hex_string object.
-    template <byte_numbering ByteNumbering>
+    template <byte_numbering ByteNumbering> requires(ByteNumbering == byte_numbering::lsb0 || ByteNumbering == byte_numbering::msb0)
     constexpr static auto
     from(bytes_view<ByteNumbering> const input) -> hex_string
     {
         if constexpr (ByteNumbering == byte_numbering::msb0)
         {
-            return hex_string{ bytes_le_t{ input }};
+            return hex_string{ bytes_le_t{ input } };
         }
         else if constexpr (ByteNumbering == byte_numbering::lsb0)
         {
             return hex_string{ input };
         }
-
-        unreachable();
     }
 
     [[nodiscard]] auto
