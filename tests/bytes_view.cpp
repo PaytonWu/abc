@@ -87,3 +87,17 @@ TEST(bytes_view, fixed_bytes) {
         ASSERT_EQ('d', bytes_be_view[3]);
     }
 }
+
+TEST(bytes_view, span)
+{
+    using namespace abc;
+
+    bytes4_t bytes4 = bytes4_t::from<byte_numbering::none>({ 'a', 'b', 'c', 'd' }).value();
+    bytes_view_t bytes_view{std::span{bytes4}};
+
+    ASSERT_EQ(bytes4.size(), bytes_view.size());
+    ASSERT_EQ(bytes4[0], bytes_view[0]);
+    ASSERT_EQ(bytes4[1], bytes_view[1]);
+    ASSERT_EQ(bytes4[2], bytes_view[2]);
+    ASSERT_EQ(bytes4[3], bytes_view[3]);
+}

@@ -147,18 +147,41 @@ TEST(bytes_endian_t, from_negtive_int) {
 }
 
 TEST(bytes, operator_plus_bytes) {
-    bytes_be_t lhs = bytes_be_t::from(0x1234567890);
-    bytes_be_t rhs = bytes_be_t::from(0x0987654321);
+    {
+        bytes_be_t lhs = bytes_be_t::from(0x1234567890);
+        bytes_be_t rhs = bytes_be_t::from(0x0987654321);
 
-    lhs = lhs + rhs;
-    ASSERT_EQ(abc::hex_string::from("0x12345678900987654321").transform([](auto const & hex_string) { return hex_string.template bytes<abc::byte_numbering::msb0>(); }).value(), lhs);
+        lhs = lhs + rhs;
+        ASSERT_EQ(abc::hex_string::from("0x12345678900987654321").transform([](auto const & hex_string) { return hex_string.template bytes<abc::byte_numbering::msb0>(); }).value(), lhs);
+    }
+
+    {
+        bytes_be_t lhs = bytes_be_t::from(0x1234567890);
+        bytes_be_t rhs = bytes_be_t::from(0x0987654321);
+
+        void const * lhs_ptr = std::addressof(lhs);
+        lhs += rhs;
+        ASSERT_EQ(abc::hex_string::from("0x12345678900987654321").transform([](auto const & hex_string) { return hex_string.template bytes<abc::byte_numbering::msb0>(); }).value(), lhs);
+        ASSERT_EQ(lhs_ptr, std::addressof(lhs));
+    }
 }
 
 TEST(bytes, operator_plus_byte_after) {
-    bytes_be_t lhs = bytes_be_t::from(0x1234567890);
+    {
+        bytes_be_t lhs = bytes_be_t::from(0x1234567890);
 
-    lhs = lhs + static_cast<abc::byte>(0);
-    ASSERT_EQ(abc::hex_string::from("0x123456789000").transform([](auto const & hex_string) { return hex_string.template bytes<abc::byte_numbering::msb0>(); }).value(), lhs);
+        lhs = lhs + static_cast<abc::byte>(0);
+        ASSERT_EQ(abc::hex_string::from("0x123456789000").transform([](auto const & hex_string) { return hex_string.template bytes<abc::byte_numbering::msb0>(); }).value(), lhs);
+    }
+
+    {
+        bytes_be_t lhs = bytes_be_t::from(0x1234567890);
+
+        void const * lhs_ptr = std::addressof(lhs);
+        lhs += static_cast<abc::byte>(0);
+        ASSERT_EQ(abc::hex_string::from("0x123456789000").transform([](auto const & hex_string) { return hex_string.template bytes<abc::byte_numbering::msb0>(); }).value(), lhs);
+        ASSERT_EQ(lhs_ptr, std::addressof(lhs));
+    }
 }
 
 TEST(bytes, operator_plus_byte_before) {
