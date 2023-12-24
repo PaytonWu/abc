@@ -606,7 +606,7 @@ public:
     }
 
     constexpr auto
-    operator+=(bytes const & other) -> bytes
+    operator+=(bytes const & other) -> bytes &
     {
         data_.reserve(size() + other.size());
         ranges::copy(other, std::back_inserter(data_));
@@ -621,7 +621,7 @@ public:
     }
 
     constexpr auto
-    operator+=(byte const other) -> bytes
+    operator+=(byte const other) -> bytes &
     {
         data_.reserve(size() + 1);
         data_.push_back(other);
