@@ -119,6 +119,14 @@ private:
         }
     }
 
+    template <byte_numbering SrcByteNumbering> requires(SrcByteNumbering != ByteNumbering && SrcByteNumbering == byte_numbering::none)
+    constexpr explicit
+    fixed_bytes(bytes_view<SrcByteNumbering> const src) : fixed_bytes{}
+    {
+        assert(src.size() == N);
+        ranges::copy(src, std::begin(data_));
+    }
+
 public:
     constexpr fixed_bytes()
     {
@@ -171,11 +179,23 @@ public:
 //        return make_unexpected(make_error_code(std::errc::invalid_argument));
 //    }
 
-    template <byte_numbering DataByteNumbering>
+    template <byte_numbering DataByteNumbering> requires (DataByteNumbering == ByteNumbering) || (DataByteNumbering != ByteNumbering && DataByteNumbering != byte_numbering::none && ByteNumbering != byte_numbering::none)
     inline static auto
     from(bytes_view<DataByteNumbering> const data) -> expected<fixed_bytes, std::error_code>
     {
-        return fixed_bytes{ data/*, byte_numbering_type<DataByteNumbering>{}*/ };
+        return fixed_bytes{ data };
+    }
+
+    template <byte_numbering DataByteNumbering> requires (DataByteNumbering != ByteNumbering && DataByteNumbering == byte_numbering::none)
+    inline static auto
+    from(bytes_view<DataByteNumbering> const data) -> expected<fixed_bytes, std::error_code>
+    {
+        if (data.size() != N)
+        {
+            return make_unexpected(make_error_code(std::errc::invalid_argument));
+        }
+
+        return fixed_bytes{ data };
     }
 
     friend auto
