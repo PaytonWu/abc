@@ -262,6 +262,8 @@ public:
     constexpr auto
     to() const noexcept -> T
     {
+        assert(data_.size() <= sizeof(T));
+        
         T value{ 0 };
         if constexpr (ByteNumbering == byte_numbering::msb0)
         {
