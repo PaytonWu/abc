@@ -10,7 +10,9 @@
 #include "bytes_view_decl.h"
 
 #include <range/v3/range_fwd.hpp>
+#include <range/v3/view/reverse.hpp>
 
+#include <cassert>
 #include <concepts>
 #include <string_view>
 
@@ -82,6 +84,34 @@ public:
     template <byte_numbering RhsByteNumbering>
     constexpr static auto from(bytes_view<RhsByteNumbering> rhs) -> bytes_view {
         return bytes_view{ rhs, byte_numbering_type<RhsByteNumbering>{} };
+    }
+
+    template <std::integral T>
+    requires(ByteNumbering != byte_numbering::none)
+    constexpr auto
+    to() const noexcept -> T
+    {
+        assert(view_.size() <= sizeof(T));
+
+        T value{ 0 };
+        if constexpr (ByteNumbering == byte_numbering::msb0)
+        {
+            for (auto const byte: view_ | ranges::views::reverse)
+            {
+                value <<= 8;
+                value |= static_cast<T>(byte);
+            }
+        }
+        else
+        {
+            for (auto const byte: view_)
+            {
+                value <<= 8;
+                value |= static_cast<T>(byte);
+            }
+        }
+
+        return value;
     }
 
     [[nodiscard]]
