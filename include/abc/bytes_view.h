@@ -96,7 +96,7 @@ public:
         T value{ 0 };
         if constexpr (ByteNumbering == byte_numbering::msb0)
         {
-            for (auto const byte: view_ | ranges::views::reverse)
+            for (auto const byte: view_)
             {
                 value <<= 8;
                 value |= static_cast<T>(byte);
@@ -104,7 +104,7 @@ public:
         }
         else
         {
-            for (auto const byte: view_)
+            for (auto const byte: view_ | ranges::views::reverse)
             {
                 value <<= 8;
                 value |= static_cast<T>(byte);
