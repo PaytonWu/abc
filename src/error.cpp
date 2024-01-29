@@ -141,10 +141,9 @@ abc_category() noexcept -> std::error_category const &
                     return "view built from rvalue";
 
                 default:
+                    assert(false);
                     return "unknown error";
             }
-
-            abc::unreachable();
         }
     } category;
     return category;

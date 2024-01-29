@@ -652,7 +652,7 @@ TEST(expected, map_non_copyable_value) {
         std::string str_;
 
     public:
-        noncopyable();
+        noncopyable() = default;
         noncopyable(noncopyable const &) = delete;
         auto operator=(noncopyable const &) -> noncopyable & = delete;
         noncopyable(noncopyable &&) = default;

@@ -1,0 +1,17 @@
+{
+  "dependencies": [
+    "asio",
+    "fmt",
+    "gtest",
+    "range-v3",
+    {
+      "name": "asio",
+      "version>=": "1.28.2"
+    },
+    {
+      "name": "gtest",
+      "version>=": "1.14.0"
+    }
+  ],
+  "builtin-baseline": "7032c5759f823fc8699a5c37d5f7072464ccb9a8"
+}

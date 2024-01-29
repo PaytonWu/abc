@@ -103,6 +103,8 @@ public:
 
     static auto from(hex_string const & hex_string) -> uint128_t
     {
+        static_assert(uint128_t::byte_numbering() == abc::byte_numbering::lsb0 || uint128_t::byte_numbering() == abc::byte_numbering::msb0);
+
         auto && bytes = hex_string.bytes<uint128_t::byte_numbering()>();
         if constexpr (byte_numbering::lsb0 == uint128_t::byte_numbering())
         {
@@ -126,8 +128,6 @@ public:
             }
             return ret;
         }
-
-        unreachable();
     }
 
     template <abc::byte_numbering ByteNumbering>
@@ -900,6 +900,8 @@ private:
     constexpr static void
     convert_to_bytes(uint64_t const val, bytes<ByteNumbering> & ret)
     {
+        static_assert(ByteNumbering == abc::byte_numbering::lsb0 || ByteNumbering == abc::byte_numbering::msb0);
+
         if constexpr (ByteNumbering == abc::byte_numbering::msb0)
         {
             ret.push_back(static_cast<uint8_t>(val >> 56));
@@ -927,15 +929,15 @@ private:
 
             return;
         }
-
-        unreachable();
     }
 
     template <abc::byte_numbering ByteNumbering>
     constexpr static void
     convert_to_bytes(uint64_t const value, std::size_t leading_zero_bytes_count, bytes<ByteNumbering> & ret)
     {
-        if (ByteNumbering == abc::byte_numbering::msb0)
+        static_assert(ByteNumbering == abc::byte_numbering::lsb0 || ByteNumbering == abc::byte_numbering::msb0);
+
+        if constexpr (ByteNumbering == abc::byte_numbering::msb0)
         {
             assert(leading_zero_bytes_count <= 8);
             switch (leading_zero_bytes_count)
@@ -971,12 +973,11 @@ private:
             return;
         }
 
-        if (ByteNumbering == abc::byte_numbering::lsb0)
+        if constexpr (ByteNumbering == abc::byte_numbering::lsb0)
         {
             assert(leading_zero_bytes_count <= 8);
-            std::size_t const tail_non_zero_bytes_count = 8 - leading_zero_bytes_count;
 
-            switch (tail_non_zero_bytes_count)
+            switch (std::size_t const tail_non_zero_bytes_count = 8 - leading_zero_bytes_count)
             {
                 case 8:
                     ret.push_back(static_cast<uint8_t>(value));
@@ -1044,8 +1045,6 @@ private:
 
             return;
         }
-
-        unreachable();
     }
 
 public:

@@ -13,6 +13,8 @@ template <byte_numbering ByteNumbering>
 static auto
 to_bytes(std::string_view string_slice) -> expected<bytes<ByteNumbering>, std::error_code>
 {
+    static_assert(ByteNumbering == abc::byte_numbering::lsb0 || ByteNumbering == abc::byte_numbering::msb0);
+
     if (hex_utility::has_hex_prefix(string_slice))
     {
         string_slice = string_slice.substr(2);
@@ -74,8 +76,6 @@ to_bytes(std::string_view string_slice) -> expected<bytes<ByteNumbering>, std::e
 
         return binary_data;
     }
-
-    unreachable();
 }
 
 auto hex_string::from(std::string_view input) -> expected<hex_string, std::error_code> {

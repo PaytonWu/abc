@@ -52,66 +52,73 @@ public:
 
 private:
     template <byte_numbering SrcByteNumbering>
-    requires (SrcByteNumbering == ByteNumbering)
-    constexpr explicit
-    fixed_bytes(std::array<byte, N> const & src, byte_numbering_type<SrcByteNumbering>) : data_{ src }
+        requires(SrcByteNumbering == ByteNumbering)
+    constexpr explicit fixed_bytes(std::array<byte, N> const & src, byte_numbering_type<SrcByteNumbering>) : data_{src}
     {
     }
 
     template <byte_numbering SrcByteNumbering>
-    requires (SrcByteNumbering != ByteNumbering && SrcByteNumbering != byte_numbering::none && ByteNumbering != byte_numbering::none)
-    constexpr explicit
-    fixed_bytes(std::array<byte, N> const & src, byte_numbering_type<SrcByteNumbering>)
+        requires(SrcByteNumbering != ByteNumbering && SrcByteNumbering != byte_numbering::none && ByteNumbering != byte_numbering::none)
+    constexpr explicit fixed_bytes(std::array<byte, N> const & src, byte_numbering_type<SrcByteNumbering>)
     {
         ranges::copy(src | ranges::views::reverse, std::begin(data_));
     }
 
     template <byte_numbering SrcByteNumbering>
-    requires (SrcByteNumbering == ByteNumbering)
-    constexpr explicit
-    fixed_bytes(std::array<std::byte, N> const & src, byte_numbering_type<SrcByteNumbering>)
+        requires(SrcByteNumbering == ByteNumbering)
+    constexpr explicit fixed_bytes(std::array<std::byte, N> const & src, byte_numbering_type<SrcByteNumbering>)
     {
         ranges::copy(src | ranges::views::transform([](auto const byte) { return std::to_integer<byte>(byte); }), data_.begin());
     }
 
     template <byte_numbering SrcByteNumbering>
-    requires (SrcByteNumbering != ByteNumbering && SrcByteNumbering != byte_numbering::none && ByteNumbering != byte_numbering::none)
-    constexpr explicit
-    fixed_bytes(std::array<std::byte, N> const & src, byte_numbering_type<SrcByteNumbering>)
+        requires(SrcByteNumbering != ByteNumbering && SrcByteNumbering != byte_numbering::none && ByteNumbering != byte_numbering::none)
+    constexpr explicit fixed_bytes(std::array<std::byte, N> const & src, byte_numbering_type<SrcByteNumbering>)
     {
         ranges::copy(src | ranges::views::reverse | ranges::views::transform([](auto const b) { return std::to_integer<byte>(b); }), data_.begin());
     }
 
-    template <byte_numbering SrcByteNumbering> requires(SrcByteNumbering == ByteNumbering)
-    constexpr explicit
-    fixed_bytes(bytes_view<SrcByteNumbering> const src/*, byte_numbering_type<SrcByteNumbering>*/) : fixed_bytes{}
+    template <byte_numbering SrcByteNumbering>
+        requires(SrcByteNumbering == ByteNumbering)
+    constexpr explicit fixed_bytes(bytes_view<SrcByteNumbering> const src /*, byte_numbering_type<SrcByteNumbering>*/) : fixed_bytes{}
     {
-        if constexpr (ByteNumbering == byte_numbering::msb0) {
-            if (src.size() == N) {
+        if constexpr (ByteNumbering == byte_numbering::msb0)
+        {
+            if (src.size() == N)
+            {
                 ranges::copy(src, std::begin(data_));
-            } else if (src.size() > N) {
+            }
+            else if (src.size() > N)
+            {
                 auto const bytes_begin = std::next(std::begin(src), static_cast<difference_type>(src.size() - N));
                 ranges::copy(bytes_begin, std::end(src), std::begin(data_));
-            } else {
+            }
+            else
+            {
                 assert(src.size() < N);
                 auto const data_begin = std::next(std::begin(data_), static_cast<difference_type>(N - src.size()));
                 ranges::copy(src, data_begin);
             }
-        } else {
+        }
+        else
+        {
             auto const end_pos = std::min(src.size(), N);
             ranges::copy(std::begin(src), std::next(std::begin(src), static_cast<difference_type>(end_pos)), std::begin(data_));
         }
     }
 
-    template <byte_numbering SrcByteNumbering> requires(SrcByteNumbering != ByteNumbering && SrcByteNumbering != byte_numbering::none && ByteNumbering != byte_numbering::none)
-    constexpr explicit
-    fixed_bytes(bytes_view<SrcByteNumbering> const src/*, byte_numbering_type<SrcByteNumbering>*/) : fixed_bytes{}
+    template <byte_numbering SrcByteNumbering>
+        requires(SrcByteNumbering != ByteNumbering && SrcByteNumbering != byte_numbering::none && ByteNumbering != byte_numbering::none)
+    constexpr explicit fixed_bytes(bytes_view<SrcByteNumbering> const src /*, byte_numbering_type<SrcByteNumbering>*/) : fixed_bytes{}
     {
-        if constexpr (ByteNumbering == byte_numbering::lsb0) {
+        if constexpr (ByteNumbering == byte_numbering::lsb0)
+        {
             auto const end_pos = std::min(src.size(), N);
             auto src_reverse_view = src | ranges::views::reverse;
             ranges::copy(std::begin(src_reverse_view), std::next(std::begin(src_reverse_view), static_cast<difference_type>(end_pos)), std::begin(data_));
-        } else {
+        }
+        else
+        {
             assert(ByteNumbering == byte_numbering::msb0);
             auto const end_pos = std::min(src.size(), N);
             ranges::copy(std::begin(src), std::next(std::begin(src), static_cast<difference_type>(end_pos)), std::begin(data_));
@@ -119,9 +126,9 @@ private:
         }
     }
 
-    template <byte_numbering SrcByteNumbering> requires(SrcByteNumbering != ByteNumbering && SrcByteNumbering == byte_numbering::none)
-    constexpr explicit
-    fixed_bytes(bytes_view<SrcByteNumbering> const src) : fixed_bytes{}
+    template <byte_numbering SrcByteNumbering>
+        requires(SrcByteNumbering != ByteNumbering && SrcByteNumbering == byte_numbering::none)
+    constexpr explicit fixed_bytes(bytes_view<SrcByteNumbering> const src) : fixed_bytes{}
     {
         assert(src.size() == N);
         ranges::copy(src, std::begin(data_));
@@ -134,7 +141,8 @@ public:
     }
 
     constexpr fixed_bytes(std::unsigned_integral auto const value)
-    requires ((ByteNumbering == byte_numbering::lsb0) || (ByteNumbering == byte_numbering::msb0)) : fixed_bytes{}
+        requires((ByteNumbering == byte_numbering::lsb0) || (ByteNumbering == byte_numbering::msb0))
+        : fixed_bytes{}
     {
         if constexpr (ByteNumbering == byte_numbering::lsb0)
         {
@@ -148,9 +156,8 @@ public:
     }
 
     template <byte_numbering ByteNumberingRhs>
-    requires (ByteNumberingRhs != byte_numbering::none && ByteNumberingRhs != ByteNumbering)
-    constexpr explicit
-    fixed_bytes(fixed_bytes<N, ByteNumberingRhs> const & rhs)
+        requires(ByteNumberingRhs != byte_numbering::none && ByteNumberingRhs != ByteNumbering)
+    constexpr explicit fixed_bytes(fixed_bytes<N, ByteNumberingRhs> const & rhs)
     {
         ranges::copy(rhs | ranges::views::reverse, data_.begin());
     }
@@ -161,32 +168,23 @@ public:
     {
         if constexpr (DataByteNumbering == ByteNumbering || (DataByteNumbering != byte_numbering::none && ByteNumbering != byte_numbering::none))
         {
-            return fixed_bytes{ data, byte_numbering_type<DataByteNumbering>{}};
+            return fixed_bytes{data, byte_numbering_type<DataByteNumbering>{}};
         }
-
-        return make_unexpected(make_error_code(std::errc::invalid_argument));
+        else
+        {
+            return make_unexpected(make_error_code(std::errc::invalid_argument));
+        }
     }
 
-//    template <byte_numbering DataByteNumbering>
-//    inline static auto
-//    from(std::array<std::byte, N> const & data) -> expected<fixed_bytes, std::error_code>
-//    {
-//        if constexpr (DataByteNumbering == ByteNumbering || (DataByteNumbering != byte_numbering::none && ByteNumbering != byte_numbering::none))
-//        {
-//            return fixed_bytes{ data, byte_numbering_type<DataByteNumbering>{}};
-//        }
-//
-//        return make_unexpected(make_error_code(std::errc::invalid_argument));
-//    }
-
-    template <byte_numbering DataByteNumbering> requires (DataByteNumbering == ByteNumbering) || (DataByteNumbering != ByteNumbering && DataByteNumbering != byte_numbering::none && ByteNumbering != byte_numbering::none)
-    inline static auto
-    from(bytes_view<DataByteNumbering> const data) -> expected<fixed_bytes, std::error_code>
+    template <byte_numbering DataByteNumbering>
+        requires(DataByteNumbering == ByteNumbering) || (DataByteNumbering != ByteNumbering && DataByteNumbering != byte_numbering::none && ByteNumbering != byte_numbering::none)
+    inline static auto from(bytes_view<DataByteNumbering> const data) -> expected<fixed_bytes, std::error_code>
     {
-        return fixed_bytes{ data };
+        return fixed_bytes{data};
     }
 
-    template <byte_numbering DataByteNumbering> requires (DataByteNumbering != ByteNumbering && DataByteNumbering == byte_numbering::none)
+    template <byte_numbering DataByteNumbering>
+        requires(DataByteNumbering != ByteNumbering && DataByteNumbering == byte_numbering::none)
     inline static auto
     from(bytes_view<DataByteNumbering> const data) -> expected<fixed_bytes, std::error_code>
     {
@@ -195,7 +193,7 @@ public:
             return make_unexpected(make_error_code(std::errc::invalid_argument));
         }
 
-        return fixed_bytes{ data };
+        return fixed_bytes{data};
     }
 
     friend auto
@@ -216,34 +214,31 @@ public:
         return data_[index];
     }
 
-    constexpr operator bytes_view<ByteNumbering>() const noexcept
+    constexpr
+    operator bytes_view<ByteNumbering>() const noexcept
     {
-        return abc::bytes_view<ByteNumbering>{ data_.data(), data_.size() };
+        return abc::bytes_view<ByteNumbering>{data_.data(), data_.size()};
     }
 
-    [[nodiscard]]
-    constexpr auto
+    [[nodiscard]] constexpr auto
     front() const noexcept -> const_reference
     {
         return data_.front();
     }
 
-    [[nodiscard]]
-    constexpr auto
+    [[nodiscard]] constexpr auto
     front() noexcept -> reference
     {
         return data_.front();
     }
 
-    [[nodiscard]]
-    constexpr auto
+    [[nodiscard]] constexpr auto
     back() const noexcept -> const_reference
     {
         return data_.back();
     }
 
-    [[nodiscard]]
-    constexpr auto
+    [[nodiscard]] constexpr auto
     back() noexcept -> reference
     {
         return data_.back();
@@ -399,7 +394,7 @@ public:
     constexpr auto
     operator^(fixed_bytes const & other) const -> fixed_bytes
     {
-        return fixed_bytes{ *this } ^= other;
+        return fixed_bytes{*this} ^= other;
     }
 
     constexpr auto
@@ -415,7 +410,7 @@ public:
     constexpr auto
     operator|(fixed_bytes const & other) const -> fixed_bytes
     {
-        return fixed_bytes{ *this } |= other;
+        return fixed_bytes{*this} |= other;
     }
 
     constexpr auto
@@ -431,7 +426,7 @@ public:
     constexpr auto
     operator&(fixed_bytes const & other) const -> fixed_bytes
     {
-        return fixed_bytes{ *this } &= other;
+        return fixed_bytes{*this} &= other;
     }
 
     constexpr auto
@@ -500,7 +495,7 @@ public:
         auto start = std::next(std::begin(data_), pos);
         auto end = std::next(start, offset);
 
-        return abc::bytes_view<ByteNumbering>{ start, end };
+        return abc::bytes_view<ByteNumbering>{start, end};
     }
 
     inline auto
@@ -520,7 +515,7 @@ public:
         auto start = std::next(std::begin(data_), pos);
         size_type offset = (n < size() - pos) ? n : size() - pos;
 
-        return std::span{ start, offset };
+        return std::span{start, offset};
     }
 
     /// @brief make span from rvalue fixed_bytes. not allowed.
@@ -542,7 +537,7 @@ public:
         auto start = std::next(std::begin(data_), pos);
         size_type offset = (n < size() - pos) ? n : size() - pos;
 
-        return std::span{ start, offset };
+        return std::span{start, offset};
     }
 
     /// @brief make span from rvalue fixed_bytes. not allowed.
@@ -554,11 +549,10 @@ public:
     }
 
 private:
-
     template <std::unsigned_integral T>
     constexpr static void
     to_little_endian(T value, internal_type & data)
-    requires ((ByteNumbering == byte_numbering::lsb0) || (ByteNumbering == byte_numbering::msb0))
+        requires((ByteNumbering == byte_numbering::lsb0) || (ByteNumbering == byte_numbering::msb0))
     {
         for (auto i = 0u; i < std::min(sizeof(T), data.size()); value >>= 8, ++i)
         {
@@ -570,7 +564,7 @@ private:
     template <std::unsigned_integral T>
     constexpr static void
     to_big_endian(T value, internal_type & data)
-    requires ((ByteNumbering == byte_numbering::lsb0) || (ByteNumbering == byte_numbering::msb0))
+        requires((ByteNumbering == byte_numbering::lsb0) || (ByteNumbering == byte_numbering::msb0))
     {
         for (auto i = data.size(); i != 0; value >>= 8, --i)
         {
@@ -580,6 +574,6 @@ private:
     }
 };
 
-}
+} // namespace abc
 
 #endif // ABC_FIXED_BYTES

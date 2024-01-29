@@ -11,7 +11,7 @@ cmake_minimum_required(VERSION 3.22)
 
 project(
     ABC
-    VERSION 0.1.0
+    VERSION 0.1.1
     DESCRIPTION "C++ based utility library"
     LANGUAGES CXX
 )
@@ -19,6 +19,10 @@ project(
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+
+set(CMAKE_C_STANDARD 23)
+set(CMAKE_C_STANDARD_REQUIRED ON)
+set(CMAKE_C_EXTENSIONS OFF)
 
 set(CMAKE_VERBOSE_MAKEFILE OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -78,15 +82,14 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" MATCHES "MSVC")
     # common compile options
     add_compile_options(
         /Zc:__cplusplus       # https://docs.microsoft.com/en-us/cpp/build/reference/zc-cplusplus
+        /Zc:__STDC__
+        /Zc:checkGwOdr
+        /Zc:enumTypes
         /Zc:externConstexpr   # https://docs.microsoft.com/en-us/cpp/build/reference/zc-externconstexpr
-        /Zc:referenceBinding  # https://docs.microsoft.com/en-us/cpp/build/reference/zc-referencebinding-enforce-reference-binding-rules
         /Zc:inline            # https://docs.microsoft.com/en-us/cpp/build/reference/zc-inline-remove-unreferenced-comdat
-        /Zc:rvalueCast        # https://docs.microsoft.com/en-us/cpp/build/reference/zc-rvaluecast-enforce-type-conversion-rules
-        /Zc:strictStrings     # https://docs.microsoft.com/en-us/cpp/build/reference/zc-strictstrings-disable-string-literal-type-conversion
+        /Zc:preprocessor
         /Zc:ternary           # https://docs.microsoft.com/en-us/cpp/build/reference/zc-ternary
         /Zc:throwingNew       # https://docs.microsoft.com/en-us/cpp/build/reference/zc-throwingnew-assume-operator-new-throws
-        /Zc:char8_t
-        /Zc:hiddenFriend
         /permissive-          # https://blogs.msdn.microsoft.com/vcblog/2016/11/16/permissive-switch/
                               # https://blogs.msdn.microsoft.com/vcblog/2017/09/11/two-phase-name-lookup-support-comes-to-msvc/
                               # https://docs.microsoft.com/en-us/cpp/build/reference/permissive-standards-conformance
