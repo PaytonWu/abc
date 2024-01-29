@@ -5,22 +5,22 @@
 
 #include <map>
 
-static const std::map <uint32_t, std::string> tests = {
-    std::make_pair(2,  "10000100000101011000010101101100"),
-    std::make_pair(3,  "12201102210121112101"),
-    std::make_pair(4,  "2010011120111230"),
-    std::make_pair(5,  "14014244043144"),
-    std::make_pair(6,  "1003520344444"),
-    std::make_pair(7,  "105625466632"),
-    std::make_pair(8,  "20405302554"),
-    std::make_pair(9,  "5642717471"),
-    std::make_pair(10, "2216002924"),
-    std::make_pair(11, "a3796a883"),
-    std::make_pair(12, "51a175124"),
-    std::make_pair(13, "294145645"),
-    std::make_pair(14, "170445352"),
-    std::make_pair(15, "ce82d6d4"),
-    std::make_pair(16, "8415856c"),
+static const std::map <uint8_t, std::string> tests = {
+    std::make_pair(static_cast<uint8_t>(2),  "10000100000101011000010101101100"),
+    std::make_pair(static_cast<uint8_t>(3),  "12201102210121112101"),
+    std::make_pair(static_cast<uint8_t>(4),  "2010011120111230"),
+    std::make_pair(static_cast<uint8_t>(5),  "14014244043144"),
+    std::make_pair(static_cast<uint8_t>(6),  "1003520344444"),
+    std::make_pair(static_cast<uint8_t>(7),  "105625466632"),
+    std::make_pair(static_cast<uint8_t>(8),  "20405302554"),
+    std::make_pair(static_cast<uint8_t>(9),  "5642717471"),
+    std::make_pair(static_cast<uint8_t>(10), "2216002924"),
+    std::make_pair(static_cast<uint8_t>(11), "a3796a883"),
+    std::make_pair(static_cast<uint8_t>(12), "51a175124"),
+    std::make_pair(static_cast<uint8_t>(13), "294145645"),
+    std::make_pair(static_cast<uint8_t>(14), "170445352"),
+    std::make_pair(static_cast<uint8_t>(15), "ce82d6d4"),
+    std::make_pair(static_cast<uint8_t>(16), "8415856c"),
     // std::make_pair(256, "abc::uint128_t"),
 };
 
@@ -30,13 +30,13 @@ TEST(Function, str){
 
     // make sure all of the test strings create the ASCII version of the string
     const abc::uint128_t original(2216002924);
-    for(std::pair <uint32_t const, std::string>  t : tests){
+    for(std::pair <uint8_t const, std::string>  t : tests){
         EXPECT_EQ(original.str(t.first), t.second);
     }
 
     // add leading zeros
-    for(uint32_t base = 2; base <= 16; base++){
-        EXPECT_EQ(original.str(base, tests.at(base).size() + leading), std::string(leading, '0') + tests.at(base));
+    for(uint8_t base = 2; base <= 16; base++){
+        EXPECT_EQ(original.str(base, static_cast<uint32_t>(tests.at(base).size() + leading)), std::string(leading, '0') + tests.at(base));
     }
 }
 

@@ -24,7 +24,7 @@ struct canthrow_move {
 
 bool should_throw = false;
 
-// #ifdef TL_EXPECTED_EXCEPTIONS_ENABLED
+#ifdef TL_EXPECTED_EXCEPTIONS_ENABLED
 struct willthrow_move {
     willthrow_move(std::string i) : i(i) {}
 
@@ -39,7 +39,7 @@ struct willthrow_move {
 
     std::string i;
 };
-// #endif // TL_EXPECTED_EXCEPTIONS_ENABLED
+#endif // TL_EXPECTED_EXCEPTIONS_ENABLED
 
 static_assert(std::is_swappable<no_throw>::value);
 
@@ -97,7 +97,7 @@ void swap_test() {
     ASSERT_TRUE(b.error().i == s1);
 }
 
-// #ifdef TL_EXPECTED_EXCEPTIONS_ENABLED
+#ifdef TL_EXPECTED_EXCEPTIONS_ENABLED
 TEST(expected, tl_swap) {
 
     swap_test<no_throw, no_throw>();
@@ -119,4 +119,4 @@ TEST(expected, tl_swap) {
     ASSERT_TRUE(a->i == s1);
     ASSERT_TRUE(b.error().i == s2);
 }
-// #endif // TL_EXPECTED_EXCEPTIONS_ENABLED
+#endif // TL_EXPECTED_EXCEPTIONS_ENABLED

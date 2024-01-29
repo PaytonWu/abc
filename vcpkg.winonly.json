@@ -1,9 +1,0 @@
-{
-  "dependencies" : [ "asio", "fmt", "gtest", "range-v3", {
-    "name" : "asio",
-    "version>=" : "1.28.2"
-  }, {
-    "name" : "gtest",
-    "version>=" : "1.14.0"
-  } ]
-}
