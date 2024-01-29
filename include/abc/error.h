@@ -59,6 +59,13 @@ auto make_error_code(errc ec) noexcept -> std::error_code;
 
 auto abc_category() noexcept -> std::error_category const &;
 
+template <typename ExceptionT>
+[[noreturn]] void
+throw_exception(ExceptionT const & eh)
+{
+    throw eh;
+}
+
 void throw_error(std::error_code const & ec);
 void throw_error(std::error_code const & ec, std::string_view extra_msg);
 
