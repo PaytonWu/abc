@@ -66,6 +66,13 @@ throw_exception(ExceptionT const & eh)
     throw eh;
 }
 
+template <typename ExceptionT, typename ... ArgsT>
+[[noreturn]] void
+throw_exception(ArgsT && ... args)
+{
+    throw ExceptionT{std::forward<ArgsT>(args)...};
+}
+
 void throw_error(std::error_code const & ec);
 void throw_error(std::error_code const & ec, std::string_view extra_msg);
 
