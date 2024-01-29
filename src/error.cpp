@@ -9,13 +9,6 @@
 namespace abc::details
 {
 
-template <typename ExceptionT>
-[[noreturn]] void
-throw_exception(ExceptionT eh)
-{
-    throw std::move(eh);
-}
-
 [[noreturn]] static void
 do_throw_error(std::error_code const & ec)
 {
