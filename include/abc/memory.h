@@ -96,7 +96,7 @@ public:
     {
     }
 
-    constexpr observer_ptr(nullptr_t) noexcept : ptr_{}
+    constexpr observer_ptr(std::nullptr_t) noexcept : ptr_{}
     {
     }
 
@@ -193,28 +193,28 @@ operator!=(observer_ptr<T> lhs, observer_ptr<U> rhs) -> bool
 
 template <typename T>
 constexpr auto
-operator==(observer_ptr<T> ptr, nullptr_t) noexcept -> bool
+operator==(observer_ptr<T> ptr, std::nullptr_t) noexcept -> bool
 {
     return !ptr;
 }
 
 template <typename T>
 constexpr auto
-operator==(nullptr_t, observer_ptr<T> ptr) noexcept -> bool
+operator==(std::nullptr_t, observer_ptr<T> ptr) noexcept -> bool
 {
     return !ptr;
 }
 
 template <typename T>
 constexpr auto
-operator!=(observer_ptr<T> ptr, nullptr_t) noexcept -> bool
+operator!=(observer_ptr<T> ptr, std::nullptr_t) noexcept -> bool
 {
     return bool(ptr);
 }
 
 template <typename T>
 constexpr auto
-operator!=(nullptr_t, observer_ptr<T> ptr) noexcept -> bool
+operator!=(std::nullptr_t, observer_ptr<T> ptr) noexcept -> bool
 {
     return bool(ptr);
 }
