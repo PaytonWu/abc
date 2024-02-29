@@ -417,3 +417,175 @@ TEST(bytes_view, to_int)
         ASSERT_EQ(u8, 0x00);
     }
 }
+
+TEST(bytes_be_view, operator_equal_equal)
+{
+    using namespace abc;
+
+    {
+        bytes_be_t bytes_be{ 'a', 'b', 'c', 'd' };
+        bytes_be_view_t bytes_be_view{ bytes_be };
+
+        ASSERT_TRUE(bytes_be_view == bytes_be_view);
+        ASSERT_FALSE(bytes_be_view != bytes_be_view);
+    }
+
+    {
+        bytes_be_t bytes_be{ 'a', 'b', 'c', 'd' };
+        bytes_be_view_t bytes_be_view{ bytes_be };
+
+        ASSERT_TRUE(bytes_be_view == bytes_be);
+        ASSERT_FALSE(bytes_be_view != bytes_be);
+    }
+
+    {
+        bytes_be_t bytes_be{ 'a', 'b', 'c', 'd' };
+        bytes_be_view_t bytes_be_view{ bytes_be };
+
+        ASSERT_TRUE(bytes_be == bytes_be_view);
+        ASSERT_FALSE(bytes_be != bytes_be_view);
+    }
+
+    {
+        bytes_be_t bytes_be1{ 'a', 'b', 'c', 'd' };
+        bytes_be_t bytes_be2{ 'a', 'b', 'c', 'd' };
+        bytes_be_view_t bytes_be_view1{ bytes_be1 };
+        bytes_be_view_t bytes_be_view2{ bytes_be2 };
+
+        ASSERT_TRUE(bytes_be_view1 == bytes_be_view2);
+        ASSERT_FALSE(bytes_be_view1 != bytes_be_view2);
+    }
+
+    {
+        bytes_be_t bytes_be1{ 'a', 'b', 'c', 'd' };
+        bytes_be_t bytes_be2{ 'a', 'b', 'c', 'd' };
+        bytes_be_view_t bytes_be_view1{ bytes_be1 };
+        bytes_be_view_t bytes_be_view2{ bytes_be2 };
+
+        ASSERT_TRUE(bytes_be_view1 == bytes_be2);
+        ASSERT_FALSE(bytes_be_view1 != bytes_be2);
+        ASSERT_TRUE(bytes_be_view2 == bytes_be1);
+        ASSERT_FALSE(bytes_be_view2 != bytes_be1);
+    }
+
+    {
+        bytes_be_t bytes_be1{ 'a', 'b', 'c', 'd' };
+        bytes_be_t bytes_be2{ 'a', 'b', 'c', 'd' };
+        bytes_be_view_t bytes_be_view1{ bytes_be1 };
+        bytes_be_view_t bytes_be_view2{ bytes_be2 };
+
+        ASSERT_TRUE(bytes_be1 == bytes_be_view2);
+        ASSERT_FALSE(bytes_be1 != bytes_be_view2);
+        ASSERT_TRUE(bytes_be2 == bytes_be_view1);
+        ASSERT_FALSE(bytes_be2 != bytes_be_view1);
+    }
+
+    {
+        bytes_be_t bytes_be1{ 'a', 'b', 'c', 'd' };
+        bytes_be_t bytes_be2{ 'd', 'c', 'b', 'a' };
+        bytes_be_view_t bytes_be_view1{ bytes_be1 };
+        bytes_be_view_t bytes_be_view2{ bytes_be2 };
+
+        ASSERT_TRUE(bytes_be_view1 != bytes_be_view2);
+        ASSERT_FALSE(bytes_be_view1 == bytes_be_view2);
+        ASSERT_TRUE(bytes_be_view2 != bytes_be1);
+    }
+
+    {
+        bytes_be_t bytes_be1{ 'a', 'b', 'c', 'd' };
+        bytes_be_t bytes_be2{ 'd', 'c', 'b', 'a' };
+        bytes_be_view_t bytes_be_view1{ bytes_be1 };
+        bytes_be_view_t bytes_be_view2{ bytes_be2 };
+
+        ASSERT_TRUE(bytes_be_view1 != bytes_be2);
+        ASSERT_FALSE(bytes_be_view1 == bytes_be2);
+        ASSERT_TRUE(bytes_be_view2 != bytes_be1);
+        ASSERT_FALSE(bytes_be_view2 == bytes_be1);
+    }
+}
+
+TEST(bytes_le_view, operator_equal_equal)
+{
+    using namespace abc;
+
+    {
+        bytes_le_t bytes_le{ 'a', 'b', 'c', 'd' };
+        bytes_le_view_t bytes_le_view{ bytes_le };
+
+        ASSERT_TRUE(bytes_le_view == bytes_le_view);
+        ASSERT_FALSE(bytes_le_view != bytes_le_view);
+    }
+
+    {
+        bytes_le_t bytes_le{ 'a', 'b', 'c', 'd' };
+        bytes_le_view_t bytes_le_view{ bytes_le };
+
+        ASSERT_TRUE(bytes_le_view == bytes_le);
+        ASSERT_FALSE(bytes_le_view != bytes_le);
+    }
+
+    {
+        bytes_le_t bytes_le{ 'a', 'b', 'c', 'd' };
+        bytes_le_view_t bytes_le_view{ bytes_le };
+
+        ASSERT_TRUE(bytes_le == bytes_le_view);
+        ASSERT_FALSE(bytes_le != bytes_le_view);
+    }
+
+    {
+        bytes_le_t bytes_le1{ 'a', 'b', 'c', 'd' };
+        bytes_le_t bytes_le2{ 'a', 'b', 'c', 'd' };
+        bytes_le_view_t bytes_le_view1{ bytes_le1 };
+        bytes_le_view_t bytes_le_view2{ bytes_le2 };
+
+        ASSERT_TRUE(bytes_le_view1 == bytes_le_view2);
+        ASSERT_FALSE(bytes_le_view1 != bytes_le_view2);
+    }
+
+    {
+        bytes_le_t bytes_le1{ 'a', 'b', 'c', 'd' };
+        bytes_le_t bytes_le2{ 'a', 'b', 'c', 'd' };
+        bytes_le_view_t bytes_le_view1{ bytes_le1 };
+        bytes_le_view_t bytes_le_view2{ bytes_le2 };
+
+        ASSERT_TRUE(bytes_le_view1 == bytes_le2);
+        ASSERT_FALSE(bytes_le_view1 != bytes_le2);
+        ASSERT_TRUE(bytes_le_view2 == bytes_le1);
+        ASSERT_FALSE(bytes_le_view2 != bytes_le1);
+    }
+
+    {
+        bytes_le_t bytes_le1{'a', 'b', 'c', 'd'};
+        bytes_le_t bytes_le2{'a', 'b', 'c', 'd'};
+        bytes_le_view_t bytes_le_view1{bytes_le1};
+        bytes_le_view_t bytes_le_view2{bytes_le2};
+
+        ASSERT_TRUE(bytes_le1 == bytes_le_view2);
+        ASSERT_FALSE(bytes_le1 != bytes_le_view2);
+        ASSERT_TRUE(bytes_le2 == bytes_le_view1);
+        ASSERT_FALSE(bytes_le2 != bytes_le_view1);
+    }
+
+    {
+        bytes_le_t bytes_le1{ 'a', 'b', 'c', 'd' };
+        bytes_le_t bytes_le2{ 'd', 'c', 'b', 'a' };
+        bytes_le_view_t bytes_le_view1{ bytes_le1 };
+        bytes_le_view_t bytes_le_view2{ bytes_le2 };
+
+        ASSERT_TRUE(bytes_le_view1 != bytes_le_view2);
+        ASSERT_FALSE(bytes_le_view1 == bytes_le_view2);
+        ASSERT_TRUE(bytes_le_view2 != bytes_le1);
+    }
+
+    {
+        bytes_le_t bytes_le1{ 'a', 'b', 'c', 'd' };
+        bytes_le_t bytes_le2{ 'd', 'c', 'b', 'a' };
+        bytes_le_view_t bytes_le_view1{ bytes_le1 };
+        bytes_le_view_t bytes_le_view2{ bytes_le2 };
+
+        ASSERT_TRUE(bytes_le_view1 != bytes_le2);
+        ASSERT_FALSE(bytes_le_view1 == bytes_le2);
+        ASSERT_TRUE(bytes_le_view2 != bytes_le1);
+        ASSERT_FALSE(bytes_le_view2 == bytes_le1);
+    }
+}
