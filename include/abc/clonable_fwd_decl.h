@@ -9,7 +9,7 @@
 namespace abc
 {
 
-template <typename T>
+template <typename T, typename ClonedResultT = T>
 class [[nodiscard]] clonable;
 
 }

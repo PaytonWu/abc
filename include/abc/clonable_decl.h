@@ -6,12 +6,14 @@
 
 #pragma once
 
+#include "clonable_fwd_decl.h"
+
 #include <type_traits>
 
 namespace abc
 {
 
-template <typename T>
+template <typename T, typename ClonedResultT>
 class clonable
 {
 protected:
@@ -30,7 +32,7 @@ protected:
 
 public:
     [[nodiscard]] virtual auto
-    clone() const -> T = 0;
+    clone() const -> ClonedResultT = 0;
 };
 
 } // namespace abc
