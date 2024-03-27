@@ -587,3 +587,33 @@ TEST(bytes, to_int)
         ASSERT_EQ(u8, 0x00);
     }
 }
+
+TEST(bytes, assign_from_view)
+{
+    {
+        bytes_be_t bytes_be{ 0x00, 0x01, 0x02, 0x03 };
+        bytes_be_t const bytes_be_expected{ 0x04, 0x05, 0x06, 0x07 };
+        bytes_be_view_t bytes_be_view{ bytes_be_expected };
+
+        bytes_be = bytes_be_view;
+        ASSERT_EQ(bytes_be_expected, bytes_be);
+    }
+
+    {
+        bytes_le_t bytes_le{ 0x00, 0x01, 0x02, 0x03 };
+        bytes_le_t const bytes_le_expected{ 0x04, 0x05, 0x06, 0x07 };
+        bytes_le_view_t bytes_le_view{ bytes_le_expected };
+
+        bytes_le = bytes_le_view;
+        ASSERT_EQ(bytes_le_expected, bytes_le);
+    }
+
+    {
+        bytes_t bytes{ 0x00, 0x01, 0x02, 0x03 };
+        bytes_t const bytes_expected{ 0x04, 0x05, 0x06, 0x07 };
+        bytes_view_t bytes_view{ bytes_expected };
+
+        bytes = bytes_view;
+        ASSERT_EQ(bytes_expected, bytes);
+    }
+}

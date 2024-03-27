@@ -650,6 +650,13 @@ public:
         return { data(), size() };
     }
 
+    constexpr auto
+    operator=(bytes_view<ByteNumbering> const view) -> bytes &
+    {
+        data_.assign(std::begin(view), std::end(view));
+        return *this;
+    }
+
 private:
     friend constexpr auto
     operator==(bytes const & lhs, bytes const & rhs) noexcept -> bool = default;
