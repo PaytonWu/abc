@@ -12,7 +12,7 @@
 
 namespace abc {
 
-template <size_t N, byte_numbering ByteNumbering>
+template <std::size_t N, byte_numbering ByteNumbering>
 class [[nodiscard]] fixed_bytes;
 
 }
