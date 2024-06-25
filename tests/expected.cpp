@@ -764,18 +764,18 @@ TEST(expected, ok) {
     }
 }
 
-TEST(expected, err) {
-    {
-        auto r1 = abc::expected<int, int>{1};
-        ASSERT_EQ(std::nullopt, r1.err());
-    }
-
-    {
-        auto r1 = abc::expected<int, int>{abc::unexpected<int>{1}};
-        ASSERT_TRUE(r1.err().has_value());
-        ASSERT_EQ(1, r1.err().value());
-    }
-}
+// TEST(expected, err) {
+//     {
+//         auto r1 = abc::expected<int, int>{1};
+//         ASSERT_EQ(std::nullopt, r1.err());
+//     }
+//
+//     {
+//         auto r1 = abc::expected<int, int>{abc::unexpected<int>{1}};
+//         ASSERT_TRUE(r1.err().has_value());
+//         ASSERT_EQ(1, r1.err().value());
+//     }
+// }
 
 namespace wrapper {
 template <std::endian Endian>

@@ -23,7 +23,7 @@
     {
       "name": "mingw-ucrt64-base",
       "inherits": "windows-x64-base",
-      "generator": "Unix Makefiles",
+      "generator": "Ninja",
       "cacheVariables": {
         "CMAKE_CXX_COMPILER": "g++"
       },
