@@ -254,7 +254,7 @@ public:
     constexpr auto
     bytes() const -> abc::bytes<ByteNumbering>
     {
-        return abc::bytes<ByteNumbering>{ binary_data_ };
+        return abc::bytes<ByteNumbering>{ static_cast<bytes_le_view_t>(binary_data_) };
     }
 
     /// @brief get the modifiable nibble at the specified index.
