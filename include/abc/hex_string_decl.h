@@ -53,13 +53,9 @@ private:
 public:
     hex_string() = default;
 
-    constexpr explicit hex_string(bytes_le_t && input) noexcept : binary_data_{ std::move(input) }
-    {
-    }
+    constexpr explicit hex_string(bytes_le_t && input) noexcept;
 
-    constexpr explicit hex_string(bytes_le_view_t const input) noexcept : binary_data_{ input }
-    {
-    }
+    constexpr explicit hex_string(bytes_le_view_t input) noexcept;
 
 public:
     class [[nodiscard]] const_reference
@@ -71,21 +67,12 @@ public:
         size_t byte_index_{};
         bool high_{ false };
 
-        constexpr const_reference(hex_string const * str, size_t const nibble_index) noexcept
-            : str_{ str }, byte_index_{ nibble_index / 2 }, high_{ static_cast<bool>(nibble_index % 2) }
-        {
-            assert(str != nullptr);
-            assert(byte_index_ < str->size());
-        }
+        constexpr const_reference(hex_string const * str, size_t nibble_index) noexcept;
 
     public:
         constexpr const_reference() noexcept = delete;
 
-        constexpr operator char() const noexcept
-        {
-            assert(str_ != nullptr);
-            return hex_utility::lower_case_hex_digits[(str_->binary_data_[byte_index_] >> (static_cast<size_t>(high_) * 4)) & 0x0f];
-        }
+        constexpr operator char() const noexcept;
     };
 
     class [[nodiscard]] reference
@@ -93,39 +80,13 @@ public:
     {
         friend class hex_string;
 
-        constexpr reference(hex_string * str, size_t const nibble_index) noexcept
-            : const_reference{ str, nibble_index }
-        {
-        }
+        constexpr reference(hex_string * str, size_t nibble_index) noexcept;
 
     public:
         constexpr reference() noexcept = delete;
 
-        inline auto
-        operator=(char const value) -> reference &
-        {
-            assert(str_ != nullptr);
-
-            if (!std::isxdigit(static_cast<unsigned char>(value)))
-            {
-                throw_error(make_error_code(errc::invalid_hex_char));
-                return *this;
-            }
-
-            assert((value >= '0' && value <= '9') || (value >= 'a' && value <= 'f') || (value >= 'A' && value <= 'F'));
-            hex_utility::hex_char_to_binary(value).transform([this](auto byte) {
-                if (high_)
-                {
-                    const_cast<hex_string *>(str_)->binary_data_[byte_index_] = (str_->binary_data_[byte_index_] & 0x0f) | (byte << 4);
-                }
-                else
-                {
-                    const_cast<hex_string *>(str_)->binary_data_[byte_index_] = (str_->binary_data_[byte_index_] & 0xf0) | byte;
-                }
-            });
-
-            return *this;
-        }
+        auto
+        operator=(char value) -> reference &;
     };
 
     /// @brief construct hex_string object from a hex string. always treat the input hex string msb0.
