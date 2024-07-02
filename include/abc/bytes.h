@@ -62,13 +62,6 @@ constexpr bytes<ByteNumbering>::bytes(std::initializer_list<value_type> const il
 }
 
 template <byte_numbering ByteNumbering>
-constexpr auto
-bytes<ByteNumbering>::operator=(std::vector<byte> raw) noexcept -> bytes & requires(ByteNumbering == byte_numbering::none) {
-    data_ = std::move(raw);
-    return *this;
-}
-
-template <byte_numbering ByteNumbering>
 template <std::input_iterator Iterator, byte_numbering SrcByteNumbering>
     requires(SrcByteNumbering == ByteNumbering || SrcByteNumbering == byte_numbering::none || ByteNumbering == byte_numbering::none)
 constexpr bytes<ByteNumbering>::bytes(Iterator begin, Iterator end, byte_numbering_type<SrcByteNumbering>) : data_{ begin, end }
@@ -95,6 +88,64 @@ template <byte_numbering SrcByteNumbering>
 constexpr bytes<ByteNumbering>::bytes(std::initializer_list<value_type> const il, byte_numbering_type<SrcByteNumbering>) : data_{ il }
 {
     ranges::reverse(data_);
+}
+
+template <byte_numbering ByteNumbering>
+template <byte_numbering RhsByteNumbering>
+    requires(RhsByteNumbering != ByteNumbering && RhsByteNumbering != byte_numbering::none && ByteNumbering != byte_numbering::none)
+constexpr auto
+bytes<ByteNumbering>::operator=(bytes<RhsByteNumbering> && rhs) -> bytes &
+{
+    data_ = std::move(rhs.data_);
+    ranges::reverse(data_);
+    return *this;
+}
+
+template <byte_numbering ByteNumbering>
+template <byte_numbering RhsByteNumber>
+    requires(RhsByteNumber != ByteNumbering && (RhsByteNumber == byte_numbering::none || ByteNumbering == byte_numbering::none))
+constexpr auto
+bytes<ByteNumbering>::operator=(bytes<RhsByteNumber> && rhs) noexcept -> bytes &
+{
+    data_ = std::move(rhs.data_);
+    return *this;
+}
+
+template <byte_numbering ByteNumbering>
+constexpr auto
+bytes<ByteNumbering>::operator=(bytes_view<ByteNumbering> view) -> bytes &
+{
+    data_.assign(std::begin(view), std::end(view));
+    return *this;
+}
+
+template <byte_numbering ByteNumbering>
+template <byte_numbering ViewByteNumbering>
+    requires(ViewByteNumbering != ByteNumbering && ViewByteNumbering != byte_numbering::none && ByteNumbering != byte_numbering::none)
+constexpr auto
+bytes<ByteNumbering>::operator=(bytes_view<ViewByteNumbering> view) -> bytes &
+{
+    data_.assign(std::begin(view), std::end(view));
+    ranges::reverse(data_);
+    return *this;
+}
+
+template <byte_numbering ByteNumbering>
+template <byte_numbering ViewByteNumbering>
+    requires(ViewByteNumbering != ByteNumbering && (ViewByteNumbering == byte_numbering::none || ByteNumbering == byte_numbering::none))
+constexpr auto
+bytes<ByteNumbering>::operator=(bytes_view<ViewByteNumbering> view) -> bytes &
+{
+    data_.assign(std::begin(view), std::end(view));
+    return *this;
+}
+
+template <byte_numbering ByteNumbering>
+constexpr auto
+bytes<ByteNumbering>::operator=(std::initializer_list<value_type> const il) -> bytes &
+{
+    data_ = il;
+    return *this;
 }
 
 template <byte_numbering ByteNumbering>
@@ -340,8 +391,8 @@ bytes<ByteNumbering>::resize(size_type new_size) -> void
 }
 
 template <byte_numbering ByteNumbering>
-constexpr void
-bytes<ByteNumbering>::reserve(size_type const new_cap)
+constexpr auto
+bytes<ByteNumbering>::reserve(size_type const new_cap) -> void
 {
     data_.reserve(new_cap);
 }
@@ -402,6 +453,8 @@ bytes<ByteNumbering>::least_significant_byte() const -> const_reference
     {
         return data_.front();
     }
+
+    unreachable();
 }
 
 template <byte_numbering ByteNumbering>
@@ -418,6 +471,8 @@ bytes<ByteNumbering>::least_significant_byte() -> reference
     {
         return data_.front();
     }
+
+    unreachable();
 }
 
 template <byte_numbering ByteNumbering>
@@ -434,6 +489,8 @@ bytes<ByteNumbering>::most_significant_byte() const -> const_reference
     {
         return data_.back();
     }
+
+    unreachable();
 }
 
 template <byte_numbering ByteNumbering>
@@ -450,6 +507,8 @@ bytes<ByteNumbering>::most_significant_byte() -> reference
     {
         return data_.back();
     }
+
+    unreachable();
 }
 
 template <byte_numbering ByteNumbering>
@@ -482,19 +541,9 @@ bytes<ByteNumbering>::subview(size_type const pos, size_type const n) const -> e
 
 template <byte_numbering ByteNumbering>
 constexpr auto
-bytes<ByteNumbering>::operator+(bytes const & other) const -> bytes
+bytes<ByteNumbering>::view() const noexcept -> bytes_view<ByteNumbering>
 {
-    auto result = *this;
-    return result += other;
-}
-
-template <byte_numbering ByteNumbering>
-constexpr auto
-bytes<ByteNumbering>::operator+=(bytes const & other) -> bytes &
-{
-    data_.reserve(size() + other.size());
-    ranges::copy(other, std::back_inserter(data_));
-    return *this;
+    return static_cast<bytes_view<ByteNumbering>>(*this);
 }
 
 template <byte_numbering ByteNumbering>
@@ -537,14 +586,6 @@ constexpr bytes<ByteNumbering>::operator bytes_view<ByteNumbering>() const noexc
     return { data(), size() };
 }
 
-template <byte_numbering ByteNumbering>
-constexpr auto
-bytes<ByteNumbering>::operator=(bytes_view<ByteNumbering> const view) -> bytes &
-{
-    data_.assign(std::begin(view), std::end(view));
-    return *this;
-}
-
 [[nodiscard]] constexpr auto
 operator<=>(bytes<byte_numbering::none> const & lhs, std::vector<byte> const & rhs) -> std::strong_ordering
 {
@@ -559,7 +600,7 @@ operator==(bytes<byte_numbering::none> const & lhs, std::vector<byte> const & rh
 
 template <byte_numbering ByteNumbering>
 constexpr auto
-operator+(byte const lhs, bytes<ByteNumbering> const & rhs) -> bytes<ByteNumbering>
+operator+(byte const lhs, bytes_view<ByteNumbering> const & rhs) -> bytes<ByteNumbering>
 {
     return bytes<ByteNumbering>{ lhs } + rhs;
 }

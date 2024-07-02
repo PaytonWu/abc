@@ -193,7 +193,7 @@ TEST(bytes, operator_plus_byte_before)
 {
     bytes_be_t lhs = bytes_be_t::from(0x1234567890);
 
-    lhs = static_cast<abc::byte>(1) + lhs;
+    lhs = static_cast<abc::byte>(1) + lhs.view();
     ASSERT_EQ(abc::hex_string::from("0x11234567890").transform([](auto const & hex_string) { return hex_string.template bytes<abc::byte_numbering::msb0>(); }).value(), lhs);
 }
 
