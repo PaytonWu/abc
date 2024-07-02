@@ -43,9 +43,7 @@ public:
 private:
     constexpr bytes_view(std::basic_string_view<byte> view) noexcept;
 
-    template <byte_numbering RhsByteNumbering>
-        requires(RhsByteNumbering == ByteNumbering)
-    constexpr bytes_view(bytes_view<RhsByteNumbering> rhs, byte_numbering_type<RhsByteNumbering>) noexcept;
+    constexpr bytes_view(bytes_view rhs, byte_numbering_type<ByteNumbering>) noexcept;
 
     template <byte_numbering RhsByteNumbering>
         requires(ByteNumbering != RhsByteNumbering && (ByteNumbering == byte_numbering::none || RhsByteNumbering == byte_numbering::none))
@@ -68,10 +66,8 @@ public:
     constexpr bytes_view(byte const * first, size_type count) noexcept;
 
     template <std::contiguous_iterator It, std::sized_sentinel_for<It> End>
-        requires std::same_as<std::iter_value_t<It>, abc::byte> && (!std::convertible_to<End, size_type>)
-    constexpr bytes_view(It first, End last) noexcept(noexcept(last - first)) : view_{first, last}
-    {
-    }
+        requires(std::same_as<std::iter_value_t<It>, abc::byte> && (!std::convertible_to<End, size_type>))
+    constexpr bytes_view(It first, End last) noexcept(noexcept(last - first));
 
     template <typename Range, typename DRange = std::remove_cvref_t<Range>>
         requires(!std::is_same_v<DRange, bytes_view>) && std::ranges::contiguous_range<Range> && std::ranges::sized_range<Range> &&
