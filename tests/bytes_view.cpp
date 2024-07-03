@@ -6,7 +6,8 @@
 
 #include <gtest/gtest.h>
 
-TEST(bytes_view, bytes) {
+TEST(bytes_view, bytes)
+{
     using namespace abc;
 
     {
@@ -33,19 +34,7 @@ TEST(bytes_view, bytes) {
 
     {
         bytes_be_t bytes_be{ 'a', 'b', 'c', 'd' };
-        bytes_be_view_t bytes_be_view{bytes_be};
-
-        ASSERT_EQ(bytes_be.size(), bytes_be_view.size());
-        ASSERT_EQ('a', bytes_be_view[0]);
-        ASSERT_EQ('b', bytes_be_view[1]);
-        ASSERT_EQ('c', bytes_be_view[2]);
-        ASSERT_EQ('d', bytes_be_view[3]);
-    }
-
-
-    {
-        bytes_be_t bytes_be{ 'a', 'b', 'c', 'd' };
-        bytes_be_view_t bytes_be_view{ bytes_be.data(), bytes_be.size() };
+        bytes_be_view_t bytes_be_view{ bytes_be };
 
         ASSERT_EQ(bytes_be.size(), bytes_be_view.size());
         ASSERT_EQ('a', bytes_be_view[0]);
@@ -56,7 +45,18 @@ TEST(bytes_view, bytes) {
 
     {
         bytes_be_t bytes_be{ 'a', 'b', 'c', 'd' };
-        bytes_be_view_t bytes_be_view{bytes_be.data(), 2};
+        bytes_be_view_t bytes_be_view{ bytes_be.data(), bytes_be.size(), byte_numbering_type<bytes_be_t::byte_numbering_value>{} };
+
+        ASSERT_EQ(bytes_be.size(), bytes_be_view.size());
+        ASSERT_EQ('a', bytes_be_view[0]);
+        ASSERT_EQ('b', bytes_be_view[1]);
+        ASSERT_EQ('c', bytes_be_view[2]);
+        ASSERT_EQ('d', bytes_be_view[3]);
+    }
+
+    {
+        bytes_be_t bytes_be{ 'a', 'b', 'c', 'd' };
+        bytes_be_view_t bytes_be_view{ bytes_be.data(), 2, byte_numbering_type<bytes_be_t::byte_numbering_value>{} };
 
         ASSERT_EQ(2, bytes_be_view.size());
         ASSERT_EQ('a', bytes_be_view[0]);
@@ -65,7 +65,7 @@ TEST(bytes_view, bytes) {
 
     {
         bytes_be_t bytes_be{ 'a', 'b', 'c', 'd' };
-        bytes_be_view_t bytes_be_view{bytes_be.last(2)};
+        bytes_be_view_t bytes_be_view{ bytes_be.last(2) };
 
         ASSERT_EQ(2, bytes_be_view.size());
         ASSERT_EQ('c', bytes_be_view[0]);
@@ -73,12 +73,13 @@ TEST(bytes_view, bytes) {
     }
 }
 
-TEST(bytes_view, fixed_bytes) {
+TEST(bytes_view, fixed_bytes)
+{
     using namespace abc;
 
     {
         bytes4_be_t bytes_be = bytes4_be_t::from<byte_numbering::msb0>({ 'a', 'b', 'c', 'd' }).value();
-        bytes_be_view_t bytes_be_view{bytes_be};
+        bytes_be_view_t bytes_be_view{ bytes_be };
 
         ASSERT_EQ(bytes_be.size(), bytes_be_view.size());
         ASSERT_EQ('a', bytes_be_view[0]);
@@ -93,7 +94,7 @@ TEST(bytes_view, span)
     using namespace abc;
 
     bytes4_t bytes4 = bytes4_t::from<byte_numbering::none>({ 'a', 'b', 'c', 'd' }).value();
-    bytes_view_t bytes_view{std::span{bytes4}};
+    bytes_view_t bytes_view{ bytes4 };
 
     ASSERT_EQ(bytes4.size(), bytes_view.size());
     ASSERT_EQ(bytes4[0], bytes_view[0]);
@@ -346,7 +347,7 @@ TEST(bytes_view, to_int)
     }
 
     {
-        bytes_le_t bytes_le{ 0x00, 0x01, 0x02};
+        bytes_le_t bytes_le{ 0x00, 0x01, 0x02 };
         bytes_le_view_t bytes_le_view{ bytes_le };
 
         auto u64 = bytes_le_view.to<std::uint64_t>();
@@ -366,7 +367,7 @@ TEST(bytes_view, to_int)
     }
 
     {
-        bytes_le_t bytes_le{ 0x00, 0x01};
+        bytes_le_t bytes_le{ 0x00, 0x01 };
         bytes_le_view_t bytes_le_view{ bytes_le };
 
         auto u64 = bytes_le_view.to<std::uint64_t>();
@@ -390,7 +391,7 @@ TEST(bytes_view, to_int)
     }
 
     {
-        bytes_le_t bytes_le{ 0x01};
+        bytes_le_t bytes_le{ 0x01 };
         bytes_le_view_t bytes_le_view{ bytes_le };
 
         auto u64 = bytes_le_view.to<std::uint64_t>();
@@ -555,10 +556,10 @@ TEST(bytes_le_view, operator_equal_equal)
     }
 
     {
-        bytes_le_t bytes_le1{'a', 'b', 'c', 'd'};
-        bytes_le_t bytes_le2{'a', 'b', 'c', 'd'};
-        bytes_le_view_t bytes_le_view1{bytes_le1};
-        bytes_le_view_t bytes_le_view2{bytes_le2};
+        bytes_le_t bytes_le1{ 'a', 'b', 'c', 'd' };
+        bytes_le_t bytes_le2{ 'a', 'b', 'c', 'd' };
+        bytes_le_view_t bytes_le_view1{ bytes_le1 };
+        bytes_le_view_t bytes_le_view2{ bytes_le2 };
 
         ASSERT_TRUE(bytes_le1 == bytes_le_view2);
         ASSERT_FALSE(bytes_le1 != bytes_le_view2);

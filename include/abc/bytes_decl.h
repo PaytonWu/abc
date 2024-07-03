@@ -40,6 +40,8 @@ public:
     using reverse_iterator = internal_type::reverse_iterator;
     using const_reverse_iterator = internal_type::const_reverse_iterator;
 
+    constexpr static byte_numbering byte_numbering_value{ByteNumbering};
+
     // public constructors
 
     bytes() = default;

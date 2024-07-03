@@ -41,13 +41,7 @@ public:
     using const_reverse_iterator = typename container_type::const_reverse_iterator;
 
 private:
-    constexpr bytes_view(std::basic_string_view<byte> view) noexcept;
-
-    constexpr bytes_view(bytes_view rhs, byte_numbering_type<ByteNumbering>) noexcept;
-
-    template <byte_numbering RhsByteNumbering>
-        requires(ByteNumbering != RhsByteNumbering && (ByteNumbering == byte_numbering::none || RhsByteNumbering == byte_numbering::none))
-    constexpr bytes_view(bytes_view<RhsByteNumbering> rhs, byte_numbering_type<RhsByteNumbering>) noexcept;
+    constexpr bytes_view(std::basic_string_view<abc::byte> view) noexcept requires(ByteNumbering == byte_numbering::none);
 
 public:
     constexpr bytes_view() noexcept = default;
@@ -63,25 +57,14 @@ public:
     friend constexpr auto
     operator==(bytes_view const & lhs, bytes_view const & rhs) noexcept -> bool = default;
 
-    constexpr bytes_view(byte const * first, size_type count) noexcept;
+    template <byte_numbering BufferByteNumbering> requires(BufferByteNumbering == ByteNumbering)
+    constexpr bytes_view(byte const * first, size_type count, byte_numbering_type<BufferByteNumbering>) noexcept;
 
-    template <std::contiguous_iterator It, std::sized_sentinel_for<It> End>
-        requires(std::same_as<std::iter_value_t<It>, abc::byte> && (!std::convertible_to<End, size_type>))
-    constexpr bytes_view(It first, End last) noexcept(noexcept(last - first));
+    template <std::contiguous_iterator It, std::sized_sentinel_for<It> End, byte_numbering BufferByteNumbering>
+        requires(std::same_as<std::iter_value_t<It>, abc::byte> && (!std::convertible_to<End, size_type>) && BufferByteNumbering == ByteNumbering)
+    constexpr bytes_view(It first, End last, byte_numbering_type<BufferByteNumbering>) noexcept(noexcept(last - first));
 
-    template <typename Range, typename DRange = std::remove_cvref_t<Range>>
-        requires(!std::is_same_v<DRange, bytes_view>) && std::ranges::contiguous_range<Range> && std::ranges::sized_range<Range> &&
-                std::is_same_v<std::ranges::range_value_t<Range>, abc::byte> && (!std::is_convertible_v<Range, abc::byte const *>) &&
-                (!requires(DRange & d) { d.operator ::abc::bytes_view<ByteNumbering>(); })
-    constexpr explicit bytes_view(Range && r) noexcept(noexcept(std::ranges::size(r)) && noexcept(std::ranges::data(r))) : view_{std::forward<Range>(r)}
-    {
-    }
-
-    constexpr explicit bytes_view(std::string_view sv) noexcept;
-
-    template <byte_numbering RhsByteNumbering>
-    constexpr static auto
-    from(bytes_view<RhsByteNumbering> rhs) -> bytes_view;
+    constexpr explicit bytes_view(std::string_view sv) noexcept requires(ByteNumbering == byte_numbering::none);
 
     template <std::integral T>
         requires(ByteNumbering != byte_numbering::none)

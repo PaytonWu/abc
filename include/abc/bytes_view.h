@@ -20,54 +20,21 @@ namespace abc
 {
 
 template <byte_numbering ByteNumbering>
-constexpr bytes_view<ByteNumbering>::bytes_view(std::basic_string_view<byte> view) noexcept : view_{ view }
+constexpr bytes_view<ByteNumbering>::bytes_view(std::basic_string_view<abc::byte> view) noexcept requires(ByteNumbering == byte_numbering::none) : view_{ view }
 {
 }
 
 template <byte_numbering ByteNumbering>
-constexpr bytes_view<ByteNumbering>::bytes_view(bytes_view rhs, byte_numbering_type<ByteNumbering>) noexcept : view_{ rhs.view_ }
+template <byte_numbering BufferByteNumbering> requires(BufferByteNumbering == ByteNumbering)
+constexpr bytes_view<ByteNumbering>::bytes_view(byte const * first, size_type count, byte_numbering_type<BufferByteNumbering>) noexcept : view_{ first, count }
 {
 }
 
 template <byte_numbering ByteNumbering>
-template <byte_numbering RhsByteNumbering>
-    requires(ByteNumbering != RhsByteNumbering && (ByteNumbering == byte_numbering::none || RhsByteNumbering == byte_numbering::none))
-constexpr bytes_view<ByteNumbering>::bytes_view(bytes_view<RhsByteNumbering> rhs, byte_numbering_type<RhsByteNumbering>) noexcept : view_{ rhs.view_ }
+template <std::contiguous_iterator It, std::sized_sentinel_for<It> End, byte_numbering BufferByteNumbering>
+    requires(std::same_as<std::iter_value_t<It>, abc::byte> && (!std::convertible_to<End, typename bytes_view<ByteNumbering>::size_type>) && BufferByteNumbering == ByteNumbering)
+constexpr bytes_view<ByteNumbering>::bytes_view(It first, End last, byte_numbering_type<BufferByteNumbering>) noexcept(noexcept(last - first)) : view_{ first, last }
 {
-}
-
-template <byte_numbering ByteNumbering>
-constexpr bytes_view<ByteNumbering>::bytes_view(byte const * first, size_type count) noexcept : view_{ first, count }
-{
-}
-
-template <byte_numbering ByteNumbering>
-template <std::contiguous_iterator It, std::sized_sentinel_for<It> End>
-    requires(std::same_as<std::iter_value_t<It>, abc::byte> && (!std::convertible_to<End, typename bytes_view<ByteNumbering>::size_type>))
-constexpr bytes_view<ByteNumbering>::bytes_view(It first, End last) noexcept(noexcept(last - first)) : view_{ first, last }
-{
-}
-
-// template <byte_numbering ByteNumbering>
-// template <typename Range, typename DRange>
-//     requires((!std::is_same_v<DRange, bytes_view<ByteNumbering>>) && std::ranges::contiguous_range<Range> && std::ranges::sized_range<Range> &&
-//             std::is_same_v<std::ranges::range_value_t<Range>, abc::byte> && (!std::is_convertible_v<Range, abc::byte const *>) &&
-//             (!requires(DRange & d) { d.operator ::abc::bytes_view<ByteNumbering>(); }))
-// constexpr bytes_view<ByteNumbering>::bytes_view(Range && r) noexcept(noexcept(std::ranges::size(r)) && noexcept(std::ranges::data(r))) : view_{ std::forward<Range>(r) }
-// {
-// }
-
-// template <byte_numbering ByteNumbering>
-// constexpr bytes_view<ByteNumbering>::bytes_view(std::string_view sv) noexcept : view_{ reinterpret_cast<byte const *>(sv.data()), sv.size() }
-// {
-// }
-
-template <byte_numbering ByteNumbering>
-template <byte_numbering RhsByteNumbering>
-constexpr auto
-bytes_view<ByteNumbering>::from(bytes_view<RhsByteNumbering> rhs) -> bytes_view
-{
-    return bytes_view{ rhs, byte_numbering_type<RhsByteNumbering>{} };
 }
 
 template <byte_numbering ByteNumbering>
