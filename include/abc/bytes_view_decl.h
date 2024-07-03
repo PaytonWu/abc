@@ -42,6 +42,7 @@ public:
 
 private:
     constexpr bytes_view(std::basic_string_view<abc::byte> view) noexcept requires(ByteNumbering == byte_numbering::none);
+    constexpr bytes_view(std::string_view sv) noexcept requires(ByteNumbering == byte_numbering::none);
 
 public:
     constexpr bytes_view() noexcept = default;
@@ -54,9 +55,6 @@ public:
 //    friend constexpr auto
 //    operator<=>(bytes_view const & lhs, bytes_view const & rhs) noexcept -> std::strong_ordering = default;
 
-    friend constexpr auto
-    operator==(bytes_view const & lhs, bytes_view const & rhs) noexcept -> bool = default;
-
     template <byte_numbering BufferByteNumbering> requires(BufferByteNumbering == ByteNumbering)
     constexpr bytes_view(byte const * first, size_type count, byte_numbering_type<BufferByteNumbering>) noexcept;
 
@@ -64,7 +62,23 @@ public:
         requires(std::same_as<std::iter_value_t<It>, abc::byte> && (!std::convertible_to<End, size_type>) && BufferByteNumbering == ByteNumbering)
     constexpr bytes_view(It first, End last, byte_numbering_type<BufferByteNumbering>) noexcept(noexcept(last - first));
 
-    constexpr explicit bytes_view(std::string_view sv) noexcept requires(ByteNumbering == byte_numbering::none);
+    friend constexpr auto
+    operator==(bytes_view const & lhs, bytes_view const & rhs) noexcept -> bool = default;
+
+    template <byte_numbering BufferByteNumbering> requires(BufferByteNumbering == ByteNumbering)
+    constexpr static auto
+    from(abc::byte const * data, size_type size, byte_numbering_type<BufferByteNumbering>) noexcept -> bytes_view;
+
+    template <std::contiguous_iterator It, std::sized_sentinel_for<It> End, byte_numbering BufferByteNumbering>
+        requires(std::same_as<std::iter_value_t<It>, abc::byte> && (!std::convertible_to<End, size_type>) && BufferByteNumbering == ByteNumbering)
+    constexpr static auto
+    from(It first, End last, byte_numbering_type<BufferByteNumbering>) noexcept(noexcept(last - first)) -> bytes_view;
+
+    constexpr static auto
+    from(std::span<abc::byte const> bytes) noexcept -> bytes_view requires(ByteNumbering == byte_numbering::none);
+
+    constexpr static auto
+    from(std::basic_string_view<abc::byte> sv) noexcept -> bytes_view requires(ByteNumbering == byte_numbering::none);
 
     template <std::integral T>
         requires(ByteNumbering != byte_numbering::none)
