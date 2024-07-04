@@ -202,7 +202,7 @@ fixed_bytes<N, ByteNumbering>::operator[](size_t const index) noexcept -> byte &
 template <std::size_t N, byte_numbering ByteNumbering>
 constexpr fixed_bytes<N, ByteNumbering>::operator bytes_view<ByteNumbering>() const noexcept
 {
-    return abc::bytes_view<ByteNumbering>{ data_.data(), data_.size(), byte_numbering_type<ByteNumbering>{} };
+    return abc::bytes_view<ByteNumbering>::from(data_.data(), data_.size(), byte_numbering_type<ByteNumbering>{});
 }
 
 template <std::size_t N, byte_numbering ByteNumbering>
@@ -515,7 +515,7 @@ fixed_bytes<N, ByteNumbering>::subview(size_type pos, size_type n) const & -> ex
     auto start = std::next(std::begin(data_), pos);
     auto end = std::next(start, offset);
 
-    return abc::bytes_view<ByteNumbering>{ start, end, byte_numbering_type<ByteNumbering>{} };
+    return abc::bytes_view<ByteNumbering>::from(start, end, byte_numbering_type<ByteNumbering>{});
 }
 
 template <std::size_t N, byte_numbering ByteNumbering>

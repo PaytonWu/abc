@@ -12,7 +12,7 @@ TEST(bytes_view, bytes)
 
     {
         bytes_be_t bytes_be{ 'a', 'b', 'c', 'd' };
-        bytes_be_view_t bytes_be_view = bytes_be;
+        bytes_be_view_t bytes_be_view = bytes_be.view();
 
         ASSERT_EQ(bytes_be.size(), bytes_be_view.size());
         ASSERT_EQ('a', bytes_be_view[0]);
@@ -45,7 +45,7 @@ TEST(bytes_view, bytes)
 
     {
         bytes_be_t bytes_be{ 'a', 'b', 'c', 'd' };
-        bytes_be_view_t bytes_be_view{ bytes_be.data(), bytes_be.size(), byte_numbering_type<bytes_be_t::byte_numbering_value>{} };
+        bytes_be_view_t bytes_be_view = bytes_be_view_t::from(bytes_be.data(), bytes_be.size(), byte_numbering_type<bytes_be_t::byte_numbering_value>{});
 
         ASSERT_EQ(bytes_be.size(), bytes_be_view.size());
         ASSERT_EQ('a', bytes_be_view[0]);
@@ -56,7 +56,7 @@ TEST(bytes_view, bytes)
 
     {
         bytes_be_t bytes_be{ 'a', 'b', 'c', 'd' };
-        bytes_be_view_t bytes_be_view{ bytes_be.data(), 2, byte_numbering_type<bytes_be_t::byte_numbering_value>{} };
+        bytes_be_view_t bytes_be_view = bytes_be_view_t::from(bytes_be.data(), 2, byte_numbering_type_v<byte_numbering::msb0>);
 
         ASSERT_EQ(2, bytes_be_view.size());
         ASSERT_EQ('a', bytes_be_view[0]);

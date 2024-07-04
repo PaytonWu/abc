@@ -524,7 +524,7 @@ constexpr auto
 bytes<ByteNumbering>::last(size_t const count) const noexcept -> bytes_view<ByteNumbering>
 {
     assert(count <= data_.size());
-    return bytes_view<ByteNumbering>{ std::addressof(data_[size() - count]), count, byte_numbering_type<ByteNumbering>{} };
+    return bytes_view<ByteNumbering>::from(std::addressof(data_[size() - count]), count, byte_numbering_type<ByteNumbering>{});
 }
 
 template <byte_numbering ByteNumbering>
@@ -583,7 +583,7 @@ bytes<ByteNumbering>::operator+=(bytes_view<ByteNumbering> const other) -> bytes
 template <byte_numbering ByteNumbering>
 constexpr bytes<ByteNumbering>::operator bytes_view<ByteNumbering>() const noexcept
 {
-    return { data(), size(), byte_numbering_type<ByteNumbering>{} };
+    return bytes_view<ByteNumbering>::from(data(), size(), byte_numbering_type<ByteNumbering>{});
 }
 
 [[nodiscard]] constexpr auto

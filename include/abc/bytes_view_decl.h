@@ -12,7 +12,8 @@
 
 #include <range/v3/range/concepts.hpp>
 
-namespace abc {
+namespace abc
+{
 
 template <byte_numbering ByteNumbering>
 class bytes_view
@@ -41,31 +42,33 @@ public:
     using const_reverse_iterator = typename container_type::const_reverse_iterator;
 
 private:
-    constexpr bytes_view(std::basic_string_view<abc::byte> view) noexcept requires(ByteNumbering == byte_numbering::none);
-    constexpr bytes_view(std::string_view sv) noexcept requires(ByteNumbering == byte_numbering::none);
-
-public:
-    constexpr bytes_view() noexcept = default;
-    constexpr bytes_view(bytes_view const &) noexcept = default;
-    constexpr bytes_view(std::nullptr_t) = delete;
-
-    constexpr auto
-    operator=(bytes_view const &) noexcept -> bytes_view & = default;
-
-//    friend constexpr auto
-//    operator<=>(bytes_view const & lhs, bytes_view const & rhs) noexcept -> std::strong_ordering = default;
-
-    template <byte_numbering BufferByteNumbering> requires(BufferByteNumbering == ByteNumbering)
+    template <byte_numbering BufferByteNumbering>
+        requires(BufferByteNumbering == ByteNumbering)
     constexpr bytes_view(byte const * first, size_type count, byte_numbering_type<BufferByteNumbering>) noexcept;
 
     template <std::contiguous_iterator It, std::sized_sentinel_for<It> End, byte_numbering BufferByteNumbering>
         requires(std::same_as<std::iter_value_t<It>, abc::byte> && (!std::convertible_to<End, size_type>) && BufferByteNumbering == ByteNumbering)
     constexpr bytes_view(It first, End last, byte_numbering_type<BufferByteNumbering>) noexcept(noexcept(last - first));
 
+public:
+    constexpr
+    bytes_view() noexcept = default;
+    constexpr
+    bytes_view(bytes_view const &) noexcept = default;
+    constexpr
+    bytes_view(std::nullptr_t) = delete;
+
+    constexpr auto
+    operator=(bytes_view const &) noexcept -> bytes_view & = default;
+
+    friend constexpr auto
+    operator<=>(bytes_view const & lhs, bytes_view const & rhs) noexcept -> std::strong_ordering = default;
+
     friend constexpr auto
     operator==(bytes_view const & lhs, bytes_view const & rhs) noexcept -> bool = default;
 
-    template <byte_numbering BufferByteNumbering> requires(BufferByteNumbering == ByteNumbering)
+    template <byte_numbering BufferByteNumbering>
+        requires(BufferByteNumbering == ByteNumbering)
     constexpr static auto
     from(abc::byte const * data, size_type size, byte_numbering_type<BufferByteNumbering>) noexcept -> bytes_view;
 
@@ -75,10 +78,22 @@ public:
     from(It first, End last, byte_numbering_type<BufferByteNumbering>) noexcept(noexcept(last - first)) -> bytes_view;
 
     constexpr static auto
-    from(std::span<abc::byte const> bytes) noexcept -> bytes_view requires(ByteNumbering == byte_numbering::none);
+    from(std::span<abc::byte const> bytes_span) noexcept -> bytes_view
+        requires(ByteNumbering == byte_numbering::none);
+
+    template <byte_numbering BufferByteNumbering>
+        requires(BufferByteNumbering == ByteNumbering)
+    constexpr static auto
+    from(std::span<abc::byte const> bytes_span, byte_numbering_type<BufferByteNumbering>) noexcept -> bytes_view;
 
     constexpr static auto
-    from(std::basic_string_view<abc::byte> sv) noexcept -> bytes_view requires(ByteNumbering == byte_numbering::none);
+    from(std::basic_string_view<abc::byte> sv) noexcept -> bytes_view
+        requires(ByteNumbering == byte_numbering::none);
+
+    template <byte_numbering BufferByteNumbering>
+        requires(BufferByteNumbering == ByteNumbering)
+    constexpr static auto
+    from(std::basic_string_view<abc::byte> sv, byte_numbering_type<BufferByteNumbering>) noexcept -> bytes_view;
 
     template <std::integral T>
         requires(ByteNumbering != byte_numbering::none)
@@ -156,9 +171,10 @@ using bytes_be_view_t = bytes_view<byte_numbering::msb0>;
 using bytes_le_view_t = bytes_view<byte_numbering::lsb0>;
 using bytes_view_t = bytes_view<byte_numbering::none>;
 
-}
+} // namespace abc
 
-namespace ranges {
+namespace ranges
+{
 
 template <abc::byte_numbering ByteNumbering>
 inline constexpr bool enable_borrowed_range<abc::bytes_view<ByteNumbering>> = true;
@@ -166,6 +182,6 @@ inline constexpr bool enable_borrowed_range<abc::bytes_view<ByteNumbering>> = tr
 template <abc::byte_numbering ByteNumbering>
 inline constexpr bool enable_view<abc::bytes_view<ByteNumbering>> = true;
 
-}
+} // namespace ranges
 
-#endif //ABC_INCLUDE_ABC_BYTES_VIEW_DECL
+#endif // ABC_INCLUDE_ABC_BYTES_VIEW_DECL

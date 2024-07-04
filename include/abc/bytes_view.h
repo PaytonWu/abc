@@ -20,12 +20,8 @@ namespace abc
 {
 
 template <byte_numbering ByteNumbering>
-constexpr bytes_view<ByteNumbering>::bytes_view(std::basic_string_view<abc::byte> view) noexcept requires(ByteNumbering == byte_numbering::none) : view_{ view }
-{
-}
-
-template <byte_numbering ByteNumbering>
-template <byte_numbering BufferByteNumbering> requires(BufferByteNumbering == ByteNumbering)
+template <byte_numbering BufferByteNumbering>
+    requires(BufferByteNumbering == ByteNumbering)
 constexpr bytes_view<ByteNumbering>::bytes_view(byte const * first, size_type count, byte_numbering_type<BufferByteNumbering>) noexcept : view_{ first, count }
 {
 }
@@ -35,6 +31,58 @@ template <std::contiguous_iterator It, std::sized_sentinel_for<It> End, byte_num
     requires(std::same_as<std::iter_value_t<It>, abc::byte> && (!std::convertible_to<End, typename bytes_view<ByteNumbering>::size_type>) && BufferByteNumbering == ByteNumbering)
 constexpr bytes_view<ByteNumbering>::bytes_view(It first, End last, byte_numbering_type<BufferByteNumbering>) noexcept(noexcept(last - first)) : view_{ first, last }
 {
+}
+
+template <byte_numbering ByteNumbering>
+template <byte_numbering BufferByteNumbering>
+    requires(BufferByteNumbering == ByteNumbering)
+constexpr auto
+bytes_view<ByteNumbering>::from(abc::byte const * data, size_type size, byte_numbering_type<BufferByteNumbering>) noexcept -> bytes_view
+{
+    return bytes_view{ data, size, byte_numbering_type<BufferByteNumbering>{} };
+}
+
+template <byte_numbering ByteNumbering>
+template <std::contiguous_iterator It, std::sized_sentinel_for<It> End, byte_numbering BufferByteNumbering>
+    requires(std::same_as<std::iter_value_t<It>, abc::byte> && (!std::convertible_to<End, typename bytes_view<ByteNumbering>::size_type>) && BufferByteNumbering == ByteNumbering)
+constexpr auto
+bytes_view<ByteNumbering>::from(It first, End last, byte_numbering_type<BufferByteNumbering>) noexcept(noexcept(last - first)) -> bytes_view
+{
+    return bytes_view{ first, last, byte_numbering_type<BufferByteNumbering>{} };
+}
+
+template <byte_numbering ByteNumbering>
+constexpr auto
+bytes_view<ByteNumbering>::from(std::span<abc::byte const> bytes) noexcept -> bytes_view
+    requires(ByteNumbering == byte_numbering::none)
+{
+    return bytes_view{ std::begin(bytes), std::end(bytes), byte_numbering_type<ByteNumbering>{} };
+}
+
+template <byte_numbering ByteNumbering>
+template <byte_numbering BufferByteNumbering>
+    requires(BufferByteNumbering == ByteNumbering)
+constexpr auto
+bytes_view<ByteNumbering>::from(std::span<abc::byte const> bytes_span, byte_numbering_type<BufferByteNumbering> bnt) noexcept -> bytes_view
+{
+    return bytes_view{ std::begin(bytes_span), std::end(bytes_span), bnt };
+}
+
+template <byte_numbering ByteNumbering>
+constexpr auto
+bytes_view<ByteNumbering>::from(std::basic_string_view<abc::byte> sv) noexcept -> bytes_view
+    requires(ByteNumbering == byte_numbering::none)
+{
+    return bytes_view{ std::begin(sv), std::end(sv), byte_numbering_type<ByteNumbering>{} };
+}
+
+template <byte_numbering ByteNumbering>
+template <byte_numbering BufferByteNumbering>
+    requires(BufferByteNumbering == ByteNumbering)
+constexpr auto
+bytes_view<ByteNumbering>::from(std::basic_string_view<abc::byte> sv, byte_numbering_type<BufferByteNumbering> bnt) noexcept -> bytes_view
+{
+    return bytes_view{ std::begin(sv), std::end(sv), bnt };
 }
 
 template <byte_numbering ByteNumbering>
