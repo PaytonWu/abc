@@ -222,14 +222,14 @@ bytes_view<ByteNumbering>::empty() const noexcept -> bool
 template <byte_numbering ByteNumbering>
 template <std::size_t Count>
 constexpr auto
-bytes_view<ByteNumbering>::first() const -> bytes_view<ByteNumbering>
+bytes_view<ByteNumbering>::first() const -> bytes_view
 {
     return bytes_view<ByteNumbering>{ view_.substr(0, Count) };
 }
 
 template <byte_numbering ByteNumbering>
 constexpr auto
-bytes_view<ByteNumbering>::first(size_type count) const -> bytes_view<ByteNumbering>
+bytes_view<ByteNumbering>::first(size_type count) const -> bytes_view
 {
     return bytes_view<ByteNumbering>{ view_.substr(0, count) };
 }
@@ -237,14 +237,14 @@ bytes_view<ByteNumbering>::first(size_type count) const -> bytes_view<ByteNumber
 template <byte_numbering ByteNumbering>
 template <std::size_t Count>
 constexpr auto
-bytes_view<ByteNumbering>::last() const -> bytes_view<ByteNumbering>
+bytes_view<ByteNumbering>::last() const -> bytes_view
 {
     return bytes_view<ByteNumbering>{ view_.substr(view_.size() - Count) };
 }
 
 template <byte_numbering ByteNumbering>
 constexpr auto
-bytes_view<ByteNumbering>::last(size_type count) const -> bytes_view<ByteNumbering>
+bytes_view<ByteNumbering>::last(size_type count) const -> bytes_view
 {
     return bytes_view<ByteNumbering>{ view_.substr(view_.size() - count) };
 }
@@ -252,14 +252,14 @@ bytes_view<ByteNumbering>::last(size_type count) const -> bytes_view<ByteNumberi
 template <byte_numbering ByteNumbering>
 template <std::size_t Offset, std::size_t Count>
 constexpr auto
-bytes_view<ByteNumbering>::subview() const -> bytes_view<ByteNumbering>
+bytes_view<ByteNumbering>::subview() const -> bytes_view
 {
     return { view_.substr(Offset, Count) };
 }
 
 template <byte_numbering ByteNumbering>
 constexpr auto
-bytes_view<ByteNumbering>::subview(size_type offset, size_type count) const -> bytes_view<ByteNumbering>
+bytes_view<ByteNumbering>::subview(size_type offset, size_type count) const -> bytes_view
 {
     return { view_.substr(offset, count) };
 }

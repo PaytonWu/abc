@@ -147,24 +147,24 @@ public:
 
     template <std::size_t Count>
     constexpr auto
-    first() const -> bytes_view<ByteNumbering>;
+    first() const -> bytes_view;
 
     constexpr auto
-    first(size_type count) const -> bytes_view<ByteNumbering>;
+    first(size_type count) const -> bytes_view;
 
     template <std::size_t Count>
     constexpr auto
-    last() const -> bytes_view<ByteNumbering>;
+    last() const -> bytes_view;
 
     constexpr auto
-    last(size_type count) const -> bytes_view<ByteNumbering>;
+    last(size_type count) const -> bytes_view;
 
     template <std::size_t Offset, std::size_t Count = npos>
     constexpr auto
-    subview() const -> bytes_view<ByteNumbering>;
+    subview() const -> bytes_view;
 
     constexpr auto
-    subview(size_type offset, size_type count = npos) const -> bytes_view<ByteNumbering>;
+    subview(size_type offset, size_type count = npos) const -> bytes_view;
 };
 
 using bytes_be_view_t = bytes_view<byte_numbering::msb0>;
