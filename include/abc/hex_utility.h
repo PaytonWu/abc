@@ -32,8 +32,8 @@ class hex_utility
 public:
     constexpr static char lower_case_hex_digits[] = "0123456789abcdef";
     constexpr static char upper_case_hex_digits[] = "0123456789ABCDEF";
-    constexpr static auto prefix = "0x";
-    constexpr static auto prefix_uppercase = "0X";
+    constexpr static auto prefix_0x = "0x";
+    constexpr static auto prefix_0X = "0X";
 
 #if defined(ABC_CPP23)
     constexpr static std::bitset<256> const hex_flag
@@ -90,7 +90,7 @@ public:
     [[nodiscard]] constexpr static auto
     has_hex_prefix(std::string_view const string_slice) noexcept -> bool
     {
-        return string_slice.starts_with(prefix) || string_slice.starts_with(prefix_uppercase);
+        return string_slice.starts_with(prefix_0x) || string_slice.starts_with(prefix_0X);
     }
 
     [[nodiscard]] constexpr static auto

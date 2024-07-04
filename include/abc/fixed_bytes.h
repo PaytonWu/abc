@@ -31,7 +31,7 @@ namespace abc
 template <std::size_t N, byte_numbering ByteNumbering>
 template <byte_numbering SrcByteNumbering>
     requires(SrcByteNumbering == ByteNumbering)
-constexpr fixed_bytes<N, ByteNumbering>::fixed_bytes(std::array<byte, N> const & src, byte_numbering_type<SrcByteNumbering>) : data_{src}
+constexpr fixed_bytes<N, ByteNumbering>::fixed_bytes(std::array<byte, N> const & src, byte_numbering_type<SrcByteNumbering>) : data_{ src }
 {
 }
 
@@ -155,7 +155,7 @@ fixed_bytes<N, ByteNumbering>::from(std::array<byte, N> const & data) -> expecte
 {
     if constexpr (DataByteNumbering == ByteNumbering || (DataByteNumbering != byte_numbering::none && ByteNumbering != byte_numbering::none))
     {
-        return fixed_bytes{data, byte_numbering_type<DataByteNumbering>{}};
+        return fixed_bytes{ data, byte_numbering_type<DataByteNumbering>{} };
     }
     else
     {
@@ -166,10 +166,9 @@ fixed_bytes<N, ByteNumbering>::from(std::array<byte, N> const & data) -> expecte
 template <std::size_t N, byte_numbering ByteNumbering>
 template <byte_numbering DataByteNumbering>
     requires(DataByteNumbering == ByteNumbering) || (DataByteNumbering != ByteNumbering && DataByteNumbering != byte_numbering::none && ByteNumbering != byte_numbering::none)
-auto
-fixed_bytes<N, ByteNumbering>::from(bytes_view<DataByteNumbering> const data) -> expected<fixed_bytes, std::error_code>
+auto fixed_bytes<N, ByteNumbering>::from(bytes_view<DataByteNumbering> const data) -> expected<fixed_bytes, std::error_code>
 {
-    return fixed_bytes{data};
+    return fixed_bytes{ data };
 }
 
 template <std::size_t N, byte_numbering ByteNumbering>
@@ -183,7 +182,7 @@ fixed_bytes<N, ByteNumbering>::from(bytes_view<DataByteNumbering> const data) ->
         return make_unexpected(make_error_code(std::errc::invalid_argument));
     }
 
-    return fixed_bytes{data};
+    return fixed_bytes{ data };
 }
 
 template <std::size_t N, byte_numbering ByteNumbering>
@@ -201,10 +200,9 @@ fixed_bytes<N, ByteNumbering>::operator[](size_t const index) noexcept -> byte &
 }
 
 template <std::size_t N, byte_numbering ByteNumbering>
-constexpr
-fixed_bytes<N, ByteNumbering>::operator bytes_view<ByteNumbering>() const noexcept
+constexpr fixed_bytes<N, ByteNumbering>::operator bytes_view<ByteNumbering>() const noexcept
 {
-    return abc::bytes_view<ByteNumbering>{data_.data(), data_.size()};
+    return abc::bytes_view<ByteNumbering>::from(data_.data(), data_.size(), byte_numbering_type<ByteNumbering>{});
 }
 
 template <std::size_t N, byte_numbering ByteNumbering>
@@ -407,7 +405,7 @@ template <std::size_t N, byte_numbering ByteNumbering>
 constexpr auto
 fixed_bytes<N, ByteNumbering>::operator^(fixed_bytes const & other) const -> fixed_bytes
 {
-    return fixed_bytes{*this} ^= other;
+    return fixed_bytes{ *this } ^= other;
 }
 
 template <std::size_t N, byte_numbering ByteNumbering>
@@ -425,7 +423,7 @@ template <std::size_t N, byte_numbering ByteNumbering>
 constexpr auto
 fixed_bytes<N, ByteNumbering>::operator|(fixed_bytes const & other) const -> fixed_bytes
 {
-    return fixed_bytes{*this} |= other;
+    return fixed_bytes{ *this } |= other;
 }
 
 template <std::size_t N, byte_numbering ByteNumbering>
@@ -443,7 +441,7 @@ template <std::size_t N, byte_numbering ByteNumbering>
 constexpr auto
 fixed_bytes<N, ByteNumbering>::operator&(fixed_bytes const & other) const -> fixed_bytes
 {
-    return fixed_bytes{*this} &= other;
+    return fixed_bytes{ *this } &= other;
 }
 
 template <std::size_t N, byte_numbering ByteNumbering>
@@ -517,7 +515,7 @@ fixed_bytes<N, ByteNumbering>::subview(size_type pos, size_type n) const & -> ex
     auto start = std::next(std::begin(data_), pos);
     auto end = std::next(start, offset);
 
-    return abc::bytes_view<ByteNumbering>{start, end};
+    return abc::bytes_view<ByteNumbering>::from(start, end, byte_numbering_type<ByteNumbering>{});
 }
 
 template <std::size_t N, byte_numbering ByteNumbering>
@@ -539,7 +537,7 @@ fixed_bytes<N, ByteNumbering>::subspan(size_type pos, size_type n) & -> expected
     auto start = std::next(std::begin(data_), pos);
     size_type offset = (n < size() - pos) ? n : size() - pos;
 
-    return std::span{start, offset};
+    return std::span{ start, offset };
 }
 
 template <std::size_t N, byte_numbering ByteNumbering>
@@ -561,7 +559,7 @@ fixed_bytes<N, ByteNumbering>::subspan(size_type pos, size_type n) const & -> ex
     auto start = std::next(std::begin(data_), pos);
     size_type offset = (n < size() - pos) ? n : size() - pos;
 
-    return std::span{start, offset};
+    return std::span{ start, offset };
 }
 
 template <std::size_t N, byte_numbering ByteNumbering>

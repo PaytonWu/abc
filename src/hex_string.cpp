@@ -3,7 +3,8 @@
 
 #include <abc/hex_string.h>
 
-namespace abc {
+namespace abc
+{
 
 /// @brief convert a hex string to binary bytes.
 /// @tparam ByteNumbering specify the byte numbering of the output bytes.
@@ -41,7 +42,7 @@ to_bytes(std::string_view string_slice) -> expected<bytes<ByteNumbering>, std::e
         auto const & chunks = string_slice | ranges::views::chunk(2);
         ranges::for_each(chunks, [&binary_data](ranges::viewable_range auto && compound_byte) mutable {
             byte byte{};
-            for (auto const [i, nibble_byte]: compound_byte | ranges::views::reverse | ranges::views::enumerate)
+            for (auto const [i, nibble_byte] : compound_byte | ranges::views::reverse | ranges::views::enumerate)
             {
                 byte |= hex_char_to_binary(nibble_byte).value() << (4 * i);
             }
@@ -65,7 +66,7 @@ to_bytes(std::string_view string_slice) -> expected<bytes<ByteNumbering>, std::e
         auto const & chunks = string_slice | ranges::views::chunk(2);
         ranges::for_each(chunks, [&binary_data](ranges::viewable_range auto && compound_byte) mutable {
             byte byte{};
-            for (auto const [i, nibble_byte]: compound_byte | ranges::views::reverse | ranges::views::enumerate)
+            for (auto const [i, nibble_byte] : compound_byte | ranges::views::reverse | ranges::views::enumerate)
             {
                 byte |= hex_utility::hex_char_to_binary(nibble_byte).value() << (4 * i);
             }
@@ -78,8 +79,10 @@ to_bytes(std::string_view string_slice) -> expected<bytes<ByteNumbering>, std::e
     }
 }
 
-auto hex_string::from(std::string_view input) -> expected<hex_string, std::error_code> {
+auto
+hex_string::from(std::string_view input) -> expected<hex_string, std::error_code>
+{
     return to_bytes<byte_numbering::lsb0>(input).transform([](auto && bytes) { return hex_string{ std::forward<decltype(bytes)>(bytes) }; });
 }
 
-}
+} // namespace abc
