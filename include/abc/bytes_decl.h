@@ -40,6 +40,8 @@ public:
     using reverse_iterator = internal_type::reverse_iterator;
     using const_reverse_iterator = internal_type::const_reverse_iterator;
 
+    constexpr static byte_numbering byte_numbering_value{ByteNumbering};
+
     // public constructors
 
     bytes() = default;
@@ -78,8 +80,34 @@ public:
     constexpr
     bytes(std::initializer_list<value_type> il);
 
+    // constexpr auto
+    // operator=(std::vector<byte> raw) noexcept -> bytes & requires(ByteNumbering == byte_numbering::none);
+
+    template <byte_numbering RhsByteNumbering>
+        requires(RhsByteNumbering != ByteNumbering && RhsByteNumbering != byte_numbering::none && ByteNumbering != byte_numbering::none)
     constexpr auto
-    operator=(std::vector<byte> raw) noexcept -> bytes & requires(ByteNumbering == byte_numbering::none);
+    operator=(bytes<RhsByteNumbering> && rhs) -> bytes &;
+
+    template <byte_numbering RhsByteNumber>
+        requires(RhsByteNumber != ByteNumbering && (RhsByteNumber == byte_numbering::none || ByteNumbering == byte_numbering::none))
+    constexpr auto
+    operator=(bytes<RhsByteNumber> && rhs) noexcept -> bytes &;
+
+    constexpr auto
+    operator=(bytes_view<ByteNumbering> view) -> bytes &;
+
+    template <byte_numbering ViewByteNumbering>
+        requires(ViewByteNumbering != ByteNumbering && ViewByteNumbering != byte_numbering::none && ByteNumbering != byte_numbering::none)
+    constexpr auto
+    operator=(bytes_view<ViewByteNumbering> view) -> bytes &;
+
+    template <byte_numbering ViewByteNumbering>
+        requires(ViewByteNumbering != ByteNumbering && (ViewByteNumbering == byte_numbering::none || ByteNumbering == byte_numbering::none))
+    constexpr auto
+    operator=(bytes_view<ViewByteNumbering> view) -> bytes &;
+
+    constexpr auto
+    operator=(std::initializer_list<value_type> il) -> bytes &;
 
 private:
     template <std::input_iterator Iterator, byte_numbering SrcByteNumbering>
@@ -99,13 +127,6 @@ private:
     constexpr bytes(std::initializer_list<value_type> il, byte_numbering_type<SrcByteNumbering>);
 
 public:
-    constexpr auto
-    operator=(std::initializer_list<value_type> const il) noexcept -> bytes &
-    {
-        data_ = il;
-        return *this;
-    }
-
     template <std::integral T>
     constexpr static auto
     from(T i) -> bytes;
@@ -250,10 +271,7 @@ public:
     subview(size_type pos, size_type n = static_cast<size_type>(-1)) const -> expected<bytes_view<ByteNumbering>, std::error_code>;
 
     constexpr auto
-    operator+(bytes const & other) const -> bytes;
-
-    constexpr auto
-    operator+=(bytes const & other) -> bytes &;
+    view() const noexcept -> bytes_view<ByteNumbering>;
 
     constexpr auto
     operator+(byte other) const -> bytes;
@@ -269,9 +287,6 @@ public:
 
     constexpr
     operator bytes_view<ByteNumbering>() const noexcept;
-
-    constexpr auto
-    operator=(bytes_view<ByteNumbering> view) -> bytes &;
 
 private:
     friend constexpr auto
@@ -289,7 +304,7 @@ operator==(bytes<byte_numbering::none> const & lhs, std::vector<byte> const & rh
 
 template <byte_numbering ByteNumbering>
 constexpr auto
-operator+(byte lhs, bytes<ByteNumbering> const & rhs) -> bytes<ByteNumbering>;
+operator+(byte lhs, bytes_view<ByteNumbering> const & rhs) -> bytes<ByteNumbering>;
 
 template <byte_numbering ByteNumbering>
 constexpr void

@@ -833,7 +833,7 @@ constexpr auto hex_string_to_binary(std::string_view string_slice) -> abc::expec
 }
 
 constexpr static auto from_hex_prefixed(std::string_view input) -> abc::expected<abc::hex_string, abc::errc> {
-    if (!input.starts_with(abc::hex_utility::prefix) && !input.starts_with(abc::hex_utility::prefix_uppercase)) {
+    if (!input.starts_with(abc::hex_utility::prefix_0x) && !input.starts_with(abc::hex_utility::prefix_0X)) {
         return abc::unexpected{abc::errc::invalid_hex_string};
     }
 

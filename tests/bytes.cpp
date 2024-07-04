@@ -193,14 +193,14 @@ TEST(bytes, operator_plus_byte_before)
 {
     bytes_be_t lhs = bytes_be_t::from(0x1234567890);
 
-    lhs = static_cast<abc::byte>(1) + lhs;
+    lhs = static_cast<abc::byte>(1) + lhs.view();
     ASSERT_EQ(abc::hex_string::from("0x11234567890").transform([](auto const & hex_string) { return hex_string.template bytes<abc::byte_numbering::msb0>(); }).value(), lhs);
 }
 
-TEST(bytes, operator_plus_span)
+TEST(bytes, operator_plus_view)
 {
     bytes_be_t lhs{ 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07 };
-    std::vector<abc::byte> bytes{ 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f };
+    bytes_be_t bytes{ 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f };
 
     lhs = lhs + bytes_be_view_t{ bytes };
 
