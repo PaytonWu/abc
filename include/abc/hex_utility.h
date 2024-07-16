@@ -35,7 +35,7 @@ public:
     constexpr static auto prefix_0x = "0x";
     constexpr static auto prefix_0X = "0X";
 
-#if defined(ABC_CPP23)
+#if defined(ABC_CXX23)
     constexpr static std::bitset<256> const hex_flag
     {
         "00000000000000000000000000000000"

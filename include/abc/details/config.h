@@ -10,9 +10,11 @@
 #   error abc requires a C++ compiler, please use a C++ compiler to compile abc
 #endif
 
-#if __cplusplus >= 202002L
-#   define ABC_CPP20
-#endif
+#include "cxx11/config.h"
+#include "cxx14/config.h"
+#include "cxx17/config.h"
+#include "cxx20/config.h"
+#include "cxx23/config.h"
 
 // ABC_OS_XXXX define OS platform
 #if defined (_WIN32)
