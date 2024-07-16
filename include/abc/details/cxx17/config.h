@@ -7,10 +7,10 @@
 #pragma once
 
 #if __cplusplus >= 201703L
-#define ABC_CPP17
+#define ABC_CXX17
 #endif
 
-#ifdef ABC_CPP17
+#ifdef ABC_CXX17
 #define ABC_CXX17_INLINE inline
 #else
 #define ABC_CXX17_INLINE

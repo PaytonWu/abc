@@ -7,7 +7,7 @@
 #pragma once
 
 #if __cplusplus >= 202002L
-#   define ABC_CPP20
+#   define ABC_CXX20
 #endif
 
 #endif //ABC_DETAILS_CXX20_CONFIG

@@ -5,7 +5,7 @@
 
 namespace abc {
 
-#if !defined(ABC_CPP23)
+#if !defined(ABC_CXX23)
 std::bitset<256> const hex_utility::hex_flag
 {
     "00000000000000000000000000000000"

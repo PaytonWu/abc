@@ -7,7 +7,7 @@
 #pragma once
 
 #if __cplusplus >= 201402L
-#   define ABC_CPP14
+#   define ABC_CXX14
 #endif
 
 #endif //ABC_DETAILS_CXX14_CONFIG
