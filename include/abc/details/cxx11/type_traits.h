@@ -13,6 +13,17 @@
 namespace abc::details::cxx11
 {
 
+struct is_std_swappable_tester
+{
+    template <typename T, typename = decltype(std::swap(std::declval<T &>(), std::declval<T &>()))>
+    static auto
+    test(int) -> std::true_type;
+
+    template <typename>
+    static auto
+    test(...) -> std::false_type;
+};
+
 using std::swap;
 
 struct swappable_tester
@@ -24,6 +35,17 @@ struct swappable_tester
     template <typename>
     static auto
     test(...) -> std::false_type;
+};
+
+struct nothrow_swappable_tester
+{
+    template <typename T>
+    static auto
+    test(int) -> std::bool_constant<noexcept(swap(std::declval<T &>(), std::declval<T &>()))>;
+
+    template <typename T>
+    static auto
+    test(...) -> std::bool_constant<false>;
 };
 
 } // namespace abc::details::cxx11

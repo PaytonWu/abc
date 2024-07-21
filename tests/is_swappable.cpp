@@ -226,3 +226,15 @@ TEST(is_swappable, non_swappable)
     EXPECT_FALSE(std::is_swappable_v<non_swappable::G>);
     #endif
 }
+
+namespace nothrow_swappable
+{
+
+struct A
+{
+    A(A &&) = default;
+    auto operator=(A &&) -> A & = default;
+};
+
+}
+

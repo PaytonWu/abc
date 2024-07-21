@@ -257,6 +257,14 @@ struct is_swappable : details::is_swappable_impl<T>
 template <typename T>
 ABC_CXX17_INLINE constexpr bool is_swappable_v = is_swappable<T>::type::value;
 
+template <typename T>
+struct is_nothrow_swappable : details::is_nothrow_swappable_impl<T>
+{
+};
+
+template <typename T>
+ABC_CXX17_INLINE constexpr bool is_nothrow_swappable_v = is_nothrow_swappable<T>::type::value;
+
 } // namespace abc
 
 #endif // ABC_TYPE_TRAITS
