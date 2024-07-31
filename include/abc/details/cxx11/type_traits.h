@@ -10,6 +10,8 @@
 
 #include <utility>
 
+// https://stackoverflow.com/questions/26744589/what-is-a-proper-way-to-implement-is-swappable-to-test-for-the-swappable-concept
+
 namespace abc::details::cxx11
 {
 
@@ -24,7 +26,17 @@ struct is_std_swappable_tester
     test(...) -> std::false_type;
 };
 
-using std::swap;
+struct tag
+{
+};
+
+template <typename T>
+auto swap(T &, T &) -> tag;
+
+template <typename T, std::size_t N>
+auto swap(T (&)[N], T (&)[N]) -> tag;
+
+
 
 struct swappable_tester
 {
@@ -35,6 +47,14 @@ struct swappable_tester
     template <typename>
     static auto
     test(...) -> std::false_type;
+
+    template <typename T, typename = std::is_same<decltype(swap(std::declval<T &>(), std::declval<T &>())), tag>>
+    static auto
+    use_std_swap(int) -> std::true_type;
+
+    template <typename>
+    static auto
+    use_std_swap(...) -> std::false_type;
 };
 
 struct nothrow_swappable_tester
