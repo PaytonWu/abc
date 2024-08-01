@@ -85,6 +85,10 @@ TEST(is_swappable, swappable)
     EXPECT_TRUE(std::is_swappable_v<swappable::B>);
     #endif
 
+    static_assert(abc::is_swappable<swappable::C>::can_swap_v);
+    static_assert(!abc::is_swappable<swappable::C>::use_std_swap_v);
+    static_assert(!std::is_move_constructible<swappable::C>::value);
+    static_assert(!std::is_move_assignable<swappable::C>::value);
     static_assert(abc::is_swappable_v<swappable::C>);
     EXPECT_TRUE(abc::is_swappable_v<swappable::C>);
     #if defined(ABC_CXX17)
@@ -108,6 +112,8 @@ TEST(is_swappable, swappable)
     EXPECT_TRUE(std::is_swappable_v<swappable::E>);
     #endif
 
+    static_assert(abc::is_swappable<swappable::Derived>::can_swap_v);
+    static_assert(!abc::is_swappable<swappable::Derived>::use_std_swap_v);
     static_assert(abc::is_swappable_v<swappable::Derived>);
     EXPECT_TRUE(abc::is_swappable_v<swappable::Derived>);
     #if defined(ABC_CXX17)

@@ -15,17 +15,6 @@
 namespace abc::details::cxx11
 {
 
-struct is_std_swappable_tester
-{
-    template <typename T, typename = decltype(std::swap(std::declval<T &>(), std::declval<T &>()))>
-    static auto
-    test(int) -> std::true_type;
-
-    template <typename>
-    static auto
-    test(...) -> std::false_type;
-};
-
 struct tag
 {
 };
@@ -36,19 +25,25 @@ auto swap(T &, T &) -> tag;
 template <typename T, std::size_t N>
 auto swap(T (&)[N], T (&)[N]) -> tag;
 
-
-
 struct swappable_tester
 {
     template <typename T, typename = decltype(swap(std::declval<T &>(), std::declval<T &>()))>
     static auto
-    test(int) -> std::true_type;
+    can_swap(int) -> std::true_type;
 
     template <typename>
     static auto
-    test(...) -> std::false_type;
+    can_swap(...) -> std::false_type;
 
-    template <typename T, typename = std::is_same<decltype(swap(std::declval<T &>(), std::declval<T &>())), tag>>
+    template <typename T, typename SwapTagT = decltype(swap(std::declval<T &>(), std::declval<T &>())), typename = typename std::enable_if<decltype(can_swap<T>(0))::value && !std::is_same<SwapTagT, tag>::value>::type>
+    static auto
+    use_adl_swap(int) -> std::true_type;
+
+    template <typename>
+    static auto
+    use_adl_swap(...) -> std::false_type;
+
+    template <typename T, typename = typename std::enable_if<std::is_same<decltype(swap(std::declval<T &>(), std::declval<T &>())), tag>::value && std::is_move_assignable<T>::value && std::is_move_constructible<T>::value>::type>
     static auto
     use_std_swap(int) -> std::true_type;
 
