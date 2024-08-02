@@ -267,8 +267,13 @@ struct is_nothrow_swappable : details::is_nothrow_swappable_impl<T>
 {
 };
 
+template <typename T, std::size_t N>
+struct is_nothrow_swappable<T[N]> : details::is_nothrow_swappable_impl<T>
+{
+};
+
 template <typename T>
-ABC_CXX17_INLINE constexpr bool is_nothrow_swappable_v = is_nothrow_swappable<T>::type::value;
+ABC_CXX17_INLINE constexpr bool is_nothrow_swappable_v = is_nothrow_swappable<T>::value;
 
 } // namespace abc
 
