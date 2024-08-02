@@ -18,10 +18,13 @@ struct is_swappable_impl : cxx11::swappable_tester
     using can_swap_boolean_type = decltype(can_swap<T>(0));
     static constexpr bool can_swap_v = can_swap_boolean_type::value;
 
-    using use_std_swap_boolean_type = decltype(use_std_swap<T>(0));
-    static constexpr bool use_std_swap_v = use_std_swap_boolean_type::value;
+    using use_adl_swap_boolean_type = decltype(use_adl_swap<T>(0));
+    static constexpr bool use_adl_swap_v = use_adl_swap_boolean_type::value;
 
-    using type = std::bool_constant<can_swap_v || use_std_swap_v>;
+    using can_std_swap_boolean_type = decltype(can_std_swap<T>(0));
+    static constexpr bool can_std_swap_v = can_std_swap_boolean_type::value;
+
+    using type = std::bool_constant<use_adl_swap_v || can_std_swap_v>;
     static constexpr bool value = type::value;
 };
 

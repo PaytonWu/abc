@@ -19,11 +19,13 @@ struct tag
 {
 };
 
+// we can tell if an unqualified swap call will call std::swap by writing a swap function with the same signature as std::swap but a unique return type that can then be examined:
+// https://stackoverflow.com/a/26745591/565635
 template <typename T>
-auto swap(T &, T &) -> tag;
+auto swap(T &, T &) -> typename std::enable_if<std::is_move_assignable<T>::value && std::is_move_constructible<T>::value, tag>::type;
 
 template <typename T, std::size_t N>
-auto swap(T (&)[N], T (&)[N]) -> tag;
+auto swap(T (&)[N], T (&)[N]) -> typename std::enable_if<std::is_move_assignable<T>::value && std::is_move_constructible<T>::value, tag>::type;
 
 struct swappable_tester
 {
@@ -35,7 +37,8 @@ struct swappable_tester
     static auto
     can_swap(...) -> std::false_type;
 
-    template <typename T, typename SwapTagT = decltype(swap(std::declval<T &>(), std::declval<T &>())), typename = typename std::enable_if<decltype(can_swap<T>(0))::value && !std::is_same<SwapTagT, tag>::value>::type>
+    // can_swap && !std::swap
+    template <typename T, typename = typename std::enable_if<decltype(can_swap<T>(0))::value && !std::is_same<decltype(swap(std::declval<T &>(), std::declval<T &>())), tag>::value>::type>
     static auto
     use_adl_swap(int) -> std::true_type;
 
@@ -43,13 +46,13 @@ struct swappable_tester
     static auto
     use_adl_swap(...) -> std::false_type;
 
-    template <typename T, typename = typename std::enable_if<std::is_same<decltype(swap(std::declval<T &>(), std::declval<T &>())), tag>::value && std::is_move_assignable<T>::value && std::is_move_constructible<T>::value>::type>
+    template <typename T, typename = typename std::enable_if<decltype(can_swap<T>(0))::value && std::is_move_assignable<T>::value && std::is_move_constructible<T>::value>::type>
     static auto
-    use_std_swap(int) -> std::true_type;
+    can_std_swap(int) -> std::true_type;
 
     template <typename>
     static auto
-    use_std_swap(...) -> std::false_type;
+    can_std_swap(...) -> std::false_type;
 };
 
 struct nothrow_swappable_tester
