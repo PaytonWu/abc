@@ -10,9 +10,37 @@
 namespace swappable
 {
 
+
+} // namespace swappable
+
+namespace swappable
+{
 struct A
 {
 };
+
+TEST(is_swappable, std_swap1)
+{
+    static_assert(abc::is_swappable<A>::can_swap_v);
+    static_assert(abc::is_swappable<A>::can_std_swap_v);
+    static_assert(!abc::is_swappable<A>::use_adl_swap_v);
+    static_assert(abc::is_swappable_v<A>);
+    EXPECT_TRUE(abc::is_swappable_v<A>);
+
+    static_assert(abc::is_nothrow_swappable<A>::can_nothrow_swap_v);
+    static_assert(abc::is_nothrow_swappable<A>::can_nothrow_std_swap_v);
+    static_assert(!abc::is_nothrow_swappable<A>::use_nothrow_adl_swap_v);
+    static_assert(abc::is_nothrow_swappable_v<A>);
+    EXPECT_TRUE(abc::is_nothrow_swappable_v<A>);
+
+#if defined(ABC_CXX17)
+    static_assert(std::is_swappable_v<A>);
+    EXPECT_TRUE(std::is_swappable_v<A>);
+
+    static_assert(std::is_nothrow_swappable_v<A>);
+    EXPECT_TRUE(std::is_nothrow_swappable_v<A>);
+#endif
+}
 
 struct B
 {
@@ -22,25 +50,24 @@ struct B
     B(B &&) = default;
     auto operator=(B &&) -> B & = default;
 };
-
-struct C
+TEST(is_swappable, std_swap2)
 {
-    C(C const &) = delete;
-    auto operator=(C const &) -> C & = delete;
+    static_assert(abc::is_swappable<B>::can_swap_v);
+    static_assert(!abc::is_swappable<B>::use_adl_swap_v);
+    static_assert(abc::is_swappable<B>::can_std_swap_v);
+    static_assert(abc::is_swappable_v<B>);
+    EXPECT_TRUE(abc::is_swappable_v<B>);
 
-    friend void swap(C & /* other */, C &) noexcept
-    {
-    }
-};
+    static_assert(abc::is_nothrow_swappable<B>::can_nothrow_swap_v);
+    static_assert(!abc::is_nothrow_swappable<B>::use_nothrow_adl_swap_v);
+    static_assert(abc::is_nothrow_swappable<B>::can_nothrow_std_swap_v);
+    static_assert(abc::is_nothrow_swappable_v<B>);
+#if defined(ABC_CXX17)
+    static_assert(std::is_swappable_v<B>);
+    EXPECT_TRUE(std::is_swappable_v<B>);
 
-struct D
-{
-    D(D const &) = delete;
-    auto operator=(D const &) -> D & = delete;
-};
-
-void swap(D & /* other */, D &) noexcept
-{
+    static_assert(std::is_nothrow_swappable_v<B>);
+#endif
 }
 
 struct E
@@ -52,6 +79,90 @@ struct E
     // https://en.cppreference.com/w/cpp/types/is_move_constructible#Example
     ~E() = default;
 };
+
+TEST(is_swappable, std_swap3)
+{
+    static_assert(abc::is_swappable<E>::can_swap_v);
+    static_assert(!abc::is_swappable<E>::use_adl_swap_v);
+    static_assert(abc::is_swappable<E>::can_std_swap_v);
+    static_assert(abc::is_swappable_v<E>);
+
+    static_assert(abc::is_nothrow_swappable<E>::can_nothrow_swap_v);
+    static_assert(!abc::is_nothrow_swappable<E>::use_nothrow_adl_swap_v);
+    static_assert(abc::is_nothrow_swappable<E>::can_nothrow_std_swap_v);
+    static_assert(abc::is_nothrow_swappable_v<E>);
+
+    EXPECT_TRUE(abc::is_swappable_v<E>);
+    EXPECT_TRUE(abc::is_nothrow_swappable_v<E>);
+#if defined(ABC_CXX17)
+    static_assert(std::is_move_constructible_v<E>);
+    static_assert(std::is_move_assignable_v<E>);
+
+    static_assert(std::is_swappable_v<E>);
+    EXPECT_TRUE(std::is_swappable_v<E>);
+    static_assert(std::is_nothrow_swappable_v<E>);
+    EXPECT_TRUE(std::is_nothrow_swappable_v<E>);
+#endif
+}
+
+struct C
+{
+    C(C const &) = delete;
+    auto operator=(C const &) -> C & = delete;
+
+    friend void swap(C & /* other */, C &) noexcept
+    {
+    }
+};
+TEST(is_swappable, adl_swap1)
+{
+    static_assert(abc::is_swappable<C>::can_swap_v);
+    static_assert(!abc::is_swappable<C>::can_std_swap_v);
+    static_assert(abc::is_swappable<C>::use_adl_swap_v);
+    static_assert(abc::is_swappable_v<C>);
+    EXPECT_TRUE(abc::is_swappable_v<C>);
+
+    static_assert(abc::is_nothrow_swappable<C>::can_nothrow_swap_v);
+    static_assert(!abc::is_nothrow_swappable<C>::can_nothrow_std_swap_v);
+    static_assert(abc::is_nothrow_swappable<C>::use_nothrow_adl_swap_v);
+    static_assert(abc::is_nothrow_swappable_v<C>);
+
+#if defined(ABC_CXX17)
+    static_assert(std::is_swappable_v<C>);
+    EXPECT_TRUE(std::is_swappable_v<C>);
+    static_assert(std::is_nothrow_swappable_v<C>);
+#endif
+}
+
+struct D
+{
+    D(D const &) = delete;
+    auto operator=(D const &) -> D & = delete;
+};
+
+void swap(D & /* other */, D &) noexcept
+{
+}
+
+TEST(is_swappable, adl_swap2)
+{
+    static_assert(abc::is_swappable<D>::can_swap_v);
+    static_assert(!abc::is_swappable<D>::can_std_swap_v);
+    static_assert(abc::is_swappable<D>::use_adl_swap_v);
+    static_assert(abc::is_swappable_v<D>);
+    EXPECT_TRUE(abc::is_swappable_v<D>);
+
+    static_assert(abc::is_nothrow_swappable<D>::can_nothrow_swap_v);
+    static_assert(!abc::is_nothrow_swappable<D>::can_nothrow_std_swap_v);
+    static_assert(abc::is_nothrow_swappable<D>::use_nothrow_adl_swap_v);
+    static_assert(abc::is_nothrow_swappable_v<D>);
+    EXPECT_TRUE(abc::is_nothrow_swappable_v<D>);
+#if defined(ABC_CXX17)
+    static_assert(std::is_swappable_v<D>);
+    EXPECT_TRUE(std::is_swappable_v<D>);
+    static_assert(std::is_nothrow_swappable_v<D>);
+#endif
+}
 
 struct Base
 {
@@ -67,61 +178,86 @@ void swap(Base & /* other */, Base &) noexcept
 {
 }
 
-} // namespace swappable
-
-TEST(is_swappable, swappable)
+TEST(is_swappable, adl_swap3)
 {
-    static_assert(abc::is_swappable_v<swappable::A>);
-    EXPECT_TRUE(abc::is_swappable_v<swappable::A>);
-    #if defined(ABC_CXX17)
-    static_assert(std::is_swappable_v<swappable::A>);
-    EXPECT_TRUE(std::is_swappable_v<swappable::A>);
-    #endif
+    static_assert(abc::is_swappable<Derived>::can_swap_v);
+    static_assert(abc::is_swappable<Derived>::use_adl_swap_v);
+    static_assert(!abc::is_swappable<Derived>::can_std_swap_v);
+    static_assert(abc::is_swappable_v<Derived>);
+    EXPECT_TRUE(abc::is_swappable_v<Derived>);
 
-    static_assert(abc::is_swappable_v<swappable::B>);
-    EXPECT_TRUE(abc::is_swappable_v<swappable::B>);
-    #if defined(ABC_CXX17)
-    static_assert(std::is_swappable_v<swappable::B>);
-    EXPECT_TRUE(std::is_swappable_v<swappable::B>);
-    #endif
-
-    static_assert(abc::is_swappable<swappable::C>::can_swap_v);
-    static_assert(!abc::is_swappable<swappable::C>::can_std_swap_v);
-    static_assert(!std::is_move_constructible<swappable::C>::value);
-    static_assert(!std::is_move_assignable<swappable::C>::value);
-    static_assert(abc::is_swappable_v<swappable::C>);
-    EXPECT_TRUE(abc::is_swappable_v<swappable::C>);
-    #if defined(ABC_CXX17)
-    static_assert(std::is_swappable_v<swappable::C>);
-    EXPECT_TRUE(std::is_swappable_v<swappable::C>);
-    #endif
-
-    static_assert(abc::is_swappable_v<swappable::D>);
-    EXPECT_TRUE(abc::is_swappable_v<swappable::D>);
-    #if defined(ABC_CXX17)
-    static_assert(std::is_swappable_v<swappable::D>);
-    EXPECT_TRUE(std::is_swappable_v<swappable::D>);
-    #endif
-
-    static_assert(std::is_move_constructible_v<swappable::E>);
-    static_assert(std::is_move_assignable_v<swappable::E>);
-    static_assert(abc::is_swappable_v<swappable::E>);
-    EXPECT_TRUE(abc::is_swappable_v<swappable::E>);
-    #if defined(ABC_CXX17)
-    static_assert(std::is_swappable_v<swappable::E>);
-    EXPECT_TRUE(std::is_swappable_v<swappable::E>);
-    #endif
-
-    static_assert(abc::is_swappable<swappable::Derived>::can_swap_v);
-    static_assert(abc::is_swappable<swappable::Derived>::use_adl_swap_v);
-    static_assert(!abc::is_swappable<swappable::Derived>::can_std_swap_v);
-    static_assert(abc::is_swappable_v<swappable::Derived>);
-    EXPECT_TRUE(abc::is_swappable_v<swappable::Derived>);
-    #if defined(ABC_CXX17)
-    static_assert(std::is_swappable_v<swappable::Derived>);
-    EXPECT_TRUE(std::is_swappable_v<swappable::Derived>);
-    #endif
+    static_assert(abc::is_nothrow_swappable<Derived>::can_nothrow_swap_v);
+    static_assert(abc::is_nothrow_swappable<Derived>::use_nothrow_adl_swap_v);
+    static_assert(!abc::is_nothrow_swappable<Derived>::can_nothrow_std_swap_v);
+    static_assert(abc::is_nothrow_swappable_v<Derived>);
+#if defined(ABC_CXX17)
+    static_assert(std::is_swappable_v<Derived>);
+    EXPECT_TRUE(std::is_swappable_v<Derived>);
+    static_assert(std::is_nothrow_swappable_v<Derived>);
+#endif
 }
+
+struct F
+{
+    F(F &&) = delete;
+    auto operator=(F &&) -> F & = delete;
+
+    F(F const &) = delete;
+    auto operator=(F const &) -> F & = delete;
+
+    friend auto swap(F & /* other */, F &) -> void
+    {
+    }
+};
+
+TEST(is_swappable, adl_swap4)
+{
+    static_assert(abc::is_swappable<F>::can_swap_v);
+    static_assert(abc::is_swappable<F>::use_adl_swap_v);
+    static_assert(!abc::is_swappable<F>::can_std_swap_v);
+    static_assert(abc::is_swappable_v<F>);
+    EXPECT_TRUE(abc::is_swappable_v<F>);
+
+    static_assert(!abc::is_nothrow_swappable<F>::can_nothrow_swap_v);
+    static_assert(!abc::is_nothrow_swappable<F>::use_nothrow_adl_swap_v);
+    static_assert(!abc::is_nothrow_swappable<F>::can_nothrow_std_swap_v);
+    static_assert(!abc::is_nothrow_swappable_v<F>);
+
+#if defined(ABC_CXX17)
+    static_assert(std::is_swappable_v<F>);
+    EXPECT_TRUE(std::is_swappable_v<F>);
+    static_assert(!std::is_nothrow_swappable_v<F>);
+#endif
+}
+
+struct G
+{
+};
+void swap(G &, G &)
+{
+}
+
+TEST(is_swappable, adl_swap5)
+{
+    static_assert(abc::is_swappable<G>::can_swap_v);
+    static_assert(abc::is_swappable<G>::use_adl_swap_v);
+    static_assert(abc::is_swappable<G>::can_std_swap_v);
+    static_assert(abc::is_swappable_v<G>);
+    EXPECT_TRUE(abc::is_swappable_v<G>);
+
+    static_assert(!abc::is_nothrow_swappable<G>::can_nothrow_swap_v);
+    static_assert(!abc::is_nothrow_swappable<G>::use_nothrow_adl_swap_v);
+    static_assert(!abc::is_nothrow_swappable<G>::can_nothrow_std_swap_v);
+    static_assert(!abc::is_nothrow_swappable_v<G>);
+    EXPECT_TRUE(!abc::is_nothrow_swappable_v<G>);
+
+#if defined(ABC_CXX17)
+    static_assert(std::is_swappable_v<G>);
+    static_assert(!std::is_nothrow_swappable_v<G>);
+#endif
+}
+
+}// namespace swappable
 
 namespace non_swappable
 {
@@ -232,16 +368,5 @@ TEST(is_swappable, non_swappable)
     static_assert(!std::is_swappable_v<non_swappable::G>);
     EXPECT_FALSE(std::is_swappable_v<non_swappable::G>);
     #endif
-}
-
-namespace nothrow_swappable
-{
-
-struct A
-{
-    A(A &&) = default;
-    auto operator=(A &&) -> A & = default;
-};
-
 }
 

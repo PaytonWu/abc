@@ -29,7 +29,7 @@ struct is_swappable_impl : cxx11::swappable_tester
 };
 
 template <typename T>
-struct is_nothrow_swappable_impl : cxx11::swappable_tester
+struct is_nothrow_swappable_impl : cxx11::nothrow_swappable_tester
 {
     using can_nothrow_swap_boolean_type = decltype(can_nothrow_swap<T>(0));
     static constexpr bool can_nothrow_swap_v = can_nothrow_swap_boolean_type::value;
