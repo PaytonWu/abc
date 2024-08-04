@@ -49,7 +49,7 @@ struct swappable_tester
     static auto
     use_adl_swap(...) -> std::false_type;
 
-    template <typename T, typename = typename std::enable_if<decltype(can_swap<T>(0))::value && std::is_move_assignable<T>::value && std::is_move_constructible<T>::value>::type>
+    template <typename T, typename = typename std::enable_if<decltype(can_swap<T>(0))::value && std::is_move_assignable<typename std::remove_reference<T>::type>::value && std::is_move_constructible<typename std::remove_reference<T>::type>::value>::type>
     static auto
     can_std_swap(int) -> std::true_type;
 
