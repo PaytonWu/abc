@@ -15,6 +15,12 @@
 namespace abc::details::cxx11
 {
 
+template <typename T>
+struct is_nothrow_swappable_impl;
+
+template <typename T>
+struct is_swappable_impl;
+
 struct tag
 {
 };
@@ -27,7 +33,7 @@ swap(T &, T &) noexcept(std::is_nothrow_move_assignable<T>::value && std::is_not
     typename std::enable_if<std::is_move_assignable<T>::value && std::is_move_constructible<T>::value, tag>::type;
 
 template <typename T, std::size_t N>
-auto swap(T (&)[N], T (&)[N]) -> typename std::enable_if<std::is_move_assignable<T>::value && std::is_move_constructible<T>::value, tag>::type;
+auto swap(T (&)[N], T (&)[N]) noexcept(is_nothrow_swappable_impl<T>::value) -> typename std::enable_if<is_swappable_impl<T>::value, tag>::type;
 
 struct swappable_tester
 {
@@ -49,13 +55,40 @@ struct swappable_tester
     static auto
     use_adl_swap(...) -> std::false_type;
 
-    template <typename T, typename = typename std::enable_if<decltype(can_swap<T>(0))::value && std::is_move_assignable<typename std::remove_reference<T>::type>::value && std::is_move_constructible<typename std::remove_reference<T>::type>::value>::type>
+    template <typename T,
+              typename = typename std::enable_if<decltype(can_swap<T>(0))::value && std::is_same<decltype(swap(std::declval<T &>(), std::declval<T &>())), tag>::value>::type>
+    static auto
+    use_std_swap(int) -> std::true_type;
+
+    template <typename>
+    static auto
+    use_std_swap(...) -> std::false_type;
+
+    template <typename T,
+              typename = typename std::enable_if<decltype(can_swap<T>(0))::value && std::is_move_assignable<typename std::remove_reference<T>::type>::value &&
+                                                 std::is_move_constructible<typename std::remove_reference<T>::type>::value>::type>
     static auto
     can_std_swap(int) -> std::true_type;
 
     template <typename>
     static auto
     can_std_swap(...) -> std::false_type;
+};
+
+template <typename T>
+struct is_swappable_impl : swappable_tester
+{
+    using can_swap_boolean_type = decltype(can_swap<T>(0));
+    static constexpr bool can_swap_v = can_swap_boolean_type::value;
+
+    using use_adl_swap_boolean_type = decltype(use_adl_swap<T>(0));
+    static constexpr bool use_adl_swap_v = use_adl_swap_boolean_type::value;
+
+    using use_std_swap_boolean_type = decltype(use_std_swap<T>(0));
+    static constexpr bool use_std_swap_v = use_std_swap_boolean_type::value;
+
+    using type = std::bool_constant<can_swap_v>;
+    static constexpr bool value = type::value;
 };
 
 struct nothrow_swappable_tester
@@ -90,11 +123,37 @@ struct nothrow_swappable_tester
         typename T,
         typename = typename std::enable_if<decltype(can_nothrow_swap<T>(0))::value && std::is_same<decltype(swap(std::declval<T &>(), std::declval<T &>())), tag>::value>::type>
     static auto
+    use_nothrow_std_swap(int) -> std::true_type;
+
+    template <typename T>
+    static auto
+    use_nothrow_std_swap(...) -> std::false_type;
+
+    template <typename T,
+              typename = typename std::enable_if<decltype(can_nothrow_swap<T>(0))::value && std::is_move_assignable<typename std::remove_reference<T>::type>::value &&
+                                                 std::is_move_constructible<typename std::remove_reference<T>::type>::value>::type>
+    static auto
     can_nothrow_std_swap(int) -> std::true_type;
 
     template <typename T>
     static auto
     can_nothrow_std_swap(...) -> std::false_type;
+};
+
+template <typename T>
+struct is_nothrow_swappable_impl : nothrow_swappable_tester
+{
+    using can_nothrow_swap_boolean_type = decltype(can_nothrow_swap<T>(0));
+    static constexpr bool can_nothrow_swap_v = can_nothrow_swap_boolean_type::value;
+
+    using use_nothrow_adl_swap_boolean_type = decltype(use_nothrow_adl_swap<T>(0));
+    static constexpr bool use_nothrow_adl_swap_v = use_nothrow_adl_swap_boolean_type::value;
+
+    using use_nothrow_std_swap_boolean_type = decltype(use_nothrow_std_swap<T>(0));
+    static constexpr bool use_nothrow_std_swap_v = use_nothrow_std_swap_boolean_type::value;
+
+    using type = std::bool_constant<can_nothrow_swap_v>;
+    static constexpr bool value = type::value;
 };
 
 } // namespace abc::details::cxx11
