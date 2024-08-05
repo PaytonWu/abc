@@ -8,6 +8,18 @@
 #include <cstdint>
 #include <type_traits>
 
+#define ENSURE_SWAPPABLE(T) static_assert(abc::is_swappable_v<T>, "abc::is_swappable_v<" #T "> == false")
+
+#define ENSURE_NOTHROW_SWAPPABLE(T) static_assert(abc::is_nothrow_swappable_v<T>, "abc::is_nothrow_swappable_v<" #T "> == false")
+
+#define ENSURE_NOT_SWAPPABLE(T) static_assert(!abc::is_swappable_v<T>, "abc::is_swappable_v<" #T "> == true")
+
+#define ENSURE_NOT_NOTHROW_SWAPPABLE(T) static_assert(!abc::is_nothrow_swappable_v<T>, "abc::is_nothrow_swappable_v<" #T "> == true")
+
+#define SWAPPABLE_AS_STD(T)                                                                                                                                                        \
+    static_assert(abc::is_swappable_v<T> == std::is_swappable_v<T>, "abc::is_swappable_v<" #T "> != std::is_swappable_v<" #T ">");                                                 \
+    static_assert(abc::is_nothrow_swappable_v<T> == std::is_nothrow_swappable_v<T>, "abc::is_nothrow_swappable_v<" #T "> != std::is_nothrow_swappable_v<" #T ">")
+
 namespace swappable
 {
 struct A
@@ -44,11 +56,14 @@ TEST(is_swappable, std_swap1)
 struct B
 {
     B(B const &) = delete;
-    auto operator=(B const &) -> B & = delete;
+    auto
+    operator=(B const &) -> B & = delete;
 
     B(B &&) = default;
-    auto operator=(B &&) -> B & = default;
+    auto
+    operator=(B &&) -> B & = default;
 };
+
 TEST(is_swappable, std_swap2)
 {
     static_assert(abc::is_swappable<B>::can_swap_v);
@@ -85,7 +100,8 @@ struct E
     // since copy constructor and copy assignment operator accept rvalue argument, E is move constructible and move assignable.
     // std::is_move_constructible_v<E> == true && std::is_move_assignement_v<E> == true
     // https://en.cppreference.com/w/cpp/types/is_move_constructible#Example
-    ~E() = default;
+    ~
+    E() = default;
 };
 
 TEST(is_swappable, std_swap3)
@@ -123,12 +139,15 @@ TEST(is_swappable, std_swap3)
 struct C
 {
     C(C const &) = delete;
-    auto operator=(C const &) -> C & = delete;
+    auto
+    operator=(C const &) -> C & = delete;
 
-    friend void swap(C & /* other */, C &) noexcept
+    friend void
+    swap(C & /* other */, C &) noexcept
     {
     }
 };
+
 TEST(is_swappable, adl_swap1)
 {
     static_assert(abc::is_swappable<C>::can_swap_v);
@@ -160,10 +179,12 @@ TEST(is_swappable, adl_swap1)
 struct D
 {
     D(D const &) = delete;
-    auto operator=(D const &) -> D & = delete;
+    auto
+    operator=(D const &) -> D & = delete;
 };
 
-void swap(D & /* other */, D &) noexcept
+void
+swap(D & /* other */, D &) noexcept
 {
 }
 
@@ -202,10 +223,12 @@ struct Base
 struct Derived : Base
 {
     Derived(Derived &&) = delete;
-    auto operator=(Derived &&) -> Derived & = delete;
+    auto
+    operator=(Derived &&) -> Derived & = delete;
 };
 
-void swap(Base & /* other */, Base &) noexcept
+void
+swap(Base & /* other */, Base &) noexcept
 {
 }
 
@@ -239,12 +262,15 @@ TEST(is_swappable, adl_swap3)
 struct F
 {
     F(F &&) = delete;
-    auto operator=(F &&) -> F & = delete;
+    auto
+    operator=(F &&) -> F & = delete;
 
     F(F const &) = delete;
-    auto operator=(F const &) -> F & = delete;
+    auto
+    operator=(F const &) -> F & = delete;
 
-    friend auto swap(F & /* other */, F &) -> void
+    friend auto
+    swap(F & /* other */, F &) -> void
     {
     }
 };
@@ -281,7 +307,9 @@ TEST(is_swappable, adl_swap4)
 struct G
 {
 };
-void swap(G &, G &)
+
+void
+swap(G &, G &)
 {
 }
 
@@ -321,21 +349,27 @@ namespace non_swappable
 struct A
 {
     A() = default;
-    A(const A &) = delete;
+    A(A const &) = delete;
     A(A &&) = delete;
-    A &operator=(const A &) = delete;
-    A &operator=(A &&) = delete;
+    A &
+    operator=(A const &) = delete;
+    A &
+    operator=(A &&) = delete;
 };
 
 struct B
 {
-    B(B &) {}
+    B(B &)
+    {
+    }
 };
 
 struct C
 {
     C(C &&) = delete;
-    auto operator=(C &&) noexcept -> C &
+
+    auto
+    operator=(C &&) noexcept -> C &
     {
         return *this;
     }
@@ -343,16 +377,22 @@ struct C
 
 struct D
 {
-    D(D &&) noexcept {}
-    auto operator=(D &&) = delete;
+    D(D &&) noexcept
+    {
+    }
+
+    auto
+    operator=(D &&) = delete;
 };
 
 struct E
 {
     E(E const &) = delete;
-    auto operator=(E const &) -> E & = delete;
+    auto
+    operator=(E const &) -> E & = delete;
 
-    void swap(E & /* other */) noexcept
+    void
+    swap(E & /* other */) noexcept
     {
     }
 };
@@ -360,21 +400,38 @@ struct E
 struct G
 {
     G(G &&) = delete;
-    auto operator=(G &&) -> G & = delete;
+    auto
+    operator=(G &&) -> G & = delete;
 };
 
 struct ADLOnlySwappableBase
 {
     ADLOnlySwappableBase(ADLOnlySwappableBase &&) = delete;
-    auto operator=(ADLOnlySwappableBase &&) -> ADLOnlySwappableBase & = delete;
+    auto
+    operator=(ADLOnlySwappableBase &&) -> ADLOnlySwappableBase & = delete;
 
-    ADLOnlySwappableBase(G &&) {}
-    auto operator=(G &&) -> ADLOnlySwappableBase & { return *this; }
+    ADLOnlySwappableBase(G &&)
+    {
+    }
 
-    ADLOnlySwappableBase(G &) {}
-    auto operator=(G &) -> ADLOnlySwappableBase & { return *this; }
+    auto
+    operator=(G &&) -> ADLOnlySwappableBase &
+    {
+        return *this;
+    }
 
-    friend void swap(ADLOnlySwappableBase & /* other */, ADLOnlySwappableBase &) noexcept
+    ADLOnlySwappableBase(G &)
+    {
+    }
+
+    auto
+    operator=(G &) -> ADLOnlySwappableBase &
+    {
+        return *this;
+    }
+
+    friend void
+    swap(ADLOnlySwappableBase & /* other */, ADLOnlySwappableBase &) noexcept
     {
     }
 };
@@ -385,299 +442,153 @@ TEST(is_swappable, non_swappable)
 {
     static_assert(!abc::is_swappable_v<non_swappable::A>);
     EXPECT_FALSE(abc::is_swappable_v<non_swappable::A>);
-    #if defined(ABC_CXX17)
+#if defined(ABC_CXX17)
     static_assert(!std::is_swappable_v<non_swappable::A>);
     EXPECT_FALSE(std::is_swappable_v<non_swappable::A>);
-    #endif
+#endif
 
     static_assert(!abc::is_swappable_v<non_swappable::B>);
     EXPECT_FALSE(abc::is_swappable_v<non_swappable::B>);
-    #if defined(ABC_CXX17)
+#if defined(ABC_CXX17)
     static_assert(!std::is_swappable_v<non_swappable::B>);
     EXPECT_FALSE(std::is_swappable_v<non_swappable::B>);
-    #endif
+#endif
 
     static_assert(!abc::is_swappable_v<non_swappable::C>);
     EXPECT_FALSE(abc::is_swappable_v<non_swappable::C>);
-    #if defined(ABC_CXX17)
+#if defined(ABC_CXX17)
     static_assert(!std::is_swappable_v<non_swappable::C>);
     EXPECT_FALSE(std::is_swappable_v<non_swappable::C>);
-    #endif
+#endif
 
     static_assert(!abc::is_swappable_v<non_swappable::D>);
     EXPECT_FALSE(abc::is_swappable_v<non_swappable::D>);
-    #if defined(ABC_CXX17)
+#if defined(ABC_CXX17)
     static_assert(!std::is_swappable_v<non_swappable::D>);
     EXPECT_FALSE(std::is_swappable_v<non_swappable::D>);
-    #endif
+#endif
 
     static_assert(!abc::is_swappable_v<non_swappable::E>);
     EXPECT_FALSE(abc::is_swappable_v<non_swappable::E>);
-    #if defined(ABC_CXX17)
+#if defined(ABC_CXX17)
     static_assert(!std::is_swappable_v<non_swappable::E>);
     EXPECT_FALSE(std::is_swappable_v<non_swappable::E>);
-    #endif
+#endif
 
     static_assert(!abc::is_swappable_v<non_swappable::G>);
     EXPECT_FALSE(abc::is_swappable_v<non_swappable::G>);
-    #if defined(ABC_CXX17)
+#if defined(ABC_CXX17)
     static_assert(!std::is_swappable_v<non_swappable::G>);
     EXPECT_FALSE(std::is_swappable_v<non_swappable::G>);
-    #endif
+#endif
 }
+
+#define SWAPPABLE_FUNDAMENTAL_TYPE_TEST_CASE(T)                                                                                                                                    \
+    ENSURE_SWAPPABLE(T);                                                                                                                                                           \
+    ENSURE_SWAPPABLE(T &);                                                                                                                                                         \
+    ENSURE_SWAPPABLE(T &&);                                                                                                                                                        \
+    ENSURE_SWAPPABLE(T volatile);                                                                                                                                                  \
+    ENSURE_SWAPPABLE(T volatile &);                                                                                                                                                \
+    ENSURE_SWAPPABLE(T volatile &&);                                                                                                                                               \
+    ENSURE_NOTHROW_SWAPPABLE(T);                                                                                                                                                   \
+    ENSURE_NOTHROW_SWAPPABLE(T &);                                                                                                                                                 \
+    ENSURE_NOTHROW_SWAPPABLE(T &&);                                                                                                                                                \
+    ENSURE_NOTHROW_SWAPPABLE(T volatile);                                                                                                                                          \
+    ENSURE_NOTHROW_SWAPPABLE(T volatile &);                                                                                                                                        \
+    ENSURE_NOTHROW_SWAPPABLE(T volatile &&);                                                                                                                                       \
+    ENSURE_NOT_SWAPPABLE(T const);                                                                                                                                                 \
+    ENSURE_NOT_SWAPPABLE(T const &);                                                                                                                                               \
+    ENSURE_NOT_SWAPPABLE(T const &&);                                                                                                                                              \
+    ENSURE_NOT_NOTHROW_SWAPPABLE(T const);                                                                                                                                         \
+    ENSURE_NOT_NOTHROW_SWAPPABLE(T const &);                                                                                                                                       \
+    ENSURE_NOT_NOTHROW_SWAPPABLE(T const &&)
+
+#define SWAPPABLE_STD_TEST_CASE(T)                                                                                                                                                 \
+    SWAPPABLE_AS_STD(T);                                                                                                                                                           \
+    SWAPPABLE_AS_STD(T &);                                                                                                                                                         \
+    SWAPPABLE_AS_STD(T &&);                                                                                                                                                        \
+    SWAPPABLE_AS_STD(T volatile);                                                                                                                                                  \
+    SWAPPABLE_AS_STD(T volatile &);                                                                                                                                                \
+    SWAPPABLE_AS_STD(T volatile &&);                                                                                                                                               \
+    SWAPPABLE_AS_STD(T const);                                                                                                                                                     \
+    SWAPPABLE_AS_STD(T const &);                                                                                                                                                   \
+    SWAPPABLE_AS_STD(T const &&)
 
 TEST(is_swappable, fundamental)
 {
-    static_assert(abc::is_swappable_v<std::int8_t>);
-    static_assert(abc::is_swappable_v<std::int8_t &>);
-    static_assert(abc::is_swappable_v<std::int8_t &&>);
-    static_assert(std::is_swappable<std::int8_t>::value);
-    static_assert(std::is_swappable<std::int8_t &>::value);
-    static_assert(std::is_swappable<std::int8_t &&>::value);
-
-    static_assert(abc::is_swappable_v<std::int8_t volatile>);
-    static_assert(abc::is_swappable_v<std::int8_t volatile &>);
-    static_assert(abc::is_swappable_v<std::int8_t volatile &&>);
-    static_assert(std::is_swappable<std::int8_t volatile>::value);
-    static_assert(std::is_swappable<std::int8_t volatile &>::value);
-    static_assert(std::is_swappable<std::int8_t volatile &&>::value);
-
-    static_assert(!abc::is_swappable_v<std::int8_t const>);
-    static_assert(!abc::is_swappable_v<std::int8_t const &>);
-    static_assert(!abc::is_swappable_v<std::int8_t const &&>);
-    static_assert(!std::is_swappable<std::int8_t const>::value);
-    static_assert(!std::is_swappable<std::int8_t const &>::value);
-    static_assert(!std::is_swappable<std::int8_t const &&>::value);
-
-    static_assert(abc::is_swappable_v<std::uint8_t>);
-    static_assert(abc::is_swappable_v<std::uint8_t &>);
-    static_assert(abc::is_swappable_v<std::uint8_t &&>);
-    static_assert(std::is_swappable<std::uint8_t>::value);
-    static_assert(std::is_swappable<std::uint8_t &>::value);
-    static_assert(std::is_swappable<std::uint8_t &&>::value);
-
-    static_assert(abc::is_swappable_v<std::uint8_t volatile>);
-    static_assert(abc::is_swappable_v<std::uint8_t volatile &>);
-    static_assert(abc::is_swappable_v<std::uint8_t volatile &&>);
-    static_assert(std::is_swappable<std::uint8_t volatile>::value);
-    static_assert(std::is_swappable<std::uint8_t volatile &>::value);
-    static_assert(std::is_swappable<std::uint8_t volatile &&>::value);
-
-    static_assert(abc::is_swappable_v<std::int16_t>);
-    static_assert(abc::is_swappable_v<std::int16_t &>);
-    static_assert(abc::is_swappable_v<std::int16_t &&>);
-    static_assert(std::is_swappable<std::int16_t>::value);
-    static_assert(std::is_swappable<std::int16_t &>::value);
-    static_assert(std::is_swappable<std::int16_t &&>::value);
-
-    static_assert(abc::is_swappable_v<std::int16_t volatile>);
-    static_assert(abc::is_swappable_v<std::int16_t volatile &>);
-    static_assert(abc::is_swappable_v<std::int16_t volatile &&>);
-    static_assert(std::is_swappable<std::int16_t volatile>::value);
-    static_assert(std::is_swappable<std::int16_t volatile &>::value);
-    static_assert(std::is_swappable<std::int16_t volatile &&>::value);
-
-    static_assert(abc::is_swappable_v<std::uint16_t>);
-    static_assert(abc::is_swappable_v<std::uint16_t &>);
-    static_assert(abc::is_swappable_v<std::uint16_t &&>);
-    static_assert(std::is_swappable<std::uint16_t>::value);
-    static_assert(std::is_swappable<std::uint16_t &>::value);
-    static_assert(std::is_swappable<std::uint16_t &&>::value);
-
-    static_assert(abc::is_swappable_v<std::uint16_t volatile>);
-    static_assert(abc::is_swappable_v<std::uint16_t volatile &>);
-    static_assert(abc::is_swappable_v<std::uint16_t volatile &&>);
-    static_assert(std::is_swappable<std::uint16_t volatile>::value);
-    static_assert(std::is_swappable<std::uint16_t volatile &>::value);
-    static_assert(std::is_swappable<std::uint16_t volatile &&>::value);
-
-    static_assert(abc::is_swappable_v<std::int32_t>);
-    static_assert(abc::is_swappable_v<std::int32_t &>);
-    static_assert(abc::is_swappable_v<std::int32_t &&>);
-    static_assert(std::is_swappable<std::int32_t>::value);
-    static_assert(std::is_swappable<std::int32_t &>::value);
-    static_assert(std::is_swappable<std::int32_t &&>::value);
-
-    static_assert(abc::is_swappable_v<std::int32_t volatile>);
-    static_assert(abc::is_swappable_v<std::int32_t volatile &>);
-    static_assert(abc::is_swappable_v<std::int32_t volatile &&>);
-    static_assert(std::is_swappable<std::int32_t volatile>::value);
-    static_assert(std::is_swappable<std::int32_t volatile &>::value);
-    static_assert(std::is_swappable<std::int32_t volatile &&>::value);
-
-    static_assert(abc::is_swappable_v<std::uint32_t>);
-    static_assert(abc::is_swappable_v<std::uint32_t &>);
-    static_assert(abc::is_swappable_v<std::uint32_t &&>);
-    static_assert(std::is_swappable<std::uint32_t>::value);
-    static_assert(std::is_swappable<std::uint32_t &>::value);
-    static_assert(std::is_swappable<std::uint32_t &&>::value);
-
-    static_assert(abc::is_swappable_v<std::uint32_t volatile>);
-    static_assert(abc::is_swappable_v<std::uint32_t volatile &>);
-    static_assert(abc::is_swappable_v<std::uint32_t volatile &&>);
-    static_assert(std::is_swappable<std::uint32_t volatile>::value);
-    static_assert(std::is_swappable<std::uint32_t volatile &>::value);
-    static_assert(std::is_swappable<std::uint32_t volatile &&>::value);
-
-    static_assert(abc::is_swappable_v<std::int64_t>);
-    static_assert(abc::is_swappable_v<std::int64_t &>);
-    static_assert(abc::is_swappable_v<std::int64_t &&>);
-    static_assert(std::is_swappable<std::int64_t>::value);
-    static_assert(std::is_swappable<std::int64_t &>::value);
-    static_assert(std::is_swappable<std::int64_t &&>::value);
-
-    static_assert(abc::is_swappable_v<std::int64_t volatile>);
-    static_assert(abc::is_swappable_v<std::int64_t volatile &>);
-    static_assert(abc::is_swappable_v<std::int64_t volatile &&>);
-    static_assert(std::is_swappable_v<std::int64_t volatile>);
-    static_assert(std::is_swappable_v<std::int64_t volatile &>);
-    static_assert(std::is_swappable_v<std::int64_t volatile &&>);
-
-    static_assert(abc::is_swappable_v<std::uint64_t>);
-    static_assert(abc::is_swappable_v<std::uint64_t &>);
-    static_assert(abc::is_swappable_v<std::uint64_t &&>);
-    static_assert(std::is_swappable<std::uint64_t>::value);
-    static_assert(std::is_swappable<std::uint64_t &>::value);
-    static_assert(std::is_swappable<std::uint64_t &&>::value);
-
-    static_assert(abc::is_swappable_v<std::uint64_t volatile>);
-    static_assert(abc::is_swappable_v<std::uint64_t volatile &>);
-    static_assert(abc::is_swappable_v<std::uint64_t volatile &&>);
-    static_assert(std::is_swappable_v<std::uint64_t volatile>);
-    static_assert(std::is_swappable_v<std::uint64_t volatile &>);
-    static_assert(std::is_swappable_v<std::uint64_t volatile &&>);
+    SWAPPABLE_FUNDAMENTAL_TYPE_TEST_CASE(std::int8_t);
+    SWAPPABLE_FUNDAMENTAL_TYPE_TEST_CASE(std::uint8_t);
+    SWAPPABLE_FUNDAMENTAL_TYPE_TEST_CASE(std::int16_t);
+    SWAPPABLE_FUNDAMENTAL_TYPE_TEST_CASE(std::uint16_t);
+    SWAPPABLE_FUNDAMENTAL_TYPE_TEST_CASE(std::int32_t);
+    SWAPPABLE_FUNDAMENTAL_TYPE_TEST_CASE(std::uint32_t);
+    SWAPPABLE_FUNDAMENTAL_TYPE_TEST_CASE(std::int64_t);
+    SWAPPABLE_FUNDAMENTAL_TYPE_TEST_CASE(std::uint64_t);
+#if defined(ABC_CXX17)
+    SWAPPABLE_STD_TEST_CASE(std::int8_t);
+    SWAPPABLE_STD_TEST_CASE(std::uint8_t);
+    SWAPPABLE_STD_TEST_CASE(std::int16_t);
+    SWAPPABLE_STD_TEST_CASE(std::uint16_t);
+    SWAPPABLE_STD_TEST_CASE(std::int32_t);
+    SWAPPABLE_STD_TEST_CASE(std::uint32_t);
+    SWAPPABLE_STD_TEST_CASE(std::int64_t);
+    SWAPPABLE_STD_TEST_CASE(std::uint64_t);
+#endif
 }
 
-TEST(is_nothrow_swappable, fundamental)
-{
-    static_assert(abc::is_nothrow_swappable_v<std::int8_t>);
-    static_assert(abc::is_nothrow_swappable_v<std::int8_t &>);
-    static_assert(abc::is_nothrow_swappable_v<std::int8_t &&>);
-    static_assert(std::is_nothrow_swappable<std::int8_t>::value);
-    static_assert(std::is_nothrow_swappable<std::int8_t &>::value);
-    static_assert(std::is_nothrow_swappable<std::int8_t &&>::value);
-
-    static_assert(abc::is_nothrow_swappable_v<std::int8_t volatile>);
-    static_assert(abc::is_nothrow_swappable_v<std::int8_t volatile &>);
-    static_assert(abc::is_nothrow_swappable_v<std::int8_t volatile &&>);
-    static_assert(std::is_nothrow_swappable<std::int8_t volatile>::value);
-    static_assert(std::is_nothrow_swappable<std::int8_t volatile &>::value);
-    static_assert(std::is_nothrow_swappable<std::int8_t volatile &&>::value);
-
-    static_assert(abc::is_nothrow_swappable_v<std::uint8_t>);
-    static_assert(abc::is_nothrow_swappable_v<std::uint8_t &>);
-    static_assert(abc::is_nothrow_swappable_v<std::uint8_t &&>);
-    static_assert(std::is_nothrow_swappable<std::uint8_t>::value);
-    static_assert(std::is_nothrow_swappable<std::uint8_t &>::value);
-    static_assert(std::is_nothrow_swappable<std::uint8_t &&>::value);
-
-    static_assert(abc::is_nothrow_swappable_v<std::uint8_t volatile>);
-    static_assert(abc::is_nothrow_swappable_v<std::uint8_t volatile &>);
-    static_assert(abc::is_nothrow_swappable_v<std::uint8_t volatile &&>);
-    static_assert(std::is_nothrow_swappable<std::uint8_t volatile>::value);
-    static_assert(std::is_nothrow_swappable<std::uint8_t volatile &>::value);
-    static_assert(std::is_nothrow_swappable<std::uint8_t volatile &&>::value);
-
-    static_assert(abc::is_nothrow_swappable_v<std::int16_t>);
-    static_assert(abc::is_nothrow_swappable_v<std::int16_t &>);
-    static_assert(abc::is_nothrow_swappable_v<std::int16_t &&>);
-    static_assert(std::is_nothrow_swappable<std::int16_t>::value);
-    static_assert(std::is_nothrow_swappable<std::int16_t &>::value);
-    static_assert(std::is_nothrow_swappable<std::int16_t &&>::value);
-
-    static_assert(abc::is_nothrow_swappable_v<std::int16_t volatile>);
-    static_assert(abc::is_nothrow_swappable_v<std::int16_t volatile &>);
-    static_assert(abc::is_nothrow_swappable_v<std::int16_t volatile &&>);
-    static_assert(std::is_nothrow_swappable<std::int16_t volatile>::value);
-    static_assert(std::is_nothrow_swappable<std::int16_t volatile &>::value);
-    static_assert(std::is_nothrow_swappable<std::int16_t volatile &&>::value);
-
-    static_assert(abc::is_nothrow_swappable_v<std::uint16_t>);
-    static_assert(abc::is_nothrow_swappable_v<std::uint16_t &>);
-    static_assert(abc::is_nothrow_swappable_v<std::uint16_t &&>);
-    static_assert(std::is_nothrow_swappable<std::uint16_t>::value);
-    static_assert(std::is_nothrow_swappable<std::uint16_t &>::value);
-    static_assert(std::is_nothrow_swappable<std::uint16_t &&>::value);
-
-    static_assert(abc::is_nothrow_swappable_v<std::uint16_t volatile>);
-    static_assert(abc::is_nothrow_swappable_v<std::uint16_t volatile &>);
-    static_assert(abc::is_nothrow_swappable_v<std::uint16_t volatile &&>);
-    static_assert(std::is_nothrow_swappable<std::uint16_t volatile>::value);
-    static_assert(std::is_nothrow_swappable<std::uint16_t volatile &>::value);
-    static_assert(std::is_nothrow_swappable<std::uint16_t volatile &&>::value);
-
-    static_assert(abc::is_nothrow_swappable_v<std::int32_t>);
-    static_assert(abc::is_nothrow_swappable_v<std::int32_t &>);
-    static_assert(abc::is_nothrow_swappable_v<std::int32_t &&>);
-    static_assert(std::is_nothrow_swappable<std::int32_t>::value);
-    static_assert(std::is_nothrow_swappable<std::int32_t &>::value);
-    static_assert(std::is_nothrow_swappable<std::int32_t &&>::value);
-
-    static_assert(abc::is_nothrow_swappable_v<std::int32_t volatile>);
-    static_assert(abc::is_nothrow_swappable_v<std::int32_t volatile &>);
-    static_assert(abc::is_nothrow_swappable_v<std::int32_t volatile &&>);
-    static_assert(std::is_nothrow_swappable<std::int32_t volatile>::value);
-    static_assert(std::is_nothrow_swappable<std::int32_t volatile &>::value);
-    static_assert(std::is_nothrow_swappable<std::int32_t volatile &&>::value);
-
-    static_assert(abc::is_nothrow_swappable_v<std::uint32_t>);
-    static_assert(abc::is_nothrow_swappable_v<std::uint32_t &>);
-    static_assert(abc::is_nothrow_swappable_v<std::uint32_t &&>);
-    static_assert(std::is_nothrow_swappable<std::uint32_t>::value);
-    static_assert(std::is_nothrow_swappable<std::uint32_t &>::value);
-    static_assert(std::is_nothrow_swappable<std::uint32_t &&>::value);
-
-    static_assert(abc::is_nothrow_swappable_v<std::uint32_t volatile>);
-    static_assert(abc::is_nothrow_swappable_v<std::uint32_t volatile &>);
-    static_assert(abc::is_nothrow_swappable_v<std::uint32_t volatile &&>);
-    static_assert(std::is_nothrow_swappable<std::uint32_t volatile>::value);
-    static_assert(std::is_nothrow_swappable<std::uint32_t volatile &>::value);
-    static_assert(std::is_nothrow_swappable<std::uint32_t volatile &&>::value);
-
-    static_assert(abc::is_nothrow_swappable_v<std::int64_t>);
-    static_assert(abc::is_nothrow_swappable_v<std::int64_t &>);
-    static_assert(abc::is_nothrow_swappable_v<std::int64_t &&>);
-    static_assert(std::is_nothrow_swappable<std::int64_t>::value);
-    static_assert(std::is_nothrow_swappable<std::int64_t &>::value);
-    static_assert(std::is_nothrow_swappable<std::int64_t &&>::value);
-
-    static_assert(abc::is_nothrow_swappable_v<std::int64_t volatile>);
-    static_assert(abc::is_nothrow_swappable_v<std::int64_t volatile &>);
-    static_assert(abc::is_nothrow_swappable_v<std::int64_t volatile &&>);
-    static_assert(std::is_nothrow_swappable<std::int64_t volatile>::value);
-    static_assert(std::is_nothrow_swappable<std::int64_t volatile &>::value);
-    static_assert(std::is_nothrow_swappable<std::int64_t volatile &&>::value);
-
-    static_assert(abc::is_nothrow_swappable_v<std::uint64_t>);
-    static_assert(abc::is_nothrow_swappable_v<std::uint64_t &>);
-    static_assert(abc::is_nothrow_swappable_v<std::uint64_t &&>);
-    static_assert(std::is_nothrow_swappable<std::uint64_t>::value);
-    static_assert(std::is_nothrow_swappable<std::uint64_t &>::value);
-    static_assert(std::is_nothrow_swappable<std::uint64_t &&>::value);
-
-    static_assert(abc::is_nothrow_swappable_v<std::uint64_t volatile>);
-    static_assert(abc::is_nothrow_swappable_v<std::uint64_t volatile &>);
-    static_assert(abc::is_nothrow_swappable_v<std::uint64_t volatile &&>);
-    static_assert(std::is_nothrow_swappable<std::uint64_t volatile>::value);
-    static_assert(std::is_nothrow_swappable<std::uint64_t volatile &>::value);
-    static_assert(std::is_nothrow_swappable<std::uint64_t volatile &&>::value);
-}
+#define SWAPPABLE_STL_TYPE_TEST_CASE(T)                                                                                                                                            \
+    ENSURE_SWAPPABLE(T);                                                                                                                                                           \
+    ENSURE_SWAPPABLE(T &);                                                                                                                                                         \
+    ENSURE_SWAPPABLE(T &&);                                                                                                                                                        \
+    ENSURE_NOT_SWAPPABLE(T volatile);                                                                                                                                              \
+    ENSURE_NOT_SWAPPABLE(T volatile &);                                                                                                                                            \
+    ENSURE_NOT_SWAPPABLE(T volatile &&);                                                                                                                                           \
+    ENSURE_NOTHROW_SWAPPABLE(T);                                                                                                                                                   \
+    ENSURE_NOTHROW_SWAPPABLE(T &);                                                                                                                                                 \
+    ENSURE_NOTHROW_SWAPPABLE(T &&);                                                                                                                                                \
+    ENSURE_NOT_NOTHROW_SWAPPABLE(T volatile);                                                                                                                                      \
+    ENSURE_NOT_NOTHROW_SWAPPABLE(T volatile &);                                                                                                                                    \
+    ENSURE_NOT_NOTHROW_SWAPPABLE(T volatile &&);                                                                                                                                   \
+    ENSURE_NOT_SWAPPABLE(T const);                                                                                                                                                 \
+    ENSURE_NOT_SWAPPABLE(T const &);                                                                                                                                               \
+    ENSURE_NOT_SWAPPABLE(T const &&);                                                                                                                                              \
+    ENSURE_NOT_NOTHROW_SWAPPABLE(T const);                                                                                                                                         \
+    ENSURE_NOT_NOTHROW_SWAPPABLE(T const &);                                                                                                                                       \
+    ENSURE_NOT_NOTHROW_SWAPPABLE(T const &&)
 
 #include <string>
+#include <vector>
+#include <string_view>
+#include <array>
+#include <map>
+#include <unordered_map>
+#include <set>
+#include <unordered_set>
 
 TEST(is_swappable, stl_type)
 {
-    static_assert(abc::is_swappable_v<std::string>);
-    static_assert(abc::is_swappable_v<std::string &>);
-    static_assert(abc::is_swappable_v<std::string &&>);
-    static_assert(std::is_swappable<std::string>::value);
-    static_assert(std::is_swappable<std::string &>::value);
-    static_assert(std::is_swappable<std::string &&>::value);
+    using array_t = std::array<int, 2>;
+    using map_t = std::map<int, int>;
+    using unordered_map_t = std::unordered_map<int, int>;
 
-    static_assert(!abc::is_swappable_v<std::string volatile>);
-    static_assert(!abc::is_swappable_v<std::string volatile &>);
-    static_assert(!abc::is_swappable_v<std::string volatile &&>);
-    static_assert(!std::is_swappable<std::string volatile>::value);
-    static_assert(!std::is_swappable<std::string volatile &>::value);
-    static_assert(!std::is_swappable<std::string volatile &&>::value);
+
+#if defined(ABC_CXX17)
+    SWAPPABLE_STD_TEST_CASE(std::string);
+    SWAPPABLE_STD_TEST_CASE(std::wstring);
+    SWAPPABLE_STD_TEST_CASE(std::vector<int>);
+    SWAPPABLE_STD_TEST_CASE(array_t);
+    SWAPPABLE_STD_TEST_CASE(map_t);
+    SWAPPABLE_STD_TEST_CASE(unordered_map_t);
+    SWAPPABLE_STD_TEST_CASE(std::set<int>);
+    SWAPPABLE_STD_TEST_CASE(std::unordered_set<int>);
+    SWAPPABLE_STD_TEST_CASE(std::set<std::string>);
+    SWAPPABLE_STD_TEST_CASE(std::unordered_set<std::string>);
+    SWAPPABLE_STD_TEST_CASE(std::string_view);
+    SWAPPABLE_STD_TEST_CASE(std::wstring_view);
+
+#endif
+
+    // static_assert(abc::is_swappable<std::string_view>::can_swap_v);
+    static_assert(abc::is_swappable_v<std::string_view>);
+    static_assert(std::is_swappable_v<std::string_view>);
 }

@@ -39,11 +39,11 @@ struct swappable_tester
 {
     template <typename T, typename = decltype(swap(std::declval<T &>(), std::declval<T &>()))>
     static auto
-    can_swap(int) noexcept(noexcept(swap(std::declval<T &>(), std::declval<T &>()))) -> std::true_type;
+    can_swap(int) -> std::true_type;
 
     template <typename>
     static auto
-    can_swap(...) noexcept(false) -> std::false_type;
+    can_swap(...) -> std::false_type;
 
     // can_swap && !std::swap
     template <typename T,
@@ -87,8 +87,8 @@ struct is_swappable_impl : swappable_tester
     using use_std_swap_boolean_type = decltype(use_std_swap<T>(0));
     static constexpr bool use_std_swap_v = use_std_swap_boolean_type::value;
 
-    using type = std::bool_constant<can_swap_v>;
-    static constexpr bool value = type::value;
+    using type = decltype(can_swap<T>(0));
+    // static constexpr bool value = type::value;
 };
 
 struct nothrow_swappable_tester
