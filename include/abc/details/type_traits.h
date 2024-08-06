@@ -38,6 +38,20 @@ struct is_nothrow_swappable_impl : cxx11::nothrow_swappable_tester
     static constexpr bool use_nothrow_std_swap_v = use_nothrow_std_swap_boolean_type::value;
 };
 
+template <typename T, typename U>
+struct is_swappable_with_impl : cxx11::swappable_with_tester
+{
+    using type = decltype(can_swap_with<T, U>(0));
+    static constexpr bool value = type::value;
+};
+
+template <typename T, typename U>
+struct is_nothrow_swappable_with_impl : cxx11::nothrow_swappable_with_tester
+{
+    using type = decltype(can_nothrow_swap_with<T, U>(0));
+    static constexpr bool value = type::value;
+};
+
 } // namespace abc::details
 
 #endif // ABC_DETAILS_TYPE_TRAITS
