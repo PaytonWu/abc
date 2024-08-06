@@ -250,12 +250,12 @@ struct type_reverse<type_tuple<Head, Remains...>>
 };
 
 template <typename T>
-struct is_swappable : details::is_swappable_impl<T>::type
+struct is_swappable : details::is_swappable_impl<T>
 {
 };
 
 template <typename T, std::size_t N>
-struct is_swappable<T[N]> : details::is_swappable_impl<T>::type
+struct is_swappable<T[N]> : details::is_swappable_impl<T>
 {
 };
 
