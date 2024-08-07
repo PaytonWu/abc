@@ -124,6 +124,28 @@ struct nothrow_swappable_tester
     can_nothrow_std_swap(...) -> std::false_type;
 };
 
+struct swappable_with_tester
+{
+    template <typename T, typename U, typename = decltype(swap(std::declval<T>(), std::declval<U>())), typename = decltype(swap(std::declval<U>(), std::declval<T>()))>
+    static auto
+    can_swap_with(int) -> std::true_type;
+
+    template <typename /*T*/, typename /*U*/>
+    static auto
+    can_swap_with(...) -> std::false_type;
+};
+
+struct nothrow_swappable_with_tester
+{
+    template <typename T, typename U>
+    static auto
+    can_nothrow_swap_with(int) -> std::bool_constant<noexcept(swap(std::declval<T>(), std::declval<U>())) && noexcept(swap(std::declval<U>(), std::declval<T>()))>;
+
+    template <typename /*T*/, typename /*U*/>
+    static auto
+    can_nothrow_swap_with(...) -> std::false_type;
+};
+
 } // namespace abc::details::cxx11
 
 #endif // ABC_DETAILS_CXX11_TYPE_TRAITS

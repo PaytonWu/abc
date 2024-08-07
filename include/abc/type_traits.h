@@ -250,12 +250,12 @@ struct type_reverse<type_tuple<Head, Remains...>>
 };
 
 template <typename T>
-struct is_swappable : details::is_swappable_impl<T>
+struct is_swappable : details::is_swappable_impl<T>::type
 {
 };
 
 template <typename T, std::size_t N>
-struct is_swappable<T[N]> : details::is_swappable_impl<T>
+struct is_swappable<T[N]> : details::is_swappable_impl<T>::type
 {
 };
 
@@ -263,17 +263,33 @@ template <typename T>
 ABC_CXX17_INLINE constexpr bool is_swappable_v = is_swappable<T>::value;
 
 template <typename T>
-struct is_nothrow_swappable : details::is_nothrow_swappable_impl<T>
+struct is_nothrow_swappable : details::is_nothrow_swappable_impl<T>::type
 {
 };
 
 template <typename T, std::size_t N>
-struct is_nothrow_swappable<T[N]> : details::is_nothrow_swappable_impl<T>
+struct is_nothrow_swappable<T[N]> : details::is_nothrow_swappable_impl<T>::type
 {
 };
 
 template <typename T>
 ABC_CXX17_INLINE constexpr bool is_nothrow_swappable_v = is_nothrow_swappable<T>::value;
+
+template <typename T, typename U>
+struct is_swappable_with : details::is_swappable_with_impl<T, U>::type
+{
+};
+
+template <typename T, typename U>
+ABC_CXX17_INLINE constexpr bool is_swappable_with_v = is_swappable_with<T, U>::value;
+
+template <typename T, typename U>
+struct is_nothrow_swappable_with : details::is_nothrow_swappable_with_impl<T, U>::type
+{
+};
+
+template <typename T, typename U>
+ABC_CXX17_INLINE constexpr bool is_nothrow_swappable_with_v = is_nothrow_swappable_with<T, U>::value;
 
 } // namespace abc
 
