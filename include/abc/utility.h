@@ -6,10 +6,16 @@
 
 #pragma once
 
+#include "details/config.h"
+#include "details/cxx11/utility.h"
+
 #include <utility>
 
 namespace abc
 {
+
+using details::cxx11::in_place_t;
+ABC_CXX17_INLINE constexpr in_place_t in_place{};
 
 [[noreturn]]
 inline void
