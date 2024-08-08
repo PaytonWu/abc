@@ -42,6 +42,31 @@ protected:
     bool has_value_{false};
 };
 
+template <typename T>
+struct optional_storage<T, false>
+{
+    template <typename... Args>
+    constexpr optional_storage(in_place_t, Args&&... args);
+
+    ~optional_storage() noexcept(std::is_nothrow_destructible<T>::value);
+
+    constexpr auto has_value() const & noexcept -> bool;
+    constexpr auto has_value() const && noexcept -> bool;
+
+protected:
+    struct alignas(T) dummy_storage
+    {
+        unsigned char dummy_[sizeof(T)];
+    };
+    union
+    {
+        dummy_storage storage_{};
+        T value_;
+    };
+
+    bool has_value_{false};
+};
+
 } // namespace cxx11
 } // namespace details
 } // namespace abc

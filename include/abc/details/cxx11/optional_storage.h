@@ -34,6 +34,33 @@ constexpr auto optional_storage<T, trivially_destructible>::has_value() const &&
     return has_value_;
 }
 
+template <typename T>
+template <typename... Args>
+constexpr optional_storage<T, false>::optional_storage(in_place_t, Args&&... args) : value_{std::forward<Args>(args)...}, has_value_{true}
+{
+}
+
+template <typename T>
+optional_storage<T, false>::~optional_storage() noexcept(std::is_nothrow_destructible<T>::value)
+{
+    if (has_value_)
+    {
+        value_.~T();
+    }
+}
+
+template <typename T>
+constexpr auto optional_storage<T, false>::has_value() const & noexcept -> bool
+{
+    return has_value_;
+}
+
+template <typename T>
+constexpr auto optional_storage<T, false>::has_value() const && noexcept -> bool
+{
+    return has_value_;
+}
+
 } //namespace cxx11
 } //namespace details
 } //namespace abc
