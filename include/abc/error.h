@@ -53,6 +53,7 @@ enum class errc {
     not_supported_byte_numbering,
     not_supported_byte_order,
     view_built_from_rvalue,
+    bad_optional_access,
 };
 
 auto make_error_code(errc ec) noexcept -> std::error_code;

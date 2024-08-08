@@ -133,6 +133,9 @@ abc_category() noexcept -> std::error_category const &
                 case errc::view_built_from_rvalue:
                     return "view built from rvalue";
 
+                case errc::bad_optional_access:
+                    return "bad optional access";
+
                 default:
                     assert(false);
                     return "unknown error";

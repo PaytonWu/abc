@@ -1,8 +1,8 @@
 // Copyright(c) 2024 - present, Payton Wu (payton.wu@outlook.com) & the contributors.
 // Distributed under the MIT License (http://opensource.org/licenses/MIT)
 
-#ifndef ABC_DETAILS_CXX11_TYPE_TRAITS
-#define ABC_DETAILS_CXX11_TYPE_TRAITS
+#ifndef ABC_INCLUDE_ABC_DETAILS_CXX11_TYPE_TRAITS
+#define ABC_INCLUDE_ABC_DETAILS_CXX11_TYPE_TRAITS
 
 #pragma once
 
@@ -12,9 +12,17 @@
 
 // https://stackoverflow.com/questions/26744589/what-is-a-proper-way-to-implement-is-swappable-to-test-for-the-swappable-concept
 
+#ifdef ABC_CXX17
 namespace abc::details::cxx11
 {
-
+#else
+namespace abc
+{
+namespace details
+{
+namespace cxx11
+{
+#endif
 template <typename T>
 struct is_nothrow_swappable_impl;
 
@@ -146,6 +154,12 @@ struct nothrow_swappable_with_tester
     can_nothrow_swap_with(...) -> std::false_type;
 };
 
+#ifdef ABC_CXX17
 } // namespace abc::details::cxx11
+#else
+} // namespace cxx11
+} // namespace details
+} // namespace abc
+#endif
 
-#endif // ABC_DETAILS_CXX11_TYPE_TRAITS
+#endif // ABC_INCLUDE_ABC_DETAILS_CXX11_TYPE_TRAITS

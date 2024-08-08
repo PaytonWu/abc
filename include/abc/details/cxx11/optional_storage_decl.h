@@ -1,8 +1,8 @@
 // Copyright(c) 2024 - present, Payton Wu (payton.wu@outlook.com) & the contributors.
 // Distributed under the MIT License (http://opensource.org/licenses/MIT)
 
-#ifndef ABC_INCLUDE_ABC_DETAILS_OPTIONAL_STORAGE_DECL
-#define ABC_INCLUDE_ABC_DETAILS_OPTIONAL_STORAGE_DECL
+#ifndef ABC_INCLUDE_ABC_DETAILS_CXX11_OPTIONAL_STORAGE_DECL
+#define ABC_INCLUDE_ABC_DETAILS_CXX11_OPTIONAL_STORAGE_DECL
 
 #pragma once
 
@@ -12,12 +12,17 @@
 #include <type_traits>
 #include <utility>
 
+#if defined(ABC_CXX17)
+namespace abc::details::cxx11
+{
+#else
 namespace abc
 {
 namespace details
 {
 namespace cxx11
 {
+#endif
 
 template <typename T, bool trivially_destructible = std::is_trivially_destructible<T>::value>
 struct optional_storage
@@ -67,8 +72,12 @@ protected:
     bool has_value_{false};
 };
 
+#if defined(ABC_CXX17)
+} // namespace abc::details::cxx11
+#else
 } // namespace cxx11
 } // namespace details
 } // namespace abc
+#endif
 
-#endif //ABC_INCLUDE_ABC_DETAILS_OPTIONAL_STORAGE_DECL
+#endif //ABC_INCLUDE_ABC_DETAILS_CXX11_OPTIONAL_STORAGE_DECL

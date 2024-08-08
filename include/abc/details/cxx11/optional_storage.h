@@ -1,20 +1,25 @@
 // Copyright(c) 2024 - present, Payton Wu (payton.wu@outlook.com) & the contributors.
 // Distributed under the MIT License (http://opensource.org/licenses/MIT)
 
-#ifndef ABC_INCLUDE_ABC_DETAILS_OPTIONAL_STORAGE
-#define ABC_INCLUDE_ABC_DETAILS_OPTIONAL_STORAGE
+#ifndef ABC_INCLUDE_ABC_DETAILS_CXX11_OPTIONAL_STORAGE
+#define ABC_INCLUDE_ABC_DETAILS_CXX11_OPTIONAL_STORAGE
 
 #pragma once
 
 #include "config.h"
 #include "optional_storage_decl.h"
 
+#ifdef ABC_CXX17
+namespace abc::details::cxx11
+{
+#else
 namespace abc
 {
 namespace details
 {
 namespace cxx11
 {
+#endif
 
 template <typename T, bool trivially_destructible>
 template <typename... Args>
@@ -61,9 +66,12 @@ constexpr auto optional_storage<T, false>::has_value() const && noexcept -> bool
     return has_value_;
 }
 
+#ifdef ABC_CXX17
+} //namespace abc::details::cxx11
+#else
 } //namespace cxx11
 } //namespace details
 } //namespace abc
+#endif
 
-
-#endif //ABC_INCLUDE_ABC_DETAILS_OPTIONAL_STORAGE
+#endif //ABC_INCLUDE_ABC_DETAILS_CXX11_OPTIONAL_STORAGE
