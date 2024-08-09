@@ -6,7 +6,8 @@
 
 #pragma once
 
-#include "config.h"
+#include "abc/details/config.h"
+
 #include "utility.h"
 
 #include <type_traits>
@@ -24,14 +25,15 @@ namespace cxx11
 {
 #endif
 
+// T is trivially destructible
 template <typename T, bool trivially_destructible = std::is_trivially_destructible<T>::value>
 struct optional_storage
 {
     template <typename... Args>
     constexpr optional_storage(in_place_t, Args&&... args);
 
-    constexpr auto has_value() const & noexcept -> bool;
-    constexpr auto has_value() const && noexcept -> bool;
+    constexpr ABC_CXX17_NODISCARD auto has_value() const & noexcept -> bool;
+    constexpr ABC_CXX17_NODISCARD auto has_value() const && noexcept -> bool;
 
 protected:
     struct alignas(T) dummy_storage
@@ -47,6 +49,7 @@ protected:
     bool has_value_{false};
 };
 
+// T is not trivially destructible
 template <typename T>
 struct optional_storage<T, false>
 {
@@ -55,8 +58,8 @@ struct optional_storage<T, false>
 
     ~optional_storage() noexcept(std::is_nothrow_destructible<T>::value);
 
-    constexpr auto has_value() const & noexcept -> bool;
-    constexpr auto has_value() const && noexcept -> bool;
+    constexpr ABC_CXX17_NODISCARD auto has_value() const & noexcept -> bool;
+    constexpr ABC_CXX17_NODISCARD auto has_value() const && noexcept -> bool;
 
 protected:
     struct alignas(T) dummy_storage

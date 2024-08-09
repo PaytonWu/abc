@@ -6,6 +6,8 @@
 
 #pragma once
 
+#include "abc/details/config.h"
+
 #ifdef ABC_CXX17
 namespace abc::details::cxx11
 {

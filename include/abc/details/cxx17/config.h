@@ -12,8 +12,10 @@
 
 #ifdef ABC_CXX17
 #define ABC_CXX17_INLINE inline
+#define ABC_CXX17_NODISCARD [[nodiscard]]
 #else
 #define ABC_CXX17_INLINE
+#define ABC_CXX17_NODISCARD
 #endif
 
 #endif // ABC_DETAILS_CXX17_CONFIG
