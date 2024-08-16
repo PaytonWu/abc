@@ -1,8 +1,8 @@
 // Copyright(c) 2024 - present, Payton Wu (payton.wu@outlook.com) & the contributors.
 // Distributed under the MIT License (http://opensource.org/licenses/MIT)
 
-#ifndef ABC_DETAILS_CXX17_CONFIG
-#define ABC_DETAILS_CXX17_CONFIG
+#ifndef ABC_INCLUDE_ABC_DETAILS_CXX17_CONFIG
+#define ABC_INCLUDE_ABC_DETAILS_CXX17_CONFIG
 
 #pragma once
 
@@ -18,4 +18,4 @@
 #define ABC_CXX17_NODISCARD
 #endif
 
-#endif // ABC_DETAILS_CXX17_CONFIG
+#endif // ABC_INCLUDE_ABC_DETAILS_CXX17_CONFIG

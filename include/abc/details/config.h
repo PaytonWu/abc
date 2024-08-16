@@ -1,8 +1,8 @@
 // Copyright(c) 2023 - present, Payton Wu (payton.wu@outlook.com) & abc contributors.
 // Distributed under the MIT License (http://opensource.org/licenses/MIT)
 
-#if !defined(ABC_DETAILS_CONFIG)
-#define ABC_DETAILS_CONFIG
+#if !defined(ABC_INCLUDE_ABC_DETAILS_CONFIG)
+#define ABC_INCLUDE_ABC_DETAILS_CONFIG
 
 #pragma once
 
@@ -10,11 +10,11 @@
 #   error abc requires a C++ compiler, please use a C++ compiler to compile abc
 #endif
 
-#include "cxx11/config.h"
-#include "cxx14/config.h"
-#include "cxx17/config.h"
-#include "cxx20/config.h"
-#include "cxx23/config.h"
+#include "cxx11_config.h"
+#include "cxx14_config.h"
+#include "cxx17_config.h"
+#include "cxx20_config.h"
+#include "cxx23_config.h"
 
 // ABC_OS_XXXX define OS platform
 #if defined (_WIN32)
@@ -87,4 +87,4 @@
                     31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, \
                     15, 14, 13, 12, 11, 10, 9,  8,  7,  6,  5,  4,  3,  2,  1,  0)
 
-#endif
+#endif  // ABC_INCLUDE_ABC_DETAILS_CONFIG
