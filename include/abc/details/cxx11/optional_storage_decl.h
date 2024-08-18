@@ -35,6 +35,11 @@ struct optional_storage
     constexpr ABC_CXX17_NODISCARD auto has_value() const & noexcept -> bool;
     constexpr ABC_CXX17_NODISCARD auto has_value() const && noexcept -> bool;
 
+    constexpr ABC_CXX17_NODISCARD auto value() & noexcept -> T&;
+    constexpr ABC_CXX17_NODISCARD auto value() const & noexcept -> const T&;
+    constexpr ABC_CXX17_NODISCARD auto value() && noexcept -> T&&;
+    constexpr ABC_CXX17_NODISCARD auto value() const && noexcept -> const T&&;
+
 protected:
     struct alignas(T) dummy_storage
     {

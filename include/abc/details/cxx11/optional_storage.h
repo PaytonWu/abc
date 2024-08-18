@@ -6,8 +6,12 @@
 
 #pragma once
 
-#include "abc/details/config.h"
 #include "optional_storage_decl.h"
+
+#include "abc/details/error.h"
+#include "abc/error.h"
+
+#include <system_error>
 
 #ifdef ABC_CXX17
 namespace abc::details::cxx11
@@ -37,6 +41,50 @@ template <typename T, bool trivially_destructible>
 constexpr auto optional_storage<T, trivially_destructible>::has_value() const && noexcept -> bool
 {
     return has_value_;
+}
+
+template <typename T, bool trivially_destructible>
+constexpr auto optional_storage<T, trivially_destructible>::value() & noexcept -> T&
+{
+    if (!has_value_)
+    {
+        do_throw_error(make_error_code(abc::errc::bad_optional_access));
+    }
+
+    return value_;
+}
+
+template <typename T, bool trivially_destructible>
+constexpr auto optional_storage<T, trivially_destructible>::value() const & noexcept -> const T&
+{
+    if (!has_value_)
+    {
+        do_throw_error(make_error_code(abc::errc::bad_optional_access));
+    }
+
+    return value_;
+}
+
+template <typename T, bool trivially_destructible>
+constexpr auto optional_storage<T, trivially_destructible>::value() && noexcept -> T&&
+{
+    if (!has_value_)
+    {
+        do_throw_error(make_error_code(abc::errc::bad_optional_access));
+    }
+
+    return std::move(value_);
+}
+
+template <typename T, bool trivially_destructible>
+constexpr auto optional_storage<T, trivially_destructible>::value() const && noexcept -> const T&&
+{
+    if (!has_value_)
+    {
+        do_throw_error(make_error_code(abc::errc::bad_optional_access));
+    }
+    
+    return std::move(value_);
 }
 
 template <typename T>

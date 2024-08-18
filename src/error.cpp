@@ -2,51 +2,74 @@
 // Distributed under the MIT License (http://opensource.org/licenses/MIT)
 
 #include <abc/error.h>
+
+#include <abc/details/error.h>
 #include <abc/utility.h>
 
 #include <fmt/core.h>
 
-namespace abc::details
-{
+#include <cassert>
 
-[[noreturn]] static void
-do_throw_error(std::error_code const & ec)
+#ifdef ABC_CXX17
+namespace abc::details {
+#else
+namespace abc { namespace details {
+#endif
+
+auto
+do_throw_error(std::error_code const & ec) -> void
 {
     assert(ec);
     abc_error eh{ ec };
-    throw_exception(std::move(eh));
+    throw_exception(eh);
 }
 
-[[noreturn]] static void
-do_throw_error(std::error_code const & ec, std::string_view const extra_msg)
+auto
+do_throw_error(std::error_code const & ec, std::string_view const extra_msg) -> void
 {
     assert(ec);
     abc_error eh{ ec, extra_msg };
-    throw_exception(std::move(eh));
+    throw_exception(eh);
 }
 
-}
+#ifdef ABC_CXX17
+} // namespace abc::details
+#else
+} } // namespace abc::details
+#endif
 
 namespace abc
 {
 
-abc_error::abc_error(std::error_code const & ec)
-    : std::exception{}, msg_{ ec.message() }, ec_{ ec }
+abc_error::
+abc_error(std::error_code const & ec)
+    : std::exception{}
+    , msg_{ ec.message() }
+    , ec_{ ec }
 {
 }
 
-abc_error::abc_error(std::error_code const & ec, std::string_view const msg)
-    : std::exception{}, msg_{ fmt::format("{}:{}", msg, ec.message()) }, ec_{ ec }
+abc_error::
+abc_error(std::error_code const & ec, std::string_view const msg)
+    : std::exception{}
+    , msg_{ fmt::format("{}:{}", msg, ec.message()) }
+    , ec_{ ec }
 {
 }
 
-abc_error::abc_error(int const ec, std::error_category const & category)
-    : std::exception{}, msg_{ std::error_code{ ec, category }.message() }, ec_{ ec, category }
+abc_error::
+abc_error(int const ec, std::error_category const & category)
+    : std::exception{}
+    , msg_{ std::error_code{ ec, category }.message() }
+    , ec_{ ec, category }
 {
 }
 
-abc_error::abc_error(int const ec, std::error_category const & category, std::string_view const msg)
-    : std::exception{}, msg_{ fmt::format("{}:{}", msg, std::error_code{ ec, category }.message()) }, ec_{ ec, category }
+abc_error::
+abc_error(int const ec, std::error_category const & category, std::string_view const msg)
+    : std::exception{}
+    , msg_{ fmt::format("{}:{}", msg, std::error_code{ ec, category }.message()) }
+    , ec_{ ec, category }
 {
 }
 
@@ -77,8 +100,7 @@ make_error_condition(errc const ec) noexcept -> std::error_condition
 auto
 abc_category() noexcept -> std::error_category const &
 {
-    static struct
-        : std::error_category
+    static struct : std::error_category
     {
         [[nodiscard]] auto
         name() const noexcept -> char const * override
@@ -142,6 +164,7 @@ abc_category() noexcept -> std::error_category const &
             }
         }
     } category;
+
     return category;
 }
 
@@ -163,4 +186,4 @@ throw_error(std::error_code const & ec, std::string_view extra_msg)
     }
 }
 
-}
+} // namespace abc

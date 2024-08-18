@@ -1,15 +1,13 @@
 // Copyright(c) 2023 - present, Payton Wu (payton.wu@outlook.com) & abc contributors.
 // Distributed under the MIT License (http://opensource.org/licenses/MIT)
 
-#if !defined(ABC_ERROR_ERROR)
-#define ABC_ERROR_ERROR
+#if !defined(ABC_INCLUDE_ABC_ERROR)
+#define ABC_INCLUDE_ABC_ERROR
 
 #pragma once
 
 #include "abc/details/config.h"
 
-#include <cassert>
-#include <cstdint>
 #include <string_view>
 #include <system_error>
 
