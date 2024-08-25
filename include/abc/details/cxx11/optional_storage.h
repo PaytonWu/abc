@@ -114,6 +114,50 @@ constexpr auto optional_storage<T, false>::has_value() const && noexcept -> bool
     return has_value_;
 }
 
+template <typename T>
+constexpr auto optional_storage<T, false>::value() & noexcept -> T&
+{
+    if (!has_value_)
+    {
+        do_throw_error(make_error_code(abc::errc::bad_optional_access));
+    }
+
+    return value_;
+}
+
+template <typename T>
+constexpr auto optional_storage<T, false>::value() const & noexcept -> const T&
+{
+    if (!has_value_)
+    {
+        do_throw_error(make_error_code(abc::errc::bad_optional_access));
+    }
+
+    return value_;
+}
+
+template <typename T>
+constexpr auto optional_storage<T, false>::value() && noexcept -> T&&
+{
+    if (!has_value_)
+    {
+        do_throw_error(make_error_code(abc::errc::bad_optional_access));
+    }
+
+    return std::move(value_);
+}
+
+template <typename T>
+constexpr auto optional_storage<T, false>::value() const && noexcept -> const T&&
+{
+    if (!has_value_)
+    {
+        do_throw_error(make_error_code(abc::errc::bad_optional_access));
+    }
+
+    return std::move(value_);
+}
+
 #ifdef ABC_CXX17
 } //namespace abc::details::cxx11
 #else

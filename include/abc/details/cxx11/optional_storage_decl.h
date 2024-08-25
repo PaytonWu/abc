@@ -66,6 +66,11 @@ struct optional_storage<T, false>
     constexpr ABC_CXX17_NODISCARD auto has_value() const & noexcept -> bool;
     constexpr ABC_CXX17_NODISCARD auto has_value() const && noexcept -> bool;
 
+    constexpr ABC_CXX17_NODISCARD auto value() & noexcept -> T&;
+    constexpr ABC_CXX17_NODISCARD auto value() const & noexcept -> const T&;
+    constexpr ABC_CXX17_NODISCARD auto value() && noexcept -> T&&;
+    constexpr ABC_CXX17_NODISCARD auto value() const && noexcept -> const T&&;
+
 protected:
     struct alignas(T) dummy_storage
     {
@@ -78,6 +83,20 @@ protected:
     };
 
     bool has_value_{false};
+};
+
+template <typename T, bool trivially_copy_constructable = std::is_trivially_copy_constructible<T>::value>
+struct optional_storage_copy_constructable : optional_storage<T>
+{
+    using optional_storage<T>::optional_storage;
+};
+
+template <typename T>
+struct optional_storage_copy_constructable<T, false> : optional_storage<T, false>
+{
+    using optional_storage<T, false>::optional_storage;
+
+
 };
 
 #if defined(ABC_CXX17)
