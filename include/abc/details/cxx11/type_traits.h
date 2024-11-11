@@ -12,17 +12,9 @@
 
 // https://stackoverflow.com/questions/26744589/what-is-a-proper-way-to-implement-is-swappable-to-test-for-the-swappable-concept
 
-#ifdef ABC_CXX17
 namespace abc::details::cxx11
 {
-#else
-namespace abc
-{
-namespace details
-{
-namespace cxx11
-{
-#endif
+
 template <typename T>
 struct is_nothrow_swappable_impl;
 

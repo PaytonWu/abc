@@ -1,44 +1,32 @@
 // Copyright(c) 2024 - present, Payton Wu (payton.wu@outlook.com) & the contributors.
 // Distributed under the MIT License (http://opensource.org/licenses/MIT)
 
-#ifndef ABC_INCLUDE_ABC_DETAILS_CXX11_OPTIONAL_STORAGE_DECL
-#define ABC_INCLUDE_ABC_DETAILS_CXX11_OPTIONAL_STORAGE_DECL
+#ifndef ABC_INCLUDE_ABC_DETAILS_OPTIONAL_STORAGE_DECL
+#define ABC_INCLUDE_ABC_DETAILS_OPTIONAL_STORAGE_DECL
 
 #pragma once
 
-#include "abc/details/config.h"
+#include "optional_storage_fwd_decl.h"
 
-#include "utility.h"
-
-#include <type_traits>
 #include <utility>
 
-#if defined(ABC_CXX17)
-namespace abc::details::cxx11
+namespace abc::details
 {
-#else
-namespace abc
-{
-namespace details
-{
-namespace cxx11
-{
-#endif
 
 // T is trivially destructible
-template <typename T, bool trivially_destructible = std::is_trivially_destructible<T>::value>
+template <typename T, bool trivially_destructible>
 struct optional_storage
 {
     template <typename... Args>
-    constexpr optional_storage(in_place_t, Args&&... args);
+    constexpr optional_storage(std::in_place_t, Args&&... args);
 
-    constexpr ABC_CXX17_NODISCARD auto has_value() const & noexcept -> bool;
-    constexpr ABC_CXX17_NODISCARD auto has_value() const && noexcept -> bool;
+    constexpr [[nodiscard]] auto has_value() const & noexcept -> bool;
+    constexpr [[nodiscard]] auto has_value() const && noexcept -> bool;
 
-    constexpr ABC_CXX17_NODISCARD auto value() & noexcept -> T&;
-    constexpr ABC_CXX17_NODISCARD auto value() const & noexcept -> const T&;
-    constexpr ABC_CXX17_NODISCARD auto value() && noexcept -> T&&;
-    constexpr ABC_CXX17_NODISCARD auto value() const && noexcept -> const T&&;
+    constexpr [[nodiscard]] auto value() & noexcept -> T&;
+    constexpr [[nodiscard]] auto value() const & noexcept -> const T&;
+    constexpr [[nodiscard]] auto value() && noexcept -> T&&;
+    constexpr [[nodiscard]] auto value() const && noexcept -> const T&&;
 
 protected:
     struct alignas(T) dummy_storage
@@ -59,17 +47,17 @@ template <typename T>
 struct optional_storage<T, false>
 {
     template <typename... Args>
-    constexpr optional_storage(in_place_t, Args&&... args);
+    constexpr optional_storage(std::in_place_t, Args&&... args);
 
     ~optional_storage() noexcept(std::is_nothrow_destructible<T>::value);
 
-    constexpr ABC_CXX17_NODISCARD auto has_value() const & noexcept -> bool;
-    constexpr ABC_CXX17_NODISCARD auto has_value() const && noexcept -> bool;
+    constexpr [[nodiscard]] auto has_value() const & noexcept -> bool;
+    constexpr [[nodiscard]] auto has_value() const && noexcept -> bool;
 
-    constexpr ABC_CXX17_NODISCARD auto value() & noexcept -> T&;
-    constexpr ABC_CXX17_NODISCARD auto value() const & noexcept -> const T&;
-    constexpr ABC_CXX17_NODISCARD auto value() && noexcept -> T&&;
-    constexpr ABC_CXX17_NODISCARD auto value() const && noexcept -> const T&&;
+    constexpr [[nodiscard]] auto value() & noexcept -> T&;
+    constexpr [[nodiscard]] auto value() const & noexcept -> const T&;
+    constexpr [[nodiscard]] auto value() && noexcept -> T&&;
+    constexpr [[nodiscard]] auto value() const && noexcept -> const T&&;
 
 protected:
     struct alignas(T) dummy_storage

@@ -10,8 +10,6 @@
 #   error abc requires a C++ compiler, please use a C++ compiler to compile abc
 #endif
 
-#include "cxx11_config.h"
-#include "cxx14_config.h"
 #include "cxx17_config.h"
 #include "cxx20_config.h"
 #include "cxx23_config.h"

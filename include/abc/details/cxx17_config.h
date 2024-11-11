@@ -8,14 +8,8 @@
 
 #if __cplusplus >= 201703L
 #define ABC_CXX17
-#endif
-
-#ifdef ABC_CXX17
-#define ABC_CXX17_INLINE inline
-#define ABC_CXX17_NODISCARD [[nodiscard]]
 #else
-#define ABC_CXX17_INLINE
-#define ABC_CXX17_NODISCARD
+#error "C++17 and above required"
 #endif
 
 #endif // ABC_INCLUDE_ABC_DETAILS_CXX17_CONFIG
