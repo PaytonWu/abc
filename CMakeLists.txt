@@ -51,6 +51,7 @@ if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang" OR "${CMAKE_CXX_COMPILER_ID}" MAT
         -pthread
         -fstack-protector-strong
         -fno-short-enums
+        -Wno-interference-size
     )
 
     add_definitions(-D_GNU_SOURCE)
@@ -129,11 +130,14 @@ if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "MSVC")
 endif()
 
 include_directories(include)
+include_directories(third_party/stdexec/include)
+
 aux_source_directory(src SRCS)
 add_library(${ABC_LIBRARY} ${SRCS})
 target_link_libraries(${ABC_LIBRARY} PRIVATE fmt::fmt-header-only)
 
 if (WITH_TESTS)
+    add_compile_options(-Wno-empty-body -Wno-unused-parameter)
     enable_testing()
     add_subdirectory(tests)
 endif()
