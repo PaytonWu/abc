@@ -10,8 +10,7 @@
 
 #include <array>
 #include <atomic>
-#include <condition_variable>
-#include <mutex>
+#include <new>
 #include <optional>
 
 namespace abc::async
@@ -21,17 +20,19 @@ template <typename T, std::size_t Capacity, stdexec::scheduler Scheduler>
 class Queue
 {
 private:
-    // Ring buffer implementation
-    std::size_t next_index(std::size_t index) const noexcept;
+    // Each cell has a sequence number and data
+    struct Cell
+    {
+        std::atomic<std::size_t> sequence;
+        T data;
+    };
 
-    std::array<T, Capacity> buffer_;
-    std::atomic<std::size_t> head_{ 0 };
-    std::atomic<std::size_t> tail_{ 0 };
-    std::atomic<std::size_t> size_{ 0 };
+    // Buffer of cells
+    std::array<Cell, Capacity> buffer_;
 
-    mutable std::mutex mutex_;
-    std::condition_variable enqueue_cv_;
-    std::condition_variable dequeue_cv_;
+    // Padded atomic indices to prevent false sharing
+    alignas(std::hardware_destructive_interference_size) std::atomic<std::size_t> head_{ 0 };
+    alignas(std::hardware_destructive_interference_size) std::atomic<std::size_t> tail_{ 0 };
 
     Scheduler scheduler_;
 
