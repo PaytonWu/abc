@@ -129,11 +129,14 @@ if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "MSVC")
 endif()
 
 include_directories(include)
+include_directories(third_party/stdexec/include)
+
 aux_source_directory(src SRCS)
 add_library(${ABC_LIBRARY} ${SRCS})
 target_link_libraries(${ABC_LIBRARY} PRIVATE fmt::fmt-header-only)
 
 if (WITH_TESTS)
+    add_compile_options(-Wno-empty-body -Wno-unused-parameter)
     enable_testing()
     add_subdirectory(tests)
 endif()
