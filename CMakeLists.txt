@@ -51,7 +51,6 @@ if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang" OR "${CMAKE_CXX_COMPILER_ID}" MAT
         -pthread
         -fstack-protector-strong
         -fno-short-enums
-        -Wno-interference-size
     )
 
     add_definitions(-D_GNU_SOURCE)
