@@ -10,7 +10,6 @@
 
 #include <array>
 #include <atomic>
-#include <new>
 #include <optional>
 
 namespace abc::async
@@ -31,8 +30,9 @@ private:
     std::array<Cell, Capacity> buffer_;
 
     // Padded atomic indices to prevent false sharing
-    alignas(std::hardware_destructive_interference_size) std::atomic<std::size_t> head_{ 0 };
-    alignas(std::hardware_destructive_interference_size) std::atomic<std::size_t> tail_{ 0 };
+    static constexpr std::size_t cache_line_size_in_bytes = 64; // Assuming 64-byte cache line size
+    alignas(cache_line_size_in_bytes) std::atomic<std::size_t> head_{ 0 };
+    alignas(cache_line_size_in_bytes) std::atomic<std::size_t> tail_{ 0 };
 
     Scheduler scheduler_;
 
