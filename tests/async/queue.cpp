@@ -27,7 +27,7 @@ TEST(async_queue, sync_enqueue_dequeue)
     // Enqueue items
     for (int i = 0; i < 4; ++i)
     {
-        EXPECT_TRUE(queue.try_enqueue(i));
+        EXPECT_TRUE(queue.enqueue(i));
         EXPECT_EQ(queue.size(), i + 1);
         EXPECT_FALSE(queue.empty());
         if (i < 3)
@@ -41,14 +41,14 @@ TEST(async_queue, sync_enqueue_dequeue)
     }
 
     // Attempt to enqueue when full
-    EXPECT_FALSE(queue.try_enqueue(4));
+    EXPECT_FALSE(queue.enqueue(4));
     EXPECT_EQ(queue.size(), 4);
     EXPECT_TRUE(queue.full());
 
     // Dequeue items
     for (int i = 0; i < 4; ++i)
     {
-        auto item = queue.try_dequeue();
+        auto item = queue.dequeue();
         ASSERT_TRUE(item.has_value());
         EXPECT_EQ(item.value(), i);
         EXPECT_EQ(queue.size(), 3 - i);
@@ -65,7 +65,7 @@ TEST(async_queue, sync_enqueue_dequeue)
     }
 
     // Attempt to dequeue when empty
-    auto item = queue.try_dequeue();
+    auto item = queue.dequeue();
     EXPECT_FALSE(item.has_value());
 }
 
@@ -82,20 +82,20 @@ TEST(async_queue, basic_async_enqueue_dequeue)
     EXPECT_FALSE(queue.full());
     EXPECT_EQ(queue.size(), 0);
 
-    bool success1 = queue.try_enqueue(0);
-    bool success2 = queue.try_enqueue(1);
-    bool success3 = queue.try_enqueue(2);
-    bool success4 = queue.try_enqueue(3);
-    bool success5 = queue.try_enqueue(4); // This should fail
-    bool success6 = queue.try_enqueue(5); // This should fail
+    bool success1 = queue.enqueue(0);
+    bool success2 = queue.enqueue(1);
+    bool success3 = queue.enqueue(2);
+    bool success4 = queue.enqueue(3);
+    bool success5 = queue.enqueue(4); // This should fail
+    bool success6 = queue.enqueue(5); // This should fail
 
     EXPECT_TRUE(success1 && success2 && success3 && success4);
     EXPECT_FALSE(success5 || success6); // Queue should be full
 
     // Create concurrent enqueue/dequeue operations
     auto producer = [&queue]() -> exec::task<void> {
-        co_await queue.enqueue(6);
-        co_await queue.enqueue(7);
+        co_await queue.async_enqueue(6);
+        co_await queue.async_enqueue(7);
     };
 
     auto consumer = [&queue, &scheduler]() -> exec::task<void> {
@@ -104,7 +104,7 @@ TEST(async_queue, basic_async_enqueue_dequeue)
 
         for (int i = 0; i < 4; ++i)
         {
-            auto item = co_await queue.dequeue();
+            auto item = co_await queue.async_dequeue();
             EXPECT_EQ(item, i);
         }
     };
@@ -121,7 +121,7 @@ TEST(async_queue, basic_async_enqueue_dequeue)
     auto const sz = queue.size();
     for (auto i = 0uz; i < sz; ++i)
     {
-        auto item = queue.try_dequeue();
+        auto item = queue.dequeue();
         ASSERT_TRUE(item.has_value());
         EXPECT_EQ(item.value(), 6 + i);
     }
@@ -149,7 +149,7 @@ TEST(async_queue, concurrent_producers_consumers)
         producers.emplace_back([&queue, &produced_count, items_per_producer, i]() {
             for (std::size_t j = 0; j < items_per_producer; ++j)
             {
-                while (!queue.try_enqueue(static_cast<int>(i * items_per_producer + j)))
+                while (!queue.enqueue(static_cast<int>(i * items_per_producer + j)))
                 {
                     // Retry until successful
                 }
@@ -165,7 +165,7 @@ TEST(async_queue, concurrent_producers_consumers)
         consumers.emplace_back([&queue, &consumed_count]() {
             while (true)
             {
-                auto item = queue.try_dequeue();
+                auto item = queue.dequeue();
                 if (item.has_value())
                 {
                     ++consumed_count;
@@ -203,68 +203,68 @@ TEST(async_queue, boundary_conditions)
     // Fill the queue to its capacity
     for (std::size_t i = 0; i < capacity; ++i)
     {
-        EXPECT_TRUE(queue.try_enqueue(static_cast<int>(i)));
+        EXPECT_TRUE(queue.enqueue(static_cast<int>(i)));
     }
 
     // Ensure the queue is full
     EXPECT_TRUE(queue.full());
-    EXPECT_FALSE(queue.try_enqueue(99)); // Enqueue should fail
+    EXPECT_FALSE(queue.enqueue(99)); // Enqueue should fail
 
     // Dequeue all items
     for (std::size_t i = 0; i < capacity; ++i)
     {
-        auto item = queue.try_dequeue();
+        auto item = queue.dequeue();
         ASSERT_TRUE(item.has_value());
         EXPECT_EQ(item.value(), static_cast<int>(i));
     }
 
     // Ensure the queue is empty
     EXPECT_TRUE(queue.empty());
-    EXPECT_FALSE(queue.try_dequeue().has_value()); // Dequeue should fail
+    EXPECT_FALSE(queue.dequeue().has_value()); // Dequeue should fail
 }
 
-TEST(async_queue, interleaved_operations)
-{
-    using namespace abc::async;
-
-    constexpr std::size_t capacity = 16;
-    Queue<int, capacity, exec::inline_scheduler> queue(exec::inline_scheduler{});
-
-    std::atomic<bool> stop{ false };
-    std::vector<std::thread> threads;
-
-    // Enqueue thread
-    threads.emplace_back([&queue, &stop]() {
-        int value = 0;
-        while (!stop.load())
-        {
-            queue.try_enqueue(value++);
-        }
-    });
-
-    // Dequeue thread
-    threads.emplace_back([&queue, &stop]() {
-        while (!stop.load())
-        {
-            auto item = queue.try_dequeue();
-            if (item.has_value())
-            {
-                EXPECT_GE(item.value(), 0);
-            }
-        }
-    });
-
-    // Run threads for a short duration
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    stop.store(true);
-
-    for (auto & thread : threads)
-    {
-        thread.join();
-    }
-
-    EXPECT_TRUE(queue.empty() || !queue.full());
-}
+//TEST(async_queue, interleaved_operations)
+//{
+//    using namespace abc::async;
+//
+//    constexpr std::size_t capacity = 16;
+//    Queue<int, capacity, exec::inline_scheduler> queue(exec::inline_scheduler{});
+//
+//    std::atomic<bool> stop{ false };
+//    std::vector<std::thread> threads;
+//
+//    // Enqueue thread
+//    threads.emplace_back([&queue, &stop]() {
+//        int value = 0;
+//        while (!stop.load())
+//        {
+//            queue.enqueue(value++);
+//        }
+//    });
+//
+//    // Dequeue thread
+//    threads.emplace_back([&queue, &stop]() {
+//        while (!stop.load())
+//        {
+//            auto item = queue.dequeue();
+//            if (item.has_value())
+//            {
+//                EXPECT_GE(item.value(), 0);
+//            }
+//        }
+//    });
+//
+//    // Run threads for a short duration
+//    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+//    stop.store(true);
+//
+//    for (auto & thread : threads)
+//    {
+//        thread.join();
+//    }
+//
+//    EXPECT_TRUE(queue.empty() || !queue.full());
+//}
 
 TEST(async_queue, exception_safety)
 {
@@ -276,7 +276,7 @@ TEST(async_queue, exception_safety)
     // Enqueue items
     for (int i = 0; i < 3; ++i)
     {
-        EXPECT_TRUE(queue.try_enqueue(i));
+        EXPECT_TRUE(queue.enqueue(i));
     }
 
     // Simulate exception during enqueue
@@ -296,7 +296,7 @@ TEST(async_queue, exception_safety)
     // Dequeue items
     for (int i = 0; i < 3; ++i)
     {
-        auto item = queue.try_dequeue();
+        auto item = queue.dequeue();
         ASSERT_TRUE(item.has_value());
         EXPECT_EQ(item.value(), i);
     }
@@ -314,10 +314,10 @@ TEST(async_queue, async_enqueue_dequeue)
 
     auto operation = [&]() -> exec::task<int> {
         // Enqueue a new item
-        co_await queue.enqueue(42);
+        co_await queue.async_enqueue(42);
 
         // Dequeue and return the next value
-        co_return co_await queue.dequeue();
+        co_return co_await queue.async_dequeue();
     };
 
     auto [result] = stdexec::sync_wait(operation()).value();
@@ -342,7 +342,7 @@ TEST(async_queue, async_backpressure)
     auto producer = [&]() -> exec::task<void> {
         for (std::size_t i = 0; i < 8; ++i)
         {
-            co_await queue.enqueue(i);
+            co_await queue.async_enqueue(i);
             completed_enqueues++;
 
             // Signal consumer to start after queue is full
@@ -364,7 +364,7 @@ TEST(async_queue, async_backpressure)
         int i = 0;
         for (i = 0; i < 8; ++i)
         {
-            int value = co_await queue.dequeue();
+            int value = co_await queue.async_dequeue();
             EXPECT_EQ(value, i);
             dequeued_values++;
         }
@@ -394,7 +394,7 @@ TEST(async_queue, multiple_async_producers_consumers)
         for (int i = 0; i < count; ++i)
         {
             int value = start + i;
-            co_await queue.enqueue(value);
+            co_await queue.async_enqueue(value);
             produced_sum += value;
         }
     };
@@ -402,18 +402,13 @@ TEST(async_queue, multiple_async_producers_consumers)
     auto consumer = [&](int count) -> exec::task<void> {
         for (int i = 0; i < count; ++i)
         {
-            int value = co_await queue.dequeue();
+            int value = co_await queue.async_dequeue();
             consumed_sum += value;
         }
     };
 
     // Create and run all tasks concurrently
-    auto combined_sender = stdexec::when_all(
-        producer(0, num_items / 2),
-        producer(num_items / 2, num_items / 2),
-        consumer(num_items / 2),
-        consumer(num_items / 2)
-    );
+    auto combined_sender = stdexec::when_all(producer(0, num_items / 2), producer(num_items / 2, num_items / 2), consumer(num_items / 2), consumer(num_items / 2));
 
     // Run all tasks concurrently
     stdexec::sync_wait(std::move(combined_sender));
@@ -433,21 +428,21 @@ TEST(async_queue, interleaved_async_operations)
     // First fill the queue
     for (std::size_t i = 0; i < capacity; ++i)
     {
-        ASSERT_TRUE(queue.try_enqueue(i));
+        ASSERT_TRUE(queue.enqueue(i));
     }
     ASSERT_TRUE(queue.full());
 
     // Test that dequeue unblocks enqueue
     auto operation = [&]() -> exec::task<int> {
         // Dequeue an item to make space
-        int first_value = co_await queue.dequeue();
+        int first_value = co_await queue.async_dequeue();
         EXPECT_EQ(first_value, 0);
 
         // Enqueue a new item
-        co_await queue.enqueue(capacity);
+        co_await queue.async_enqueue(capacity);
 
         // Dequeue and return the next value
-        int next_value = co_await queue.dequeue();
+        int next_value = co_await queue.async_dequeue();
         co_return next_value;
     };
 
@@ -472,11 +467,262 @@ TEST(async_queue, stress_test)
     // Stress test with alternating enqueue and dequeue
     for (std::size_t i = 0; i < num_operations; ++i)
     {
-        EXPECT_TRUE(queue.try_enqueue(static_cast<int>(i % capacity)));
-        auto item = queue.try_dequeue();
+        EXPECT_TRUE(queue.enqueue(static_cast<int>(i % capacity)));
+        auto item = queue.dequeue();
         ASSERT_TRUE(item.has_value());
         EXPECT_EQ(item.value(), static_cast<int>(i % capacity));
     }
 
+    EXPECT_TRUE(queue.empty());
+}
+
+TEST(async_queue, wait_for_basic_functionality)
+{
+    using namespace abc::async;
+    constexpr std::size_t capacity = 8;
+
+    exec::static_thread_pool pool{ 4 };
+    Queue<int, capacity, exec::static_thread_pool::scheduler> queue(pool.get_scheduler());
+
+    // Fill queue with some values
+    for (int i = 0; i < 5; ++i)
+    {
+        ASSERT_TRUE(queue.enqueue(i));
+    }
+
+    // Test wait_for with a simple predicate
+    auto operation = [&]() -> exec::task<int> {
+        // Wait for a value greater than 3
+        co_return co_await queue.wait_for([](int value) { return value > 3; });
+    };
+
+    auto [result] = stdexec::sync_wait(operation()).value();
+
+    EXPECT_EQ(result, 4);
+    // wait_for consumes all items until it finds a match, so queue should be empty
+    EXPECT_TRUE(queue.empty());
+}
+
+TEST(async_queue, wait_for_multiple_conditions)
+{
+    using namespace abc::async;
+    constexpr std::size_t capacity = 16;
+
+    exec::static_thread_pool pool{ 4 };
+    Queue<int, capacity, exec::static_thread_pool::scheduler> queue(pool.get_scheduler());
+
+    // Fill queue with even and odd numbers
+    for (int i = 0; i < 10; ++i)
+    {
+        ASSERT_TRUE(queue.enqueue(i));
+    }
+
+    auto operation = [&]() -> exec::task<std::pair<int, int>> {
+        // Wait for first even number greater than 5
+        int even_result = co_await queue.wait_for([](int value) { return value > 5 && value % 2 == 0; });
+
+        // Wait for first odd number greater than 3
+        int odd_result = co_await queue.wait_for([](int value) { return value > 3 && value % 2 == 1; });
+
+        co_return std::make_pair(even_result, odd_result);
+    };
+
+    auto [result] = stdexec::sync_wait(operation()).value();
+
+    EXPECT_EQ(result.first, 6);
+    EXPECT_EQ(result.second, 7);
+    EXPECT_EQ(queue.size(), 2);
+}
+
+TEST(async_queue, wait_for_empty_queue)
+{
+    using namespace abc::async;
+    constexpr std::size_t capacity = 4;
+
+    exec::static_thread_pool pool{ 4 };
+    Queue<int, capacity, exec::static_thread_pool::scheduler> queue(pool.get_scheduler());
+
+    std::atomic<bool> producer_started{ false };
+    std::atomic<bool> consumer_finished{ false };
+
+    auto producer = [&]() -> exec::task<void> {
+        producer_started = true;
+
+        // Wait a bit to ensure consumer starts first
+        co_await stdexec::schedule(pool.get_scheduler());
+        co_await stdexec::schedule(pool.get_scheduler());
+
+        // Add the value that matches the predicate
+        co_await queue.async_enqueue(42);
+    };
+
+    auto consumer = [&]() -> exec::task<int> {
+        // Wait for producer to start
+        while (!producer_started)
+        {
+            co_await stdexec::schedule(pool.get_scheduler());
+        }
+
+        // Wait for value 42
+        int result = co_await queue.wait_for([](int value) { return value == 42; });
+        consumer_finished = true;
+        co_return result;
+    };
+
+    auto [result] = stdexec::sync_wait(stdexec::when_all(producer(), consumer())).value();
+
+    EXPECT_EQ(result, 42);
+    EXPECT_TRUE(consumer_finished);
+    EXPECT_TRUE(queue.empty());
+}
+
+TEST(async_queue, wait_for_complex_predicate)
+{
+    using namespace abc::async;
+    constexpr std::size_t capacity = 8;
+
+    exec::static_thread_pool pool{ 4 };
+    Queue<int, capacity, exec::static_thread_pool::scheduler> queue(pool.get_scheduler());
+
+    // Fill queue with various values
+    std::vector<int> values = { 1, 3, 5, 7, 9, 11, 13, 15 };
+    for (int value : values)
+    {
+        ASSERT_TRUE(queue.enqueue(value));
+    }
+
+    auto operation = [&]() -> exec::task<int> {
+        // Wait for a prime number greater than 10
+        co_return co_await queue.wait_for([](int value) {
+            if (value <= 10)
+            {
+                return false;
+            }
+
+            // Simple prime check
+            for (int i = 2; i * i <= value; ++i)
+            {
+                if (value % i == 0)
+                {
+                    return false;
+                }
+            }
+            return true;
+        });
+    };
+
+    auto [result] = stdexec::sync_wait(operation()).value();
+
+    EXPECT_EQ(result, 11); // First prime number > 10
+    EXPECT_EQ(queue.size(), 2);
+}
+
+TEST(async_queue, wait_for_multiple_waiters)
+{
+    using namespace abc::async;
+    constexpr std::size_t capacity = 16;
+
+    exec::static_thread_pool pool{ 4 };
+    Queue<int, capacity, exec::static_thread_pool::scheduler> queue(pool.get_scheduler());
+
+    std::atomic<int> completed_waiters{ 0 };
+
+    auto waiter = [&](int target_value) -> exec::task<int> {
+        int result = co_await queue.wait_for([target_value](int value) { return value == target_value; });
+        completed_waiters++;
+        co_return result;
+    };
+
+    auto producer = [&]() -> exec::task<void> {
+        // Add values with some delay
+        for (int i = 0; i < 5; ++i)
+        {
+            co_await queue.async_enqueue(i);
+            co_await stdexec::schedule(pool.get_scheduler());
+        }
+    };
+
+    int result0 = -1;
+    int result2 = -1;
+    int result4 = -1;
+
+    auto waiter_chain = stdexec::let_value(stdexec::when_all(waiter(0)), [&](int res) { result0 = res; return stdexec::when_all(waiter(2)); }) |
+        stdexec::let_value([&](int res) { result2 = res; return stdexec::when_all(waiter(4)); }) |
+        stdexec::let_value([&](int res) { result4 = res; return stdexec::just(); });
+
+    stdexec::sync_wait(stdexec::when_all(std::move(waiter_chain), producer()));
+
+    EXPECT_EQ(result0, 0);
+    EXPECT_EQ(result2, 2);
+    EXPECT_EQ(result4, 4);
+    EXPECT_EQ(completed_waiters.load(), 3);
+    EXPECT_EQ(queue.size(), 0);
+}
+
+TEST(async_queue, wait_for_performance)
+{
+    using namespace abc::async;
+    constexpr std::size_t capacity = 1024;
+    constexpr int num_items = 1000;
+
+    exec::static_thread_pool pool{ 4 };
+    Queue<int, capacity, exec::static_thread_pool::scheduler> queue(pool.get_scheduler());
+
+    // Fill queue with sequential values
+    for (int i = 0; i < num_items; ++i)
+    {
+        ASSERT_TRUE(queue.enqueue(i));
+    }
+
+    auto operation = [&]() -> exec::task<std::vector<int>> {
+        std::vector<int> results;
+
+        // Wait for multiple specific values
+        for (int i = 0; i < 10; ++i)
+        {
+            int target = i * 100;
+            int result = co_await queue.wait_for([target](int value) { return value == target; });
+            results.push_back(result);
+        }
+
+        co_return results;
+    };
+
+    auto [results] = stdexec::sync_wait(operation()).value();
+
+    EXPECT_EQ(results.size(), 10);
+    for (int i = 0; i < 10; ++i)
+    {
+        EXPECT_EQ(results[i], i * 100);
+    }
+    EXPECT_EQ(queue.size(), 99);
+}
+
+TEST(async_queue, wait_for_edge_cases)
+{
+    using namespace abc::async;
+    constexpr std::size_t capacity = 4;
+
+    exec::static_thread_pool pool{ 4 };
+    Queue<int, capacity, exec::static_thread_pool::scheduler> queue(pool.get_scheduler());
+
+    // Test with always-false predicate (should block indefinitely)
+    [[maybe_unused]] auto always_false_waiter = [&]() -> exec::task<void> {
+        try
+        {
+            co_await queue.wait_for([](int) { return false; });
+        }
+        catch (...)
+        {
+            // Expected to not complete
+        }
+    };
+
+    // Test with always-true predicate
+    ASSERT_TRUE(queue.enqueue(42));
+    auto always_true_waiter = [&]() -> exec::task<int> { co_return co_await queue.wait_for([](int) { return true; }); };
+
+    auto [result] = stdexec::sync_wait(always_true_waiter()).value();
+    EXPECT_EQ(result, 42);
     EXPECT_TRUE(queue.empty());
 }

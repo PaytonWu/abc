@@ -8,6 +8,8 @@
 
 #include "queue_fwd_decl.h"
 
+#include <exec/task.hpp>
+
 #include <array>
 #include <atomic>
 #include <optional>
@@ -46,14 +48,15 @@ public:
     auto operator=(Queue &&) -> Queue & = delete;
 
     // Async enqueue operation
-    auto enqueue(T item) -> stdexec::sender auto;
+    auto async_enqueue(T item) -> exec::task<void>;
 
     // Async dequeue operation
-    auto dequeue() -> stdexec::sender auto;
+    auto async_dequeue() -> exec::task<T>;
 
     // Synchronous operations for convenience
-    auto try_enqueue(T item) -> bool;
-    auto try_dequeue() -> std::optional<T>;
+    auto enqueue(T && item) -> bool;
+    auto enqueue(T const & item) -> bool;
+    auto dequeue() -> std::optional<T>;
 
     // Query operations
     auto empty() const noexcept -> bool;
@@ -61,6 +64,8 @@ public:
     auto size() const noexcept -> std::size_t;
 
     constexpr auto capacity() const noexcept -> std::size_t;
+
+    auto wait_for(auto pred) -> exec::task<T>;
 };
 
 } // namespace abc::async

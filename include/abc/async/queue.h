@@ -8,20 +8,18 @@
 
 #include "queue_decl.h"
 
-#include <exec/task.hpp>
-
 namespace abc::async
 {
 
 template <typename T, std::size_t Capacity, stdexec::scheduler Scheduler>
-Queue<T, Capacity, Scheduler>::Queue(Scheduler scheduler)
-    : scheduler_{ scheduler }
+Queue<T, Capacity, Scheduler>::Queue(Scheduler scheduler) : scheduler_{ scheduler }
 {
     static_assert(Capacity > 0, "Queue capacity must be greater than 0");
     static_assert((Capacity & (Capacity - 1)) == 0, "Capacity must be a power of 2");
 
     // Initialize all sequence numbers
-    for (size_t i = 0; i < Capacity; ++i) {
+    for (size_t i = 0; i < Capacity; ++i)
+    {
         buffer_[i].sequence.store(i, std::memory_order_relaxed);
     }
 }
@@ -53,29 +51,74 @@ Queue<T, Capacity, Scheduler>::size() const noexcept
 
 template <typename T, std::size_t Capacity, stdexec::scheduler Scheduler>
 bool
-Queue<T, Capacity, Scheduler>::try_enqueue(T item)
+Queue<T, Capacity, Scheduler>::enqueue(T && item)
 {
     std::size_t pos = tail_.load(std::memory_order_relaxed);
 
-    for (;;) {
+    for (;;)
+    {
         // Get the cell at the current position
-        Cell* cell = &buffer_[pos & (Capacity - 1)];
+        Cell * cell = &buffer_[pos & (Capacity - 1)];
         std::size_t seq = cell->sequence.load(std::memory_order_acquire);
         intptr_t diff = (intptr_t)seq - (intptr_t)pos;
 
-        if (diff == 0) {
+        if (diff == 0)
+        {
             // Cell is available, try to claim it
-            if (tail_.compare_exchange_weak(pos, pos + 1, std::memory_order_relaxed)) {
+            if (tail_.compare_exchange_weak(pos, pos + 1, std::memory_order_relaxed))
+            {
                 // Store the data
                 cell->data = std::move(item);
                 // Make the data available to consumers
                 cell->sequence.store(pos + 1, std::memory_order_release);
                 return true;
             }
-        } else if (diff < 0) {
+        }
+        else if (diff < 0)
+        {
             // Queue is full
             return false;
-        } else {
+        }
+        else
+        {
+            // Another thread claimed the cell, get updated position
+            pos = tail_.load(std::memory_order_relaxed);
+        }
+    }
+}
+
+template <typename T, std::size_t Capacity, stdexec::scheduler Scheduler>
+bool
+Queue<T, Capacity, Scheduler>::enqueue(T const & item)
+{
+    std::size_t pos = tail_.load(std::memory_order_relaxed);
+
+    for (;;)
+    {
+        // Get the cell at the current position
+        Cell * cell = &buffer_[pos & (Capacity - 1)];
+        std::size_t seq = cell->sequence.load(std::memory_order_acquire);
+        intptr_t diff = (intptr_t)seq - (intptr_t)pos;
+
+        if (diff == 0)
+        {
+            // Cell is available, try to claim it
+            if (tail_.compare_exchange_weak(pos, pos + 1, std::memory_order_relaxed))
+            {
+                // Store the data
+                cell->data = item;
+                // Make the data available to consumers
+                cell->sequence.store(pos + 1, std::memory_order_release);
+                return true;
+            }
+        }
+        else if (diff < 0)
+        {
+            // Queue is full
+            return false;
+        }
+        else
+        {
             // Another thread claimed the cell, get updated position
             pos = tail_.load(std::memory_order_relaxed);
         }
@@ -84,29 +127,36 @@ Queue<T, Capacity, Scheduler>::try_enqueue(T item)
 
 template <typename T, std::size_t Capacity, stdexec::scheduler Scheduler>
 std::optional<T>
-Queue<T, Capacity, Scheduler>::try_dequeue()
+Queue<T, Capacity, Scheduler>::dequeue()
 {
     std::size_t pos = head_.load(std::memory_order_relaxed);
 
-    for (;;) {
+    for (;;)
+    {
         // Get the cell at the current position
-        Cell* cell = &buffer_[pos & (Capacity - 1)];
+        Cell * cell = &buffer_[pos & (Capacity - 1)];
         std::size_t seq = cell->sequence.load(std::memory_order_acquire);
         intptr_t diff = (intptr_t)seq - (intptr_t)(pos + 1);
 
-        if (diff == 0) {
+        if (diff == 0)
+        {
             // Cell has data, try to claim it
-            if (head_.compare_exchange_weak(pos, pos + 1, std::memory_order_relaxed)) {
+            if (head_.compare_exchange_weak(pos, pos + 1, std::memory_order_relaxed))
+            {
                 // Extract the data
                 T result = std::move(cell->data);
                 // Mark the cell as empty
                 cell->sequence.store(pos + Capacity, std::memory_order_release);
                 return result;
             }
-        } else if (diff < 0) {
+        }
+        else if (diff < 0)
+        {
             // Queue is empty
             return std::nullopt;
-        } else {
+        }
+        else
+        {
             // Another thread claimed the cell, get updated position
             pos = head_.load(std::memory_order_relaxed);
         }
@@ -115,35 +165,35 @@ Queue<T, Capacity, Scheduler>::try_dequeue()
 
 template <typename T, std::size_t Capacity, stdexec::scheduler Scheduler>
 auto
-Queue<T, Capacity, Scheduler>::enqueue(T item) -> stdexec::sender auto
+Queue<T, Capacity, Scheduler>::async_enqueue(T item) -> exec::task<void>
 {
-    return stdexec::let_value(stdexec::just(std::move(item)), [this](auto && item) -> exec::task<void> {
-        while (true) {
-            if (try_enqueue(std::forward<decltype(item)>(item))) {
-                co_return;
-            }
-
-            // Queue is full, yield and retry
-            co_await stdexec::schedule(scheduler_);
+    while (true)
+    {
+        if (enqueue(std::move(item)))
+        {
+            co_return;
         }
-    });
+
+        // Queue is full, yield and retry
+        co_await stdexec::schedule(scheduler_);
+    }
 }
 
 template <typename T, std::size_t Capacity, stdexec::scheduler Scheduler>
 auto
-Queue<T, Capacity, Scheduler>::dequeue() -> stdexec::sender auto
+Queue<T, Capacity, Scheduler>::async_dequeue() -> exec::task<T>
 {
-    return [this]() -> exec::task<T> {
-        while (true) {
-            auto result = try_dequeue();
-            if (result) {
-                co_return std::move(*result);
-            }
-
-            // Queue is empty, yield and retry
-            co_await stdexec::schedule(scheduler_);
+    while (true)
+    {
+        auto result = dequeue();
+        if (result)
+        {
+            co_return std::move(*result);
         }
-    }();
+
+        // Queue is empty, yield and retry
+        co_await stdexec::schedule(scheduler_);
+    }
 }
 
 template <typename T, std::size_t Capacity, stdexec::scheduler Scheduler>
@@ -151,6 +201,25 @@ constexpr auto
 Queue<T, Capacity, Scheduler>::capacity() const noexcept -> std::size_t
 {
     return Capacity;
+}
+
+template <typename T, std::size_t Capacity, stdexec::scheduler Scheduler>
+auto
+Queue<T, Capacity, Scheduler>::wait_for(auto pred) -> exec::task<T>
+{
+    while (true)
+    {
+        auto result = dequeue();
+        if (result)
+        {
+            if (auto value = std::move(*result); static_cast<bool>(pred(value)))
+            {
+                co_return value;
+            }
+        }
+
+        co_await stdexec::schedule(scheduler_);
+    }
 }
 
 } // namespace abc::async
