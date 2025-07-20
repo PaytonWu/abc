@@ -133,6 +133,9 @@ abc_category() noexcept -> std::error_category const &
                 case errc::view_built_from_rvalue:
                     return "view built from rvalue";
 
+                case errc::task_done_called_too_many_times:
+                    return "task done called too many times";
+
                 default:
                     assert(false);
                     return "unknown error";
