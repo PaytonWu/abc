@@ -67,8 +67,6 @@ public:
 
     constexpr auto capacity() const noexcept -> std::size_t;
 
-    auto wait_for(auto pred) -> exec::task<T>;
-
     auto task_done() -> void;
     auto join() -> exec::task<void>;
 };

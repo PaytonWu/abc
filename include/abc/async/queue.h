@@ -209,25 +209,6 @@ Queue<T, Capacity, Scheduler>::capacity() const noexcept -> std::size_t
 
 template <typename T, std::size_t Capacity, stdexec::scheduler Scheduler>
 auto
-Queue<T, Capacity, Scheduler>::wait_for(auto pred) -> exec::task<T>
-{
-    while (true)
-    {
-        auto result = dequeue();
-        if (result)
-        {
-            if (auto value = std::move(*result); static_cast<bool>(pred(value)))
-            {
-                co_return value;
-            }
-        }
-
-        co_await stdexec::schedule(scheduler_);
-    }
-}
-
-template <typename T, std::size_t Capacity, stdexec::scheduler Scheduler>
-auto
 Queue<T, Capacity, Scheduler>::task_done() -> void
 {
     if (unfinished_.load(std::memory_order_relaxed) <= 0)
