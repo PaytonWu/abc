@@ -12,6 +12,7 @@
 
 #include <array>
 #include <atomic>
+#include <cstdint>
 #include <optional>
 
 namespace abc::async
@@ -35,6 +36,7 @@ private:
     static constexpr std::size_t cache_line_size_in_bytes = 64; // Assuming 64-byte cache line size
     alignas(cache_line_size_in_bytes) std::atomic<std::size_t> head_{ 0 };
     alignas(cache_line_size_in_bytes) std::atomic<std::size_t> tail_{ 0 };
+    alignas(cache_line_size_in_bytes) std::atomic<std::int64_t> unfinished_{ 0 };
 
     Scheduler scheduler_;
 
@@ -66,6 +68,9 @@ public:
     constexpr auto capacity() const noexcept -> std::size_t;
 
     auto wait_for(auto pred) -> exec::task<T>;
+
+    auto task_done() -> void;
+    auto join() -> exec::task<void>;
 };
 
 } // namespace abc::async

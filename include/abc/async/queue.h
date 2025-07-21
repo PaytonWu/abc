@@ -8,6 +8,8 @@
 
 #include "queue_decl.h"
 
+#include "abc/error.h"
+
 namespace abc::async
 {
 
@@ -71,6 +73,7 @@ Queue<T, Capacity, Scheduler>::enqueue(T && item)
                 cell->data = std::move(item);
                 // Make the data available to consumers
                 cell->sequence.store(pos + 1, std::memory_order_release);
+                unfinished_.fetch_add(1, std::memory_order_release);
                 return true;
             }
         }
@@ -109,6 +112,7 @@ Queue<T, Capacity, Scheduler>::enqueue(T const & item)
                 cell->data = item;
                 // Make the data available to consumers
                 cell->sequence.store(pos + 1, std::memory_order_release);
+                unfinished_.fetch_add(1, std::memory_order_release);
                 return true;
             }
         }
@@ -220,6 +224,30 @@ Queue<T, Capacity, Scheduler>::wait_for(auto pred) -> exec::task<T>
 
         co_await stdexec::schedule(scheduler_);
     }
+}
+
+template <typename T, std::size_t Capacity, stdexec::scheduler Scheduler>
+auto
+Queue<T, Capacity, Scheduler>::task_done() -> void
+{
+    if (unfinished_.load(std::memory_order_relaxed) <= 0)
+    {
+        throw_error(errc::task_done_called_too_many_times);
+    }
+
+    unfinished_.fetch_sub(1, std::memory_order_relaxed);
+}
+
+template <typename T, std::size_t Capacity, stdexec::scheduler Scheduler>
+auto
+Queue<T, Capacity, Scheduler>::join() -> exec::task<void>
+{
+    while (unfinished_.load(std::memory_order_relaxed) > 0)
+    {
+        co_await stdexec::schedule(scheduler_);
+    }
+
+    co_return;
 }
 
 } // namespace abc::async
