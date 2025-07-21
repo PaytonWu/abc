@@ -223,48 +223,48 @@ TEST(async_queue, boundary_conditions)
     EXPECT_FALSE(queue.dequeue().has_value()); // Dequeue should fail
 }
 
-//TEST(async_queue, interleaved_operations)
+// TEST(async_queue, interleaved_operations)
 //{
-//    using namespace abc::async;
+//     using namespace abc::async;
 //
-//    constexpr std::size_t capacity = 16;
-//    Queue<int, capacity, exec::inline_scheduler> queue(exec::inline_scheduler{});
+//     constexpr std::size_t capacity = 16;
+//     Queue<int, capacity, exec::inline_scheduler> queue(exec::inline_scheduler{});
 //
-//    std::atomic<bool> stop{ false };
-//    std::vector<std::thread> threads;
+//     std::atomic<bool> stop{ false };
+//     std::vector<std::thread> threads;
 //
-//    // Enqueue thread
-//    threads.emplace_back([&queue, &stop]() {
-//        int value = 0;
-//        while (!stop.load())
-//        {
-//            queue.enqueue(value++);
-//        }
-//    });
+//     // Enqueue thread
+//     threads.emplace_back([&queue, &stop]() {
+//         int value = 0;
+//         while (!stop.load())
+//         {
+//             queue.enqueue(value++);
+//         }
+//     });
 //
-//    // Dequeue thread
-//    threads.emplace_back([&queue, &stop]() {
-//        while (!stop.load())
-//        {
-//            auto item = queue.dequeue();
-//            if (item.has_value())
-//            {
-//                EXPECT_GE(item.value(), 0);
-//            }
-//        }
-//    });
+//     // Dequeue thread
+//     threads.emplace_back([&queue, &stop]() {
+//         while (!stop.load())
+//         {
+//             auto item = queue.dequeue();
+//             if (item.has_value())
+//             {
+//                 EXPECT_GE(item.value(), 0);
+//             }
+//         }
+//     });
 //
-//    // Run threads for a short duration
-//    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-//    stop.store(true);
+//     // Run threads for a short duration
+//     std::this_thread::sleep_for(std::chrono::milliseconds(100));
+//     stop.store(true);
 //
-//    for (auto & thread : threads)
-//    {
-//        thread.join();
-//    }
+//     for (auto & thread : threads)
+//     {
+//         thread.join();
+//     }
 //
-//    EXPECT_TRUE(queue.empty() || !queue.full());
-//}
+//     EXPECT_TRUE(queue.empty() || !queue.full());
+// }
 
 TEST(async_queue, exception_safety)
 {
@@ -646,9 +646,19 @@ TEST(async_queue, wait_for_multiple_waiters)
     int result2 = -1;
     int result4 = -1;
 
-    auto waiter_chain = stdexec::let_value(stdexec::when_all(waiter(0)), [&](int res) { result0 = res; return stdexec::when_all(waiter(2)); }) |
-        stdexec::let_value([&](int res) { result2 = res; return stdexec::when_all(waiter(4)); }) |
-        stdexec::let_value([&](int res) { result4 = res; return stdexec::just(); });
+    auto waiter_chain = stdexec::let_value(stdexec::when_all(waiter(0)),
+                                           [&](int res) {
+                                               result0 = res;
+                                               return stdexec::when_all(waiter(2));
+                                           }) |
+                        stdexec::let_value([&](int res) {
+                            result2 = res;
+                            return stdexec::when_all(waiter(4));
+                        }) |
+                        stdexec::let_value([&](int res) {
+                            result4 = res;
+                            return stdexec::just();
+                        });
 
     stdexec::sync_wait(stdexec::when_all(std::move(waiter_chain), producer()));
 
@@ -725,4 +735,438 @@ TEST(async_queue, wait_for_edge_cases)
     auto [result] = stdexec::sync_wait(always_true_waiter()).value();
     EXPECT_EQ(result, 42);
     EXPECT_TRUE(queue.empty());
+}
+
+TEST(async_queue, task_done_basic_functionality)
+{
+    using namespace abc::async;
+    constexpr std::size_t capacity = 4;
+
+    exec::static_thread_pool pool{ 4 };
+    Queue<int, capacity, exec::static_thread_pool::scheduler> queue(pool.get_scheduler());
+
+    // Initially, unfinished count should be 0, so task_done() should throw
+    EXPECT_THROW(queue.task_done(), abc::abc_error);
+
+    // Enqueue an item (this increments unfinished count)
+    ASSERT_TRUE(queue.enqueue(42));
+
+    // Now task_done() should work
+    EXPECT_NO_THROW(queue.task_done());
+
+    // Calling task_done() again should throw since count is back to 0
+    EXPECT_THROW(queue.task_done(), abc::abc_error);
+}
+
+TEST(async_queue, task_done_multiple_items)
+{
+    using namespace abc::async;
+    constexpr std::size_t capacity = 8;
+
+    exec::static_thread_pool pool{ 4 };
+    Queue<int, capacity, exec::static_thread_pool::scheduler> queue(pool.get_scheduler());
+
+    // Enqueue multiple items
+    constexpr int num_items = 5;
+    for (int i = 0; i < num_items; ++i)
+    {
+        ASSERT_TRUE(queue.enqueue(i));
+    }
+
+    // Call task_done() for each item
+    for (int i = 0; i < num_items; ++i)
+    {
+        EXPECT_NO_THROW(queue.task_done());
+    }
+
+    // One more call should throw
+    EXPECT_THROW(queue.task_done(), abc::abc_error);
+}
+
+TEST(async_queue, task_done_exception_type)
+{
+    using namespace abc::async;
+    constexpr std::size_t capacity = 4;
+
+    exec::static_thread_pool pool{ 4 };
+    Queue<int, capacity, exec::static_thread_pool::scheduler> queue(pool.get_scheduler());
+
+    // Test that the correct error code is thrown
+    try
+    {
+        queue.task_done();
+        FAIL() << "Expected abc::abc_error to be thrown";
+    }
+    catch (abc::abc_error const & e)
+    {
+        EXPECT_EQ(e.code(), abc::make_error_code(abc::errc::task_done_called_too_many_times));
+        EXPECT_STREQ(e.what(), "task done called too many times");
+    }
+    catch (...)
+    {
+        FAIL() << "Unexpected exception type thrown";
+    }
+}
+
+TEST(async_queue, task_done_concurrent_access)
+{
+    using namespace abc::async;
+    constexpr std::size_t capacity = 1024;
+    constexpr int num_threads = 8;
+    constexpr int items_per_thread = 100;
+
+    exec::static_thread_pool pool{ num_threads };
+    Queue<int, capacity, exec::static_thread_pool::scheduler> queue(pool.get_scheduler());
+
+    std::atomic<int> enqueue_count{ 0 };
+    std::atomic<int> task_done_count{ 0 };
+    std::atomic<int> exceptions_count{ 0 };
+
+    // Enqueue items from multiple threads
+    std::vector<std::thread> enqueue_threads;
+    for (int t = 0; t < num_threads; ++t)
+    {
+        enqueue_threads.emplace_back([&, t]() {
+            for (int i = 0; i < items_per_thread; ++i)
+            {
+                while (!queue.enqueue(t * items_per_thread + i))
+                {
+                    // Retry if queue is full
+                }
+                ++enqueue_count;
+            }
+        });
+    }
+
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+
+    // Call task_done from multiple threads
+    std::vector<std::thread> task_done_threads;
+    for (int t = 0; t < num_threads; ++t)
+    {
+        task_done_threads.emplace_back([&]() {
+            for (int i = 0; i < items_per_thread; ++i)
+            {
+                try
+                {
+                    queue.task_done();
+                    ++task_done_count;
+                }
+                catch (abc::abc_error const &)
+                {
+                    ++exceptions_count;
+                }
+            }
+        });
+    }
+
+    // Join all threads
+    for (auto & t : enqueue_threads)
+    {
+        t.join();
+    }
+    for (auto & t : task_done_threads)
+    {
+        t.join();
+    }
+
+    // Verify that enqueue_count equals task_done_count (no exceptions should occur with proper synchronization)
+    EXPECT_EQ(enqueue_count.load(), num_threads * items_per_thread);
+    EXPECT_EQ(task_done_count.load(), num_threads * items_per_thread);
+    EXPECT_EQ(exceptions_count.load(), 0);
+}
+
+TEST(async_queue, join_with_empty_queue)
+{
+    using namespace abc::async;
+    constexpr std::size_t capacity = 4;
+
+    exec::static_thread_pool pool{ 4 };
+    Queue<int, capacity, exec::static_thread_pool::scheduler> queue(pool.get_scheduler());
+
+    // With no enqueued items, join should return immediately
+    auto start_time = std::chrono::steady_clock::now();
+
+    auto join_task = [&]() -> exec::task<void> { co_await queue.join(); };
+
+    stdexec::sync_wait(join_task());
+
+    auto end_time = std::chrono::steady_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
+
+    // Should complete very quickly (less than 10ms)
+    EXPECT_LT(duration.count(), 10);
+}
+
+TEST(async_queue, join_waits_for_task_completion)
+{
+    using namespace abc::async;
+    constexpr std::size_t capacity = 4;
+
+    exec::static_thread_pool pool{ 4 };
+    Queue<int, capacity, exec::static_thread_pool::scheduler> queue(pool.get_scheduler());
+
+    std::atomic<bool> join_completed{ false };
+    std::atomic<bool> task_done_called{ false };
+
+    // Enqueue an item
+    ASSERT_TRUE(queue.enqueue(42));
+
+    auto join_task = [&]() -> exec::task<void> {
+        co_await queue.join();
+        join_completed = true;
+    };
+
+    auto task_done_task = [&]() -> exec::task<void> {
+        // Wait a bit to ensure join starts first
+        co_await stdexec::schedule(pool.get_scheduler());
+        co_await stdexec::schedule(pool.get_scheduler());
+
+        // Verify join hasn't completed yet
+        EXPECT_FALSE(join_completed.load());
+
+        queue.task_done();
+        task_done_called = true;
+    };
+
+    stdexec::sync_wait(stdexec::when_all(join_task(), task_done_task()));
+
+    EXPECT_TRUE(join_completed.load());
+    EXPECT_TRUE(task_done_called.load());
+}
+
+TEST(async_queue, join_with_multiple_tasks)
+{
+    using namespace abc::async;
+    constexpr std::size_t capacity = 8;
+
+    exec::static_thread_pool pool{ 4 };
+    Queue<int, capacity, exec::static_thread_pool::scheduler> queue(pool.get_scheduler());
+
+    constexpr int num_items = 5;
+    std::atomic<int> tasks_completed{ 0 };
+    std::atomic<bool> join_completed{ false };
+
+    // Enqueue multiple items
+    for (int i = 0; i < num_items; ++i)
+    {
+        ASSERT_TRUE(queue.enqueue(i));
+    }
+
+    auto join_task = [&]() -> exec::task<void> {
+        co_await queue.join();
+        join_completed = true;
+    };
+
+    auto task_completion_simulator = [&]() -> exec::task<void> {
+        for (int i = 0; i < num_items; ++i)
+        {
+            // Wait a bit between task completions
+            co_await stdexec::schedule(pool.get_scheduler());
+
+            // Verify join hasn't completed yet (except on the last iteration)
+            if (i < num_items - 1)
+            {
+                EXPECT_FALSE(join_completed.load());
+            }
+
+            queue.task_done();
+            ++tasks_completed;
+        }
+    };
+
+    stdexec::sync_wait(stdexec::when_all(join_task(), task_completion_simulator()));
+
+    EXPECT_TRUE(join_completed.load());
+    EXPECT_EQ(tasks_completed.load(), num_items);
+}
+
+TEST(async_queue, multiple_join_waiters)
+{
+    using namespace abc::async;
+    constexpr std::size_t capacity = 4;
+
+    exec::static_thread_pool pool{ 4 };
+    Queue<int, capacity, exec::static_thread_pool::scheduler> queue(pool.get_scheduler());
+
+    constexpr int num_waiters = 3;
+    std::atomic<int> join_completions{ 0 };
+
+    // Enqueue one item
+    ASSERT_TRUE(queue.enqueue(42));
+
+    auto create_join_waiter = [&]() -> exec::task<void> {
+        co_await queue.join();
+        ++join_completions;
+    };
+
+    auto task_completer = [&]() -> exec::task<void> {
+        // Wait for all waiters to start
+        co_await stdexec::schedule(pool.get_scheduler());
+        co_await stdexec::schedule(pool.get_scheduler());
+
+        queue.task_done();
+    };
+
+    // Run all tasks (multiple waiters + task completer)
+    auto waiter1 = create_join_waiter();
+    auto waiter2 = create_join_waiter();
+    auto waiter3 = create_join_waiter();
+    auto completer = task_completer();
+
+    stdexec::sync_wait(stdexec::when_all(std::move(waiter1), std::move(waiter2), std::move(waiter3), std::move(completer)));
+
+    EXPECT_EQ(join_completions.load(), num_waiters);
+}
+
+TEST(async_queue, join_task_done_integration_workflow)
+{
+    using namespace abc::async;
+    constexpr std::size_t capacity = 8;
+
+    exec::static_thread_pool pool{ 4 };
+    Queue<int, capacity, exec::static_thread_pool::scheduler> queue(pool.get_scheduler());
+
+    std::atomic<int> items_processed{ 0 };
+    std::atomic<bool> all_tasks_completed{ false };
+
+    auto producer = [&]() -> exec::task<void> {
+        for (int i = 0; i < 5; ++i)
+        {
+            co_await queue.async_enqueue(i);
+        }
+    };
+
+    auto consumer = [&]() -> exec::task<void> {
+        for (int i = 0; i < 5; ++i)
+        {
+            int value = co_await queue.async_dequeue();
+            EXPECT_EQ(value, i);
+
+            // Simulate some work
+            co_await stdexec::schedule(pool.get_scheduler());
+
+            // Mark task as done
+            queue.task_done();
+            ++items_processed;
+        }
+    };
+
+    auto join_waiter = [&]() -> exec::task<void> {
+        co_await queue.join();
+        all_tasks_completed = true;
+    };
+
+    stdexec::sync_wait(stdexec::when_all(producer(), consumer(), join_waiter()));
+
+    EXPECT_EQ(items_processed.load(), 5);
+    EXPECT_TRUE(all_tasks_completed.load());
+    EXPECT_TRUE(queue.empty());
+}
+
+TEST(async_queue, join_with_concurrent_enqueue_dequeue_task_done)
+{
+    using namespace abc::async;
+    constexpr std::size_t capacity = 16;
+    constexpr int total_items = 100;
+
+    exec::static_thread_pool pool{ 8 };
+    Queue<int, capacity, exec::static_thread_pool::scheduler> queue(pool.get_scheduler());
+
+    std::atomic<int> items_produced{ 0 };
+    std::atomic<int> items_consumed{ 0 };
+    std::atomic<int> tasks_completed{ 0 };
+    std::atomic<bool> join_finished{ false };
+
+    auto producer = [&]() -> exec::task<void> {
+        for (int i = 0; i < total_items; ++i)
+        {
+            co_await queue.async_enqueue(i);
+            ++items_produced;
+        }
+    };
+
+    auto consumer = [&]() -> exec::task<void> {
+        for (int i = 0; i < total_items; ++i)
+        {
+            int value = co_await queue.async_dequeue();
+            ++items_consumed;
+
+            // Simulate variable work time
+            if (value % 3 == 0)
+            {
+                co_await stdexec::schedule(pool.get_scheduler());
+            }
+
+            queue.task_done();
+            ++tasks_completed;
+        }
+    };
+
+    auto join_monitor = [&]() -> exec::task<void> {
+        co_await queue.join();
+        join_finished = true;
+    };
+
+    stdexec::sync_wait(stdexec::when_all(producer(), consumer(), join_monitor()));
+
+    EXPECT_EQ(items_produced.load(), total_items);
+    EXPECT_EQ(items_consumed.load(), total_items);
+    EXPECT_EQ(tasks_completed.load(), total_items);
+    EXPECT_TRUE(join_finished.load());
+    EXPECT_TRUE(queue.empty());
+}
+
+TEST(async_queue, task_done_error_persistence)
+{
+    using namespace abc::async;
+    constexpr std::size_t capacity = 4;
+
+    exec::static_thread_pool pool{ 4 };
+    Queue<int, capacity, exec::static_thread_pool::scheduler> queue(pool.get_scheduler());
+
+    // Test that multiple calls when count is 0 all throw errors
+    for (int i = 0; i < 3; ++i)
+    {
+        EXPECT_THROW(queue.task_done(), abc::abc_error);
+    }
+
+    // Add one item and complete it
+    ASSERT_TRUE(queue.enqueue(1));
+    EXPECT_NO_THROW(queue.task_done());
+
+    // Multiple calls again should all throw
+    for (int i = 0; i < 3; ++i)
+    {
+        EXPECT_THROW(queue.task_done(), abc::abc_error);
+    }
+}
+
+TEST(async_queue, join_immediate_return_after_all_tasks_done)
+{
+    using namespace abc::async;
+    constexpr std::size_t capacity = 4;
+
+    exec::static_thread_pool pool{ 4 };
+    Queue<int, capacity, exec::static_thread_pool::scheduler> queue(pool.get_scheduler());
+
+    // Enqueue and immediately complete tasks
+    for (int i = 0; i < 3; ++i)
+    {
+        ASSERT_TRUE(queue.enqueue(i));
+        queue.task_done();
+    }
+
+    // join() should return immediately
+    auto start_time = std::chrono::steady_clock::now();
+
+    auto join_task = [&]() -> exec::task<void> { co_await queue.join(); };
+
+    stdexec::sync_wait(join_task());
+
+    auto end_time = std::chrono::steady_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
+
+    // Should complete very quickly (less than 10ms)
+    EXPECT_LT(duration.count(), 10);
 }

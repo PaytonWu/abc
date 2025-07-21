@@ -209,18 +209,6 @@ Queue<T, Capacity, Scheduler>::capacity() const noexcept -> std::size_t
 
 template <typename T, std::size_t Capacity, stdexec::scheduler Scheduler>
 auto
-Queue<T, Capacity, Scheduler>::task_done() -> void
-{
-    if (unfinished_.load(std::memory_order_relaxed) <= 0)
-    {
-        throw_error(errc::task_done_called_too_many_times);
-    }
-
-    unfinished_.fetch_sub(1, std::memory_order_relaxed);
-}
-
-template <typename T, std::size_t Capacity, stdexec::scheduler Scheduler>
-auto
 Queue<T, Capacity, Scheduler>::wait_for(auto pred) -> exec::task<T>
 {
     while (true)
@@ -240,9 +228,21 @@ Queue<T, Capacity, Scheduler>::wait_for(auto pred) -> exec::task<T>
 
 template <typename T, std::size_t Capacity, stdexec::scheduler Scheduler>
 auto
+Queue<T, Capacity, Scheduler>::task_done() -> void
+{
+    if (unfinished_.load(std::memory_order_relaxed) <= 0)
+    {
+        throw_error(errc::task_done_called_too_many_times);
+    }
+
+    unfinished_.fetch_sub(1, std::memory_order_relaxed);
+}
+
+template <typename T, std::size_t Capacity, stdexec::scheduler Scheduler>
+auto
 Queue<T, Capacity, Scheduler>::join() -> exec::task<void>
 {
-    if (unfinished_.load(std::memory_order_relaxed) > 0)
+    while (unfinished_.load(std::memory_order_relaxed) > 0)
     {
         co_await stdexec::schedule(scheduler_);
     }
