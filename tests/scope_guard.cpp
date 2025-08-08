@@ -8,12 +8,13 @@
 #include <functional>
 #include <stdexcept>
 #include <string>
+#include <vector>
 
 namespace
 {
 
-// Test fixture for scope guard tests
-class ScopeGuardTest : public ::testing::Test
+// Test fixtures
+class ScopeExitTest : public ::testing::Test
 {
 protected:
     void
@@ -23,14 +24,33 @@ protected:
     }
 };
 
-// Helper function to test exception state
+class ScopeFailTest : public ::testing::Test
+{
+protected:
+    void
+    SetUp() override
+    {
+        // Reset any global state if needed
+    }
+};
+
+class ScopeSuccessTest : public ::testing::Test
+{
+protected:
+    void
+    SetUp() override
+    {
+        // Reset any global state if needed
+    }
+};
+
+// Helper functions
 void
 throw_exception()
 {
     throw std::runtime_error("test exception");
 }
 
-// Helper function that doesn't throw
 void
 no_throw_function()
 {
@@ -39,53 +59,45 @@ no_throw_function()
 
 } // namespace
 
-TEST_F(ScopeGuardTest, DefaultConstruction)
+// =============================================================================
+// ScopeExit Tests
+// =============================================================================
+
+TEST_F(ScopeExitTest, BasicFunctionality)
 {
     bool executed = false;
     {
-        auto guard = abc::make_scope_guard([&executed](bool exiting_exception) {
-            executed = true;
-            EXPECT_FALSE(exiting_exception);
-        });
+        auto guard = abc::make_scope_exit([&executed] { executed = true; });
         EXPECT_FALSE(executed);
     }
     EXPECT_TRUE(executed);
 }
 
-TEST_F(ScopeGuardTest, DirectConstruction)
+TEST_F(ScopeExitTest, DirectConstruction)
 {
     bool executed = false;
     {
-        abc::ScopeGuard<std::function<void(bool)>> guard([&executed](bool exiting_exception) {
-            executed = true;
-            EXPECT_FALSE(exiting_exception);
-        });
+        abc::ScopeExit<std::function<void()>> guard([&executed] { executed = true; });
         EXPECT_FALSE(executed);
     }
     EXPECT_TRUE(executed);
 }
 
-TEST_F(ScopeGuardTest, LambdaCapture)
+TEST_F(ScopeExitTest, LambdaCapture)
 {
     std::string message = "initial";
     {
-        auto guard = abc::make_scope_guard([&message](bool exiting_exception) {
-            message = "executed";
-            EXPECT_FALSE(exiting_exception);
-        });
+        auto guard = abc::make_scope_exit([&message] { message = "executed"; });
         EXPECT_EQ(message, "initial");
     }
     EXPECT_EQ(message, "executed");
 }
 
-TEST_F(ScopeGuardTest, MoveConstructor)
+TEST_F(ScopeExitTest, MoveConstructor)
 {
     bool executed = false;
     {
-        auto guard1 = abc::make_scope_guard([&executed](bool exiting_exception) {
-            executed = true;
-            EXPECT_FALSE(exiting_exception);
-        });
+        auto guard1 = abc::make_scope_exit([&executed] { executed = true; });
 
         auto guard2 = std::move(guard1);
         // guard1 should be released after move
@@ -94,64 +106,34 @@ TEST_F(ScopeGuardTest, MoveConstructor)
     EXPECT_TRUE(executed);
 }
 
-TEST_F(ScopeGuardTest, MoveConstructorReleasesOriginal)
+TEST_F(ScopeExitTest, ReleaseMethod)
 {
     bool executed = false;
     {
-        auto guard1 = abc::make_scope_guard([&executed](bool exiting_exception) {
-            executed = true;
-            EXPECT_FALSE(exiting_exception);
-        });
-
-        auto guard2 = std::move(guard1);
-        // guard1 should be released, so it won't execute when destroyed
-        EXPECT_FALSE(executed);
-    }
-    EXPECT_TRUE(executed);
-}
-
-TEST_F(ScopeGuardTest, ReleaseMethod)
-{
-    bool executed = false;
-    {
-        auto guard = abc::make_scope_guard([&executed](bool exiting_exception) {
-            executed = true;
-            EXPECT_FALSE(exiting_exception);
-        });
+        auto guard = abc::make_scope_exit([&executed] { executed = true; });
         guard.release();
         EXPECT_FALSE(executed);
     }
     EXPECT_FALSE(executed); // Should still be false after destruction
 }
 
-TEST_F(ScopeGuardTest, ReleaseAfterMove)
+TEST_F(ScopeExitTest, ExecutesOnNormalExit)
 {
     bool executed = false;
     {
-        auto guard1 = abc::make_scope_guard([&executed](bool exiting_exception) {
-            executed = true;
-            EXPECT_FALSE(exiting_exception);
-        });
-
-        auto guard2 = std::move(guard1);
-        guard2.release();
-        EXPECT_FALSE(executed);
+        auto guard = abc::make_scope_exit([&executed] { executed = true; });
+        no_throw_function();
     }
-    EXPECT_FALSE(executed);
+    EXPECT_TRUE(executed);
 }
 
-TEST_F(ScopeGuardTest, ExceptionDetection)
+TEST_F(ScopeExitTest, ExecutesOnException)
 {
     bool executed = false;
-    bool was_exception = false;
 
     try
     {
-        auto guard = abc::make_scope_guard([&executed, &was_exception](bool exiting_exception) {
-            executed = true;
-            was_exception = exiting_exception;
-        });
-
+        auto guard = abc::make_scope_exit([&executed] { executed = true; });
         throw_exception();
     }
     catch (std::runtime_error const &)
@@ -160,59 +142,169 @@ TEST_F(ScopeGuardTest, ExceptionDetection)
     }
 
     EXPECT_TRUE(executed);
-    EXPECT_TRUE(was_exception);
 }
 
-TEST_F(ScopeGuardTest, NoExceptionDetection)
+TEST_F(ScopeExitTest, MultipleGuards)
 {
-    bool executed = false;
-    bool was_exception = false;
-
+    std::vector<int> execution_order;
     {
-        auto guard = abc::make_scope_guard([&executed, &was_exception](bool exiting_exception) {
-            executed = true;
-            was_exception = exiting_exception;
-        });
+        auto guard1 = abc::make_scope_exit([&execution_order] { execution_order.push_back(1); });
 
-        no_throw_function();
+        auto guard2 = abc::make_scope_exit([&execution_order] { execution_order.push_back(2); });
+
+        auto guard3 = abc::make_scope_exit([&execution_order] { execution_order.push_back(3); });
+
+        EXPECT_TRUE(execution_order.empty());
     }
 
-    EXPECT_TRUE(executed);
-    EXPECT_FALSE(was_exception);
+    // Guards execute in reverse order of declaration (LIFO)
+    ASSERT_EQ(execution_order.size(), 3);
+    EXPECT_EQ(execution_order[0], 3);
+    EXPECT_EQ(execution_order[1], 2);
+    EXPECT_EQ(execution_order[2], 1);
 }
 
-TEST_F(ScopeGuardTest, NestedExceptions)
+TEST_F(ScopeExitTest, FunctionObject)
 {
-    bool outer_executed = false;
-    bool inner_executed = false;
-    bool outer_was_exception = false;
-    bool inner_was_exception = false;
+    struct Functor
+    {
+        bool & executed;
+
+        Functor(bool & exec) : executed(exec)
+        {
+        }
+
+        void
+        operator()() const
+        {
+            executed = true;
+        }
+    };
+
+    bool executed = false;
+    {
+        auto guard = abc::make_scope_exit(Functor(executed));
+        EXPECT_FALSE(executed);
+    }
+    EXPECT_TRUE(executed);
+}
+
+TEST_F(ScopeExitTest, TypeTraits)
+{
+    auto guard = abc::make_scope_exit([] {});
+
+    // Should not be copy constructible or assignable
+    EXPECT_FALSE(std::is_copy_constructible_v<decltype(guard)>);
+    EXPECT_FALSE(std::is_copy_assignable_v<decltype(guard)>);
+    EXPECT_FALSE(std::is_move_assignable_v<decltype(guard)>);
+
+    // Should be move constructible
+    EXPECT_TRUE(std::is_move_constructible_v<decltype(guard)>);
+}
+
+// =============================================================================
+// ScopeFail Tests
+// =============================================================================
+
+TEST_F(ScopeFailTest, BasicFunctionality)
+{
+    bool executed = false;
+    {
+        auto guard = abc::make_scope_fail([&executed] { executed = true; });
+        EXPECT_FALSE(executed);
+    }
+    // Should NOT execute on normal exit
+    EXPECT_FALSE(executed);
+}
+
+TEST_F(ScopeFailTest, ExecutesOnException)
+{
+    bool executed = false;
 
     try
     {
-        auto outer_guard = abc::make_scope_guard([&outer_executed, &outer_was_exception](bool exiting_exception) {
-            outer_executed = true;
-            outer_was_exception = exiting_exception;
-        });
+        auto guard = abc::make_scope_fail([&executed] { executed = true; });
+        throw_exception();
+    }
+    catch (std::runtime_error const &)
+    {
+        // Exception caught
+    }
+
+    // Should execute when exiting due to exception
+    EXPECT_TRUE(executed);
+}
+
+TEST_F(ScopeFailTest, DoesNotExecuteOnNormalExit)
+{
+    bool executed = false;
+    {
+        auto guard = abc::make_scope_fail([&executed] { executed = true; });
+        no_throw_function();
+    }
+    EXPECT_FALSE(executed);
+}
+
+TEST_F(ScopeFailTest, ReleaseMethod)
+{
+    bool executed = false;
+
+    try
+    {
+        auto guard = abc::make_scope_fail([&executed] { executed = true; });
+        guard.release();
+        throw_exception();
+    }
+    catch (std::runtime_error const &)
+    {
+        // Exception caught
+    }
+
+    // Should not execute because guard was released
+    EXPECT_FALSE(executed);
+}
+
+TEST_F(ScopeFailTest, MoveConstructor)
+{
+    bool executed = false;
+
+    try
+    {
+        auto guard1 = abc::make_scope_fail([&executed] { executed = true; });
+
+        auto guard2 = std::move(guard1);
+        // guard1 should be released after move
+        throw_exception();
+    }
+    catch (std::runtime_error const &)
+    {
+        // Exception caught
+    }
+
+    EXPECT_TRUE(executed); // guard2 should execute
+}
+
+TEST_F(ScopeFailTest, NestedExceptions)
+{
+    bool outer_executed = false;
+    bool inner_executed = false;
+
+    try
+    {
+        auto outer_guard = abc::make_scope_fail([&outer_executed] { outer_executed = true; });
 
         try
         {
-            auto inner_guard = abc::make_scope_guard([&inner_executed, &inner_was_exception](bool exiting_exception) {
-                inner_executed = true;
-                inner_was_exception = exiting_exception;
-            });
-
+            auto inner_guard = abc::make_scope_fail([&inner_executed] { inner_executed = true; });
             throw_exception();
         }
         catch (std::runtime_error const &)
         {
-            // Inner exception caught
+            // Inner exception caught, so inner_guard should execute
         }
 
-        // Outer scope should still be active
-        EXPECT_FALSE(outer_executed);
-        EXPECT_TRUE(inner_executed);
-        EXPECT_TRUE(inner_was_exception);
+        // After catching the inner exception, we're no longer in an exception state
+        // for the outer scope, so outer_guard should NOT execute
     }
     catch (...)
     {
@@ -220,279 +312,328 @@ TEST_F(ScopeGuardTest, NestedExceptions)
         FAIL() << "Unexpected exception in outer scope";
     }
 
-    EXPECT_TRUE(outer_executed);
-    EXPECT_FALSE(outer_was_exception);
+    EXPECT_TRUE(inner_executed);  // Inner guard should execute due to exception
+    EXPECT_FALSE(outer_executed); // Outer guard should not execute (normal exit)
 }
 
-TEST_F(ScopeGuardTest, MultipleGuards)
+TEST_F(ScopeFailTest, MultipleGuardsWithException)
 {
-    int execution_count = 0;
+    std::vector<int> execution_order;
 
+    try
     {
-        auto guard1 = abc::make_scope_guard([&execution_count](bool exiting_exception) {
-            execution_count++;
-            EXPECT_FALSE(exiting_exception);
-        });
+        auto guard1 = abc::make_scope_fail([&execution_order] { execution_order.push_back(1); });
 
-        auto guard2 = abc::make_scope_guard([&execution_count](bool exiting_exception) {
-            execution_count++;
-            EXPECT_FALSE(exiting_exception);
-        });
+        auto guard2 = abc::make_scope_fail([&execution_order] { execution_order.push_back(2); });
 
-        auto guard3 = abc::make_scope_guard([&execution_count](bool exiting_exception) {
-            execution_count++;
-            EXPECT_FALSE(exiting_exception);
-        });
+        auto guard3 = abc::make_scope_fail([&execution_order] { execution_order.push_back(3); });
 
-        EXPECT_EQ(execution_count, 0);
+        throw_exception();
+    }
+    catch (std::runtime_error const &)
+    {
+        // Exception caught
     }
 
-    EXPECT_EQ(execution_count, 3);
+    // All guards should execute in reverse order of declaration (LIFO)
+    ASSERT_EQ(execution_order.size(), 3);
+    EXPECT_EQ(execution_order[0], 3);
+    EXPECT_EQ(execution_order[1], 2);
+    EXPECT_EQ(execution_order[2], 1);
 }
 
-TEST_F(ScopeGuardTest, GuardWithState)
+TEST_F(ScopeFailTest, TypeTraits)
 {
-    struct State
-    {
-        int value = 0;
-        std::string message = "initial";
-    };
+    auto guard = abc::make_scope_fail([] {});
 
-    State state;
-    {
-        auto guard = abc::make_scope_guard([&state](bool exiting_exception) {
-            state.value = 42;
-            state.message = "modified";
-            EXPECT_FALSE(exiting_exception);
-        });
+    // Should not be copy constructible or assignable
+    EXPECT_FALSE(std::is_copy_constructible_v<decltype(guard)>);
+    EXPECT_FALSE(std::is_copy_assignable_v<decltype(guard)>);
+    EXPECT_FALSE(std::is_move_assignable_v<decltype(guard)>);
 
-        EXPECT_EQ(state.value, 0);
-        EXPECT_EQ(state.message, "initial");
-    }
-
-    EXPECT_EQ(state.value, 42);
-    EXPECT_EQ(state.message, "modified");
+    // Should be move constructible
+    EXPECT_TRUE(std::is_move_constructible_v<decltype(guard)>);
 }
 
-TEST_F(ScopeGuardTest, FunctionObject)
+// =============================================================================
+// ScopeSuccess Tests
+// =============================================================================
+
+TEST_F(ScopeSuccessTest, BasicFunctionality)
 {
-    struct Functor
-    {
-        bool & executed;
-        bool & was_exception;
-
-        Functor(bool & exec, bool & except) : executed(exec), was_exception(except)
-        {
-        }
-
-        void
-        operator()(bool exiting_exception) const
-        {
-            executed = true;
-            was_exception = exiting_exception;
-        }
-    };
-
     bool executed = false;
-    bool was_exception = false;
-
     {
-        auto guard = abc::make_scope_guard(Functor(executed, was_exception));
+        auto guard = abc::make_scope_success([&executed] { executed = true; });
         EXPECT_FALSE(executed);
     }
-
+    // Should execute on normal exit
     EXPECT_TRUE(executed);
-    EXPECT_FALSE(was_exception);
 }
 
-TEST_F(ScopeGuardTest, MemberFunction)
+TEST_F(ScopeSuccessTest, ExecutesOnNormalExit)
 {
-    struct TestClass
+    bool executed = false;
     {
-        bool executed = false;
-        bool was_exception = false;
-
-        void
-        cleanup(bool exiting_exception)
-        {
-            executed = true;
-            was_exception = exiting_exception;
-        }
-    };
-
-    TestClass obj;
-    {
-        auto guard = abc::make_scope_guard([&obj](bool exiting_exception) { obj.cleanup(exiting_exception); });
-
-        EXPECT_FALSE(obj.executed);
+        auto guard = abc::make_scope_success([&executed] { executed = true; });
+        no_throw_function();
     }
-
-    EXPECT_TRUE(obj.executed);
-    EXPECT_FALSE(obj.was_exception);
+    EXPECT_TRUE(executed);
 }
 
-TEST_F(ScopeGuardTest, ExceptionInGuardExecution)
+TEST_F(ScopeSuccessTest, DoesNotExecuteOnException)
 {
     bool executed = false;
 
+    try
     {
-        auto guard = abc::make_scope_guard([&executed](bool exiting_exception) {
-            executed = true;
-            EXPECT_FALSE(exiting_exception);
-            throw std::logic_error("guard execution error");
-        });
+        auto guard = abc::make_scope_success([&executed] { executed = true; });
+        throw_exception();
+    }
+    catch (std::runtime_error const &)
+    {
+        // Exception caught
     }
 
-    EXPECT_TRUE(executed);
-    // The exception from guard execution should propagate
-    // This test verifies that the guard executes even if it throws
+    // Should NOT execute when exiting due to exception
+    EXPECT_FALSE(executed);
 }
 
-TEST_F(ScopeGuardTest, CopyConstructorDeleted)
+TEST_F(ScopeSuccessTest, ReleaseMethod)
 {
-    auto guard = abc::make_scope_guard([](bool) {});
+    bool executed = false;
+    {
+        auto guard = abc::make_scope_success([&executed] { executed = true; });
+        guard.release();
+    }
+    // Should not execute because guard was released
+    EXPECT_FALSE(executed);
+}
 
-    // This should not compile, but we can test that the copy constructor is deleted
-    // by checking if the type is not copy constructible
+TEST_F(ScopeSuccessTest, MoveConstructor)
+{
+    bool executed = false;
+    {
+        auto guard1 = abc::make_scope_success([&executed] { executed = true; });
+
+        auto guard2 = std::move(guard1);
+        // guard1 should be released after move
+        EXPECT_FALSE(executed);
+    }
+    EXPECT_TRUE(executed); // guard2 should execute
+}
+
+TEST_F(ScopeSuccessTest, NestedSuccessScopes)
+{
+    bool outer_executed = false;
+    bool inner_executed = false;
+
+    {
+        auto outer_guard = abc::make_scope_success([&outer_executed] { outer_executed = true; });
+
+        {
+            auto inner_guard = abc::make_scope_success([&inner_executed] { inner_executed = true; });
+            // Normal exit from inner scope
+        }
+
+        EXPECT_TRUE(inner_executed);  // Inner guard should execute
+        EXPECT_FALSE(outer_executed); // Outer guard not executed yet
+
+        // Normal exit from outer scope
+    }
+
+    EXPECT_TRUE(outer_executed); // Outer guard should execute
+}
+
+TEST_F(ScopeSuccessTest, NestedWithException)
+{
+    bool outer_executed = false;
+    bool inner_executed = false;
+
+    try
+    {
+        auto outer_guard = abc::make_scope_success([&outer_executed] { outer_executed = true; });
+
+        try
+        {
+            auto inner_guard = abc::make_scope_success([&inner_executed] { inner_executed = true; });
+            throw_exception();
+        }
+        catch (std::runtime_error const &)
+        {
+            // Inner exception caught
+        }
+
+        // After catching the inner exception, we continue normally
+        // so the outer guard should execute
+    }
+    catch (...)
+    {
+        // Should not reach here
+        FAIL() << "Unexpected exception in outer scope";
+    }
+
+    EXPECT_FALSE(inner_executed); // Inner guard should not execute due to exception
+    EXPECT_TRUE(outer_executed);  // Outer guard should execute (normal exit)
+}
+
+TEST_F(ScopeSuccessTest, MultipleGuardsNormalExit)
+{
+    std::vector<int> execution_order;
+    {
+        auto guard1 = abc::make_scope_success([&execution_order] { execution_order.push_back(1); });
+
+        auto guard2 = abc::make_scope_success([&execution_order] { execution_order.push_back(2); });
+
+        auto guard3 = abc::make_scope_success([&execution_order] { execution_order.push_back(3); });
+
+        // Normal exit
+    }
+
+    // All guards should execute in reverse order of declaration (LIFO)
+    ASSERT_EQ(execution_order.size(), 3);
+    EXPECT_EQ(execution_order[0], 3);
+    EXPECT_EQ(execution_order[1], 2);
+    EXPECT_EQ(execution_order[2], 1);
+}
+
+TEST_F(ScopeSuccessTest, TypeTraits)
+{
+    auto guard = abc::make_scope_success([] {});
+
+    // Should not be copy constructible or assignable
     EXPECT_FALSE(std::is_copy_constructible_v<decltype(guard)>);
-}
-
-TEST_F(ScopeGuardTest, CopyAssignmentDeleted)
-{
-    auto guard = abc::make_scope_guard([](bool) {});
-
-    // This should not compile, but we can test that the copy assignment is deleted
-    // by checking if the type is not copy assignable
     EXPECT_FALSE(std::is_copy_assignable_v<decltype(guard)>);
+    EXPECT_FALSE(std::is_move_assignable_v<decltype(guard)>);
+
+    // Should be move constructible
+    EXPECT_TRUE(std::is_move_constructible_v<decltype(guard)>);
 }
 
-TEST_F(ScopeGuardTest, MoveAssignmentNotProvided)
+// =============================================================================
+// Combined Tests
+// =============================================================================
+
+TEST(ScopeGuardsIntegrationTest, AllThreeTypesInFunction)
 {
-    auto guard1 = abc::make_scope_guard([](bool) {});
-    auto guard2 = abc::make_scope_guard([](bool) {});
+    bool exit_executed = false;
+    bool fail_executed = false;
+    bool success_executed = false;
 
-    // Move assignment is not provided, so this should not compile
-    // We can test that the type is not move assignable
-    EXPECT_FALSE(std::is_move_assignable_v<decltype(guard1)>);
-}
+    auto test_function = [&](bool should_throw) {
+        auto exit_guard = abc::make_scope_exit([&exit_executed] { exit_executed = true; });
 
-TEST_F(ScopeGuardTest, NoexceptSpecifications)
-{
-    // Test that constructors and destructor have appropriate noexcept specifications
-    auto guard = abc::make_scope_guard([](bool) {});
+        auto fail_guard = abc::make_scope_fail([&fail_executed] { fail_executed = true; });
 
-    // Constructor should be noexcept
-    EXPECT_TRUE((std::is_nothrow_constructible_v<decltype(guard), decltype(guard)>));
+        auto success_guard = abc::make_scope_success([&success_executed] { success_executed = true; });
 
-    // Move constructor should be noexcept
-    EXPECT_TRUE(std::is_nothrow_move_constructible_v<decltype(guard)>);
-
-    // Destructor should be noexcept if the callable's operator() is noexcept
-    // This depends on the specific callable type
-}
-
-TEST_F(ScopeGuardTest, ComplexCallable)
-{
-    struct ComplexCallable
-    {
-        std::vector<int> & vec;
-        std::string & str;
-
-        ComplexCallable(std::vector<int> & v, std::string & s) : vec(v), str(s)
+        if (should_throw)
         {
-        }
-
-        void
-        operator()(bool exiting_exception) const
-        {
-            vec.push_back(42);
-            str = "modified";
-            EXPECT_FALSE(exiting_exception);
+            throw_exception();
         }
     };
 
-    std::vector<int> numbers;
-    std::string text = "original";
-
+    // Test normal execution
+    try
     {
-        auto guard = abc::make_scope_guard(ComplexCallable(numbers, text));
-        EXPECT_TRUE(numbers.empty());
-        EXPECT_EQ(text, "original");
+        test_function(false);
+    }
+    catch (...)
+    {
+        FAIL() << "Unexpected exception";
     }
 
-    EXPECT_EQ(numbers.size(), 1);
-    EXPECT_EQ(numbers[0], 42);
-    EXPECT_EQ(text, "modified");
+    EXPECT_TRUE(exit_executed);    // Always executes
+    EXPECT_FALSE(fail_executed);   // Only on exception
+    EXPECT_TRUE(success_executed); // Only on success
+
+    // Reset flags
+    exit_executed = false;
+    fail_executed = false;
+    success_executed = false;
+
+    // Test exception execution
+    try
+    {
+        test_function(true);
+    }
+    catch (std::runtime_error const &)
+    {
+        // Expected exception
+    }
+
+    EXPECT_TRUE(exit_executed);     // Always executes
+    EXPECT_TRUE(fail_executed);     // Only on exception
+    EXPECT_FALSE(success_executed); // Only on success
 }
 
-TEST_F(ScopeGuardTest, GuardInFunction)
+TEST(ScopeGuardsIntegrationTest, ComplexResourceManagement)
 {
-    bool executed = false;
+    struct Resource
+    {
+        bool & acquired;
+        bool & released;
+        bool & cleaned_on_failure;
+        bool & finalized_on_success;
 
-    auto test_function = [&executed]() {
-        auto guard = abc::make_scope_guard([&executed](bool exiting_exception) {
-            executed = true;
-            EXPECT_FALSE(exiting_exception);
-        });
-
-        // Function returns, guard should execute
+        Resource(bool & acq, bool & rel, bool & fail, bool & succ) : acquired(acq), released(rel), cleaned_on_failure(fail), finalized_on_success(succ)
+        {
+            acquired = true;
+        }
     };
 
-    test_function();
-    EXPECT_TRUE(executed);
-}
+    bool acquired = false;
+    bool released = false;
+    bool cleaned_on_failure = false;
+    bool finalized_on_success = false;
 
-TEST_F(ScopeGuardTest, GuardInLoop)
-{
-    int execution_count = 0;
+    auto use_resource = [&](bool simulate_error) {
+        Resource res(acquired, released, cleaned_on_failure, finalized_on_success);
 
-    for (int i = 0; i < 3; ++i)
-    {
-        auto guard = abc::make_scope_guard([&execution_count, i](bool exiting_exception) {
-            execution_count++;
-            EXPECT_FALSE(exiting_exception);
-        });
+        auto cleanup = abc::make_scope_exit([&] { released = true; });
 
-        // Guard should execute at end of each iteration
-    }
+        auto failure_handler = abc::make_scope_fail([&] { cleaned_on_failure = true; });
 
-    EXPECT_EQ(execution_count, 3);
-}
+        auto success_handler = abc::make_scope_success([&] { finalized_on_success = true; });
 
-TEST_F(ScopeGuardTest, ConditionalGuard)
-{
-    bool should_execute = true;
-    bool executed = false;
-
-    {
-        auto guard = abc::make_scope_guard([&executed, should_execute](bool exiting_exception) {
-            if (should_execute)
-            {
-                executed = true;
-            }
-            EXPECT_FALSE(exiting_exception);
-        });
-
-        should_execute = false; // This won't affect the guard's execution
-    }
-
-    EXPECT_TRUE(executed); // Guard still executes, but the condition is checked
-}
-
-TEST_F(ScopeGuardTest, GuardWithReturnValue)
-{
-    int result = 0;
-
-    auto test_function = [&result]() -> int {
-        auto guard = abc::make_scope_guard([&result](bool exiting_exception) {
-            result = 100;
-            EXPECT_FALSE(exiting_exception);
-        });
-
-        return 42; // Guard should execute before return
+        if (simulate_error)
+        {
+            throw std::runtime_error("Simulated error");
+        }
     };
 
-    int return_value = test_function();
-    EXPECT_EQ(return_value, 42);
-    EXPECT_EQ(result, 100);
+    // Test successful resource usage
+    try
+    {
+        use_resource(false);
+    }
+    catch (...)
+    {
+        FAIL() << "Unexpected exception";
+    }
+
+    EXPECT_TRUE(acquired);
+    EXPECT_TRUE(released);
+    EXPECT_FALSE(cleaned_on_failure);
+    EXPECT_TRUE(finalized_on_success);
+
+    // Reset for error case
+    acquired = false;
+    released = false;
+    cleaned_on_failure = false;
+    finalized_on_success = false;
+
+    // Test resource usage with error
+    try
+    {
+        use_resource(true);
+    }
+    catch (std::runtime_error const &)
+    {
+        // Expected
+    }
+
+    EXPECT_TRUE(acquired);
+    EXPECT_TRUE(released);
+    EXPECT_TRUE(cleaned_on_failure);
+    EXPECT_FALSE(finalized_on_success);
 }

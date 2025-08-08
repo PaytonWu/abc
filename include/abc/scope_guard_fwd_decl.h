@@ -9,15 +9,34 @@
 namespace abc
 {
 
-template <typename Callable>
-class ScopeGuard;
+template <typename EF>
+class ScopeExit;
 
-template <typename Callable>
-auto make_scope_guard(Callable && action) -> ScopeGuard<Callable>;
+template <typename EF>
+class ScopeFail;
 
-// Deduction guide for automatic template argument deduction
-template <typename Callable>
-ScopeGuard(Callable) -> ScopeGuard<Callable>;
+template <typename EF>
+class ScopeSuccess;
+
+// Factory functions
+template <typename EF>
+auto make_scope_exit(EF && exit_function) -> ScopeExit<EF>;
+
+template <typename EF>
+auto make_scope_fail(EF && exit_function) -> ScopeFail<EF>;
+
+template <typename EF>
+auto make_scope_success(EF && exit_function) -> ScopeSuccess<EF>;
+
+// Deduction guides for automatic template argument deduction
+template <typename EF>
+ScopeExit(EF) -> ScopeExit<EF>;
+
+template <typename EF>
+ScopeFail(EF) -> ScopeFail<EF>;
+
+template <typename EF>
+ScopeSuccess(EF) -> ScopeSuccess<EF>;
 
 } // namespace abc
 

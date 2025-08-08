@@ -11,52 +11,191 @@
 namespace abc
 {
 
-template <typename Callable>
-auto
-make_scope_guard(Callable && action) -> ScopeGuard<Callable>
+// =============================================================================
+// ScopeExit Implementation
+// =============================================================================
+
+template <typename EF>
+template <typename EFP>
+    requires not_same_as<std::remove_cvref_t<EFP>, ScopeExit<EF>> && std::constructible_from<EF, EFP>
+ScopeExit<EF>::ScopeExit(EFP && exit_function) noexcept(std::is_nothrow_constructible_v<EF, EFP &>)
+try
+    : exit_function_(exit_function)
 {
-    return ScopeGuard<Callable>(std::forward<Callable>(action));
+}
+catch (...)
+{
+    exit_function();
 }
 
-template <typename Callable>
-ScopeGuard<Callable>::ScopeGuard(Callable action) noexcept : action_{ std::move(action) }
-                                                           , active_{ true }
+template <typename EF>
+template <typename EFP>
+    requires not_same_as<std::remove_cvref_t<EFP>, ScopeExit<EF>> && std::constructible_from<EF, EFP> && not_lvalue_ref<EFP> && std::is_nothrow_constructible_v<EF, EFP>
+ScopeExit<EF>::ScopeExit(EFP && exit_function) noexcept : exit_function_(std::forward<EFP>(exit_function))
 {
 }
 
-template <typename Callable>
-ScopeGuard<Callable>::ScopeGuard(ScopeGuard<Callable> && other) noexcept : action_{ std::move(other.action_) }
-                                                                         , active_{ other.active_ }
+template <typename EF>
+ScopeExit<EF>::ScopeExit(ScopeExit && other) noexcept
+    requires std::is_nothrow_move_constructible_v<EF>
+    : exit_function_(std::forward<EF>(other.exit_function_))
 {
     other.release();
 }
 
-template <typename Callable>
-ScopeGuard<Callable>::~ScopeGuard() noexcept
+template <typename EF>
+ScopeExit<EF>::ScopeExit(ScopeExit && other) noexcept(std::is_nothrow_copy_constructible_v<EF>)
+    requires(!std::is_nothrow_move_constructible_v<EF>) && std::is_copy_constructible_v<EF>
+    : exit_function_(other.exit_function_)
 {
-    if (active_)
+    other.release();
+}
+
+template <typename EF>
+ScopeExit<EF>::~ScopeExit() noexcept
+{
+    if (execute_on_destruction_)
     {
-        bool exiting_exception = std::uncaught_exceptions() > exception_count_;
-        try
-        {
-            action_(exiting_exception);
-        }
-        catch (std::exception const &)
-        {
-            // Ignore exceptions thrown by the callable
-        }
-        catch (...)
-        {
-            // Ignore exceptions thrown by the callable
-        }
+        exit_function_();
     }
 }
 
-template <typename Callable>
-auto
-ScopeGuard<Callable>::release() noexcept -> void
+template <typename EF>
+void
+ScopeExit<EF>::release() noexcept
 {
-    active_ = false;
+    execute_on_destruction_ = false;
+}
+
+// =============================================================================
+// ScopeFail Implementation
+// =============================================================================
+
+template <typename EF>
+template <typename EFP>
+    requires not_same_as<std::remove_cvref_t<EFP>, ScopeFail<EF>> && std::constructible_from<EF, EFP>
+ScopeFail<EF>::ScopeFail(EFP && exit_function) noexcept(std::is_nothrow_constructible_v<EF, EFP &>)
+try
+    : exit_function_(exit_function)
+{
+}
+catch (...)
+{
+    exit_function();
+}
+
+template <typename EF>
+template <typename EFP>
+    requires not_same_as<std::remove_cvref_t<EFP>, ScopeFail<EF>> && std::constructible_from<EF, EFP> && not_lvalue_ref<EFP> && std::is_nothrow_constructible_v<EF, EFP>
+ScopeFail<EF>::ScopeFail(EFP && exit_function) noexcept : exit_function_(std::forward<EFP>(exit_function))
+{
+}
+
+template <typename EF>
+ScopeFail<EF>::ScopeFail(ScopeFail && other) noexcept
+    requires std::is_nothrow_move_constructible_v<EF>
+    : exit_function_(std::forward<EF>(other.exit_function_))
+{
+    other.release();
+}
+
+template <typename EF>
+ScopeFail<EF>::ScopeFail(ScopeFail && other) noexcept(std::is_nothrow_copy_constructible_v<EF>)
+    requires(!std::is_nothrow_move_constructible_v<EF>) && std::is_copy_constructible_v<EF>
+    : exit_function_(other.exit_function_)
+{
+    other.release();
+}
+
+template <typename EF>
+ScopeFail<EF>::~ScopeFail() noexcept
+{
+    if (std::uncaught_exceptions() > uncaught_init_)
+    {
+        exit_function_();
+    }
+}
+
+template <typename EF>
+void
+ScopeFail<EF>::release() noexcept
+{
+    uncaught_init_ = INT_MAX;
+}
+
+// =============================================================================
+// ScopeSuccess Implementation
+// =============================================================================
+
+template <typename EF>
+template <typename EFP>
+    requires not_same_as<std::remove_cvref_t<EFP>, ScopeSuccess<EF>> && std::constructible_from<EF, EFP>
+ScopeSuccess<EF>::ScopeSuccess(EFP && exit_function) noexcept(std::is_nothrow_constructible_v<EF, EFP &>) : exit_function_(exit_function)
+{
+}
+
+template <typename EF>
+template <typename EFP>
+    requires not_same_as<std::remove_cvref_t<EFP>, ScopeSuccess<EF>> && std::constructible_from<EF, EFP> && not_lvalue_ref<EFP> && std::is_nothrow_constructible_v<EF, EFP>
+ScopeSuccess<EF>::ScopeSuccess(EFP && exit_function) noexcept : exit_function_(std::forward<EFP>(exit_function))
+{
+}
+
+template <typename EF>
+ScopeSuccess<EF>::ScopeSuccess(ScopeSuccess && other) noexcept
+    requires std::is_nothrow_move_constructible_v<EF>
+    : exit_function_(std::forward<EF>(other.exit_function_))
+{
+    other.release();
+}
+
+template <typename EF>
+ScopeSuccess<EF>::ScopeSuccess(ScopeSuccess && other) noexcept(std::is_nothrow_copy_constructible_v<EF>)
+    requires(!std::is_nothrow_move_constructible_v<EF>) && std::is_copy_constructible_v<EF>
+    : exit_function_(other.exit_function_)
+{
+    other.release();
+}
+
+template <typename EF>
+ScopeSuccess<EF>::~ScopeSuccess() noexcept(noexcept(this->exit_function_()))
+{
+    if (std::uncaught_exceptions() <= uncaught_init_)
+    {
+        exit_function_();
+    }
+}
+
+template <typename EF>
+void
+ScopeSuccess<EF>::release() noexcept
+{
+    uncaught_init_ = -INT_MAX;
+}
+
+// =============================================================================
+// Factory functions for creating scope guards
+// =============================================================================
+
+template <typename EF>
+auto
+make_scope_exit(EF && exit_function) -> ScopeExit<EF>
+{
+    return ScopeExit<EF>(std::forward<EF>(exit_function));
+}
+
+template <typename EF>
+auto
+make_scope_fail(EF && exit_function) -> ScopeFail<EF>
+{
+    return ScopeFail<EF>(std::forward<EF>(exit_function));
+}
+
+template <typename EF>
+auto
+make_scope_success(EF && exit_function) -> ScopeSuccess<EF>
+{
+    return ScopeSuccess<EF>(std::forward<EF>(exit_function));
 }
 
 } // namespace abc
