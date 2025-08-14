@@ -52,31 +52,31 @@ aligned_size(std::size_t size, std::size_t alignment) noexcept -> std::size_t
 
 template <std::size_t Alignment>
 inline auto
-address_aligned_at(byte * ptr) noexcept -> byte *
+address_aligned_at(byte_t * ptr) noexcept -> byte_t *
 {
     static_assert(std::has_single_bit(Alignment), "Alignment must be a power of 2");
-    return reinterpret_cast<byte *>((reinterpret_cast<std::uintptr_t>(ptr) + (Alignment - 1)) & -Alignment);
+    return reinterpret_cast<byte_t *>((reinterpret_cast<std::uintptr_t>(ptr) + (Alignment - 1)) & -Alignment);
 }
 
 template <typename T>
 inline auto
-address_aligned_at(byte * ptr) noexcept -> T *
+address_aligned_at(byte_t * ptr) noexcept -> T *
 {
     return reinterpret_cast<T *>(address_aligned_at<alignof(T)>(ptr));
 }
 
 inline auto
-address_aligned_at(std::size_t alignment, byte * ptr) noexcept -> byte *
+address_aligned_at(std::size_t alignment, byte_t * ptr) noexcept -> byte_t *
 {
     assert(std::has_single_bit(alignment));
 #if defined(_MSC_VER)
 #pragma warning(push)
 #pragma warning(disable : 4146)
     // warning C4146: unary minus operator applied to unsigned type, result still unsigned
-    return reinterpret_cast<byte *>((reinterpret_cast<std::uintptr_t>(ptr) + (alignment - 1)) & -alignment);
+    return reinterpret_cast<byte_t *>((reinterpret_cast<std::uintptr_t>(ptr) + (alignment - 1)) & -alignment);
 #pragma warning(pop)
 #else
-    return reinterpret_cast<byte *>((reinterpret_cast<std::uintptr_t>(ptr) + (alignment - 1)) & -alignment);
+    return reinterpret_cast<byte_t *>((reinterpret_cast<std::uintptr_t>(ptr) + (alignment - 1)) & -alignment);
 #endif
 }
 
@@ -100,12 +100,12 @@ public:
     {
     }
 
-    constexpr explicit observer_ptr(pointer_type ptr) noexcept : ptr_{ptr}
+    constexpr explicit observer_ptr(pointer_type ptr) noexcept : ptr_{ ptr }
     {
     }
 
     template <typename U, typename = typename std::enable_if_t<std::is_convertible<typename std::add_pointer<U>::type, pointer_type>::value>>
-    constexpr observer_ptr(observer_ptr<U> p) noexcept : ptr_{p.get()}
+    constexpr observer_ptr(observer_ptr<U> p) noexcept : ptr_{ p.get() }
     {
     }
 

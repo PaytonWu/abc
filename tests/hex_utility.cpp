@@ -130,12 +130,12 @@ TEST(hex_utility, hex_string_to_binary)
 {
     std::random_device rd;
     std::uniform_int_distribution distribution{ 0, 255 };
-    abc::bytes_le_t bytes;
+    abc::LittleEndianBytes bytes;
 
     bytes.resize(std::uniform_int_distribution<size_t>{ 0u, 5000u }(rd));
     for (auto & byte : bytes)
     {
-        byte = static_cast<abc::byte>(distribution(rd));
+        byte = static_cast<abc::byte_t>(distribution(rd));
     }
 
     auto const hex_string = abc::hex_string::from<abc::ByteNumbering::Lsb0>(bytes);

@@ -10,8 +10,8 @@
 #include <abc/error.h>
 #include <abc/expected.h>
 
-#include <range/v3/algorithm/for_each.hpp>
 #include <range/v3/algorithm/all_of.hpp>
+#include <range/v3/algorithm/for_each.hpp>
 #include <range/v3/view/chunk.hpp>
 #include <range/v3/view/enumerate.hpp>
 #include <range/v3/view/reverse.hpp>
@@ -36,17 +36,14 @@ public:
     constexpr static auto prefix_0X = "0X";
 
 #if defined(ABC_CXX23)
-    constexpr static std::bitset<256> const hex_flag
-    {
-        "00000000000000000000000000000000"
-        "00000000000000000000000000000000"
-        "00000000000000000000000000000000"
-        "00000000000000000000000000000000"
-        "00000000000000000000000001111110"  // abcdef
-        "00000000000000000000000001111110"  // ABCDEF
-        "00000011111111110000000000000000"  // 0123456789
-        "00000000000000000000000000000000"
-    };
+    constexpr static std::bitset<256> const hex_flag{ "00000000000000000000000000000000"
+                                                      "00000000000000000000000000000000"
+                                                      "00000000000000000000000000000000"
+                                                      "00000000000000000000000000000000"
+                                                      "00000000000000000000000001111110" // abcdef
+                                                      "00000000000000000000000001111110" // ABCDEF
+                                                      "00000011111111110000000000000000" // 0123456789
+                                                      "00000000000000000000000000000000" };
 #else
     static std::bitset<256> const hex_flag;
 #endif
@@ -95,11 +92,8 @@ public:
 
     [[nodiscard]] constexpr static auto
     is_hex_without_prefix(std::string_view const string_slice) noexcept -> bool
-    {   // "0123456789abcdefABCDEF"
-        return ranges::all_of(string_slice,
-                              [](auto const ch) {
-                                  return is_hex(ch);
-                              });
+    { // "0123456789abcdefABCDEF"
+        return ranges::all_of(string_slice, [](auto const ch) { return is_hex(ch); });
     }
 
     [[nodiscard]] constexpr static auto
@@ -113,10 +107,8 @@ public:
         return is_hex_without_prefix(string_slice.substr(2));
     }
 
-    [[nodiscard]] static auto
-    hex_char_to_binary(char ch) noexcept -> abc::expected<byte, std::error_code>;
-
+    [[nodiscard]] static auto hex_char_to_binary(char ch) noexcept -> abc::expected<byte_t, std::error_code>;
 };
-}
+} // namespace abc
 
 #endif

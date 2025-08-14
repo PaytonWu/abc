@@ -54,7 +54,7 @@ TEST(fixed_bytes, move_constructor)
 TEST(fixed_bytes_msb0, from_msb0)
 {
     bytes16_msb0_t bytes{
-        bytes16_msb0_t::from<ByteNumbering::Msb0>(std::array<byte, 16>{ 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f }).value()
+        bytes16_msb0_t::from<ByteNumbering::Msb0>(std::array<byte_t, 16>{ 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f }).value()
     };
     EXPECT_EQ(bytes.size(), 16);
     EXPECT_EQ(bytes[0], 0);
@@ -64,7 +64,7 @@ TEST(fixed_bytes_msb0, from_msb0)
 TEST(fixed_bytes_msb0, from_lsb0)
 {
     bytes16_msb0_t bytes{
-        bytes16_msb0_t::from<ByteNumbering::Lsb0>(std::array<byte, 16>{ 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f }).value()
+        bytes16_msb0_t::from<ByteNumbering::Lsb0>(std::array<byte_t, 16>{ 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f }).value()
     };
     EXPECT_EQ(bytes.size(), 16);
     EXPECT_EQ(bytes[0], 0x0f);
@@ -73,7 +73,7 @@ TEST(fixed_bytes_msb0, from_lsb0)
 
 TEST(fixed_bytes, array_constructor)
 {
-    std::array<byte, 16> const arr{ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 };
+    std::array<byte_t, 16> const arr{ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 };
     bytes16_msb0_t bytes = bytes16_msb0_t::from<ByteNumbering::Msb0>(arr).value();
     EXPECT_EQ(bytes.size(), 16);
     for (auto i : std::views::iota(1u, 16u))
@@ -122,7 +122,7 @@ TEST(fixed_bytes_be, from)
 
 TEST(fixed_bytes_le, to)
 {
-    bytes16_lsb0_t bytes{ bytes16_lsb0_t::from<ByteNumbering::Lsb0>(std::array<byte, 16>{ 8, 7, 6, 5, 4, 3, 2, 1 }).value() };
+    bytes16_lsb0_t bytes{ bytes16_lsb0_t::from<ByteNumbering::Lsb0>(std::array<byte_t, 16>{ 8, 7, 6, 5, 4, 3, 2, 1 }).value() };
     EXPECT_EQ(bytes.to<uint64_t>(), 0x0102030405060708U);
     EXPECT_EQ(bytes.to<uint32_t>(), 0x05060708U);
     EXPECT_EQ(bytes.to<uint16_t>(), 0x0708U);
@@ -131,7 +131,7 @@ TEST(fixed_bytes_le, to)
 
 TEST(fixed_bytes_be, to)
 {
-    bytes16_msb0_t bytes{ bytes16_msb0_t::from<ByteNumbering::Msb0>(std::array<byte, 16>{ 1, 2, 3, 4, 5, 6, 7, 8 }).value() }; // 0x01020304050607080000000000000000
+    bytes16_msb0_t bytes{ bytes16_msb0_t::from<ByteNumbering::Msb0>(std::array<byte_t, 16>{ 1, 2, 3, 4, 5, 6, 7, 8 }).value() }; // 0x01020304050607080000000000000000
     EXPECT_EQ(bytes.to<uint64_t>(), 0x00);
     EXPECT_EQ(bytes.to<uint32_t>(), 0x00);
     EXPECT_EQ(bytes.to<uint16_t>(), 0x00);
@@ -197,11 +197,11 @@ TEST(fixed_bytes_le, hex_string)
 //     auto result = fixed_bytes<5, ByteNumbering::none>::from<ByteNumbering::msb0>(bytes);
 //     EXPECT_TRUE(result.has_value());
 ////    auto const & fixed_bytes = result.value();
-////    EXPECT_EQ(static_cast<byte>(0x12), fixed_bytes[0]);
-////    EXPECT_EQ(static_cast<byte>(0x34), fixed_bytes[1]);
-////    EXPECT_EQ(static_cast<byte>(0x56), fixed_bytes[2]);
-////    EXPECT_EQ(static_cast<byte>(0x78), fixed_bytes[3]);
-////    EXPECT_EQ(static_cast<byte>(0x90), fixed_bytes[4]);
+////    EXPECT_EQ(static_cast<byte_t>(0x12), fixed_bytes[0]);
+////    EXPECT_EQ(static_cast<byte_t>(0x34), fixed_bytes[1]);
+////    EXPECT_EQ(static_cast<byte_t>(0x56), fixed_bytes[2]);
+////    EXPECT_EQ(static_cast<byte_t>(0x78), fixed_bytes[3]);
+////    EXPECT_EQ(static_cast<byte_t>(0x90), fixed_bytes[4]);
 //}
 
 TEST(fixed_bytes, subbytes)

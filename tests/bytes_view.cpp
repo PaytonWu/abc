@@ -11,7 +11,7 @@ TEST(bytes_view, bytes)
     using namespace abc;
 
     {
-        bytes_be_t bytes_be{ 'a', 'b', 'c', 'd' };
+        BigEndianBytes bytes_be{ 'a', 'b', 'c', 'd' };
         bytes_be_view_t bytes_be_view = bytes_be.view();
 
         ASSERT_EQ(bytes_be.size(), bytes_be_view.size());
@@ -22,7 +22,7 @@ TEST(bytes_view, bytes)
     }
 
     {
-        bytes_be_t bytes_be{ 'a', 'b', 'c', 'd' };
+        BigEndianBytes bytes_be{ 'a', 'b', 'c', 'd' };
         auto bytes_be_view = static_cast<bytes_be_view_t>(bytes_be);
 
         ASSERT_EQ(bytes_be.size(), bytes_be_view.size());
@@ -33,7 +33,7 @@ TEST(bytes_view, bytes)
     }
 
     {
-        bytes_be_t bytes_be{ 'a', 'b', 'c', 'd' };
+        BigEndianBytes bytes_be{ 'a', 'b', 'c', 'd' };
         bytes_be_view_t bytes_be_view{ bytes_be };
 
         ASSERT_EQ(bytes_be.size(), bytes_be_view.size());
@@ -44,8 +44,8 @@ TEST(bytes_view, bytes)
     }
 
     {
-        bytes_be_t bytes_be{ 'a', 'b', 'c', 'd' };
-        bytes_be_view_t bytes_be_view = bytes_be_view_t::from(bytes_be.data(), bytes_be.size(), ByteNumberingType<bytes_be_t::byte_numbering_v>{});
+        BigEndianBytes bytes_be{ 'a', 'b', 'c', 'd' };
+        bytes_be_view_t bytes_be_view = bytes_be_view_t::from(bytes_be.data(), bytes_be.size(), ByteNumberingType<BigEndianBytes::byte_numbering_v>{});
 
         ASSERT_EQ(bytes_be.size(), bytes_be_view.size());
         ASSERT_EQ('a', bytes_be_view[0]);
@@ -55,7 +55,7 @@ TEST(bytes_view, bytes)
     }
 
     {
-        bytes_be_t bytes_be{ 'a', 'b', 'c', 'd' };
+        BigEndianBytes bytes_be{ 'a', 'b', 'c', 'd' };
         bytes_be_view_t bytes_be_view = bytes_be_view_t::from(bytes_be.data(), 2, ByteNumberingType<ByteNumbering::Msb0>{});
 
         ASSERT_EQ(2, bytes_be_view.size());
@@ -64,7 +64,7 @@ TEST(bytes_view, bytes)
     }
 
     {
-        bytes_be_t bytes_be{ 'a', 'b', 'c', 'd' };
+        BigEndianBytes bytes_be{ 'a', 'b', 'c', 'd' };
         bytes_be_view_t bytes_be_view{ bytes_be.last(2) };
 
         ASSERT_EQ(2, bytes_be_view.size());
@@ -107,7 +107,7 @@ TEST(bytes_view, to_int)
 {
     using namespace abc;
     {
-        bytes_be_t bytes_be{ 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07 };
+        BigEndianBytes bytes_be{ 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07 };
         bytes_be_view_t bytes_be_view{ bytes_be };
 
         auto u64 = bytes_be_view.to<std::uint64_t>();
@@ -115,7 +115,7 @@ TEST(bytes_view, to_int)
     }
 
     {
-        bytes_be_t bytes_be{ 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x00 };
+        BigEndianBytes bytes_be{ 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x00 };
         bytes_be_view_t bytes_be_view{ bytes_be };
 
         auto u64 = bytes_be_view.to<std::uint64_t>();
@@ -123,7 +123,7 @@ TEST(bytes_view, to_int)
     }
 
     {
-        auto bytes_be = bytes_be_t{ 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06 };
+        auto bytes_be = BigEndianBytes{ 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06 };
         bytes_be_view_t bytes_be_view{ bytes_be };
 
         auto u64 = bytes_be_view.to<std::uint64_t>();
@@ -131,7 +131,7 @@ TEST(bytes_view, to_int)
     }
 
     {
-        auto bytes_be = bytes_be_t{ 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x00 };
+        auto bytes_be = BigEndianBytes{ 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x00 };
         bytes_be_view_t bytes_be_view{ bytes_be };
 
         auto u64 = bytes_be_view.to<std::uint64_t>();
@@ -139,7 +139,7 @@ TEST(bytes_view, to_int)
     }
 
     {
-        auto bytes_be = bytes_be_t{ 0x00, 0x01, 0x02, 0x03, 0x04, 0x05 };
+        auto bytes_be = BigEndianBytes{ 0x00, 0x01, 0x02, 0x03, 0x04, 0x05 };
         bytes_be_view_t bytes_be_view{ bytes_be };
 
         auto u64 = bytes_be_view.to<std::uint64_t>();
@@ -147,7 +147,7 @@ TEST(bytes_view, to_int)
     }
 
     {
-        auto bytes_be = bytes_be_t{ 0x00, 0x01, 0x02, 0x03, 0x04, 0x00 };
+        auto bytes_be = BigEndianBytes{ 0x00, 0x01, 0x02, 0x03, 0x04, 0x00 };
         bytes_be_view_t bytes_be_view{ bytes_be };
 
         auto u64 = bytes_be_view.to<std::uint64_t>();
@@ -155,7 +155,7 @@ TEST(bytes_view, to_int)
     }
 
     {
-        auto bytes_be = bytes_be_t{ 0x00, 0x01, 0x02, 0x03, 0x04 };
+        auto bytes_be = BigEndianBytes{ 0x00, 0x01, 0x02, 0x03, 0x04 };
         bytes_be_view_t bytes_be_view{ bytes_be };
 
         auto u64 = bytes_be_view.to<std::uint64_t>();
@@ -163,7 +163,7 @@ TEST(bytes_view, to_int)
     }
 
     {
-        auto bytes_be = bytes_be_t{ 0x00, 0x01, 0x02, 0x03, 0x00 };
+        auto bytes_be = BigEndianBytes{ 0x00, 0x01, 0x02, 0x03, 0x00 };
         bytes_be_view_t bytes_be_view{ bytes_be };
 
         auto u64 = bytes_be_view.to<std::uint64_t>();
@@ -171,7 +171,7 @@ TEST(bytes_view, to_int)
     }
 
     {
-        auto bytes_be = bytes_be_t{ 0x00, 0x01, 0x02, 0x03 };
+        auto bytes_be = BigEndianBytes{ 0x00, 0x01, 0x02, 0x03 };
         bytes_be_view_t bytes_be_view{ bytes_be };
 
         auto u64 = bytes_be_view.to<std::uint64_t>();
@@ -181,7 +181,7 @@ TEST(bytes_view, to_int)
     }
 
     {
-        auto bytes_be = bytes_be_t{ 0x00, 0x01, 0x02, 0x00 };
+        auto bytes_be = BigEndianBytes{ 0x00, 0x01, 0x02, 0x00 };
         bytes_be_view_t bytes_be_view{ bytes_be };
 
         auto u64 = bytes_be_view.to<std::uint64_t>();
@@ -191,7 +191,7 @@ TEST(bytes_view, to_int)
     }
 
     {
-        auto bytes_be = bytes_be_t{ 0x00, 0x01, 0x02 };
+        auto bytes_be = BigEndianBytes{ 0x00, 0x01, 0x02 };
         bytes_be_view_t bytes_be_view{ bytes_be };
 
         auto u64 = bytes_be_view.to<std::uint64_t>();
@@ -201,7 +201,7 @@ TEST(bytes_view, to_int)
     }
 
     {
-        auto bytes_be = bytes_be_t{ 0x00, 0x01, 0x00 };
+        auto bytes_be = BigEndianBytes{ 0x00, 0x01, 0x00 };
         bytes_be_view_t bytes_be_view{ bytes_be };
 
         auto u64 = bytes_be_view.to<std::uint64_t>();
@@ -211,7 +211,7 @@ TEST(bytes_view, to_int)
     }
 
     {
-        auto bytes_be = bytes_be_t{ 0x00, 0x01 };
+        auto bytes_be = BigEndianBytes{ 0x00, 0x01 };
         bytes_be_view_t bytes_be_view{ bytes_be };
 
         auto u64 = bytes_be_view.to<std::uint64_t>();
@@ -223,7 +223,7 @@ TEST(bytes_view, to_int)
     }
 
     {
-        auto bytes_be = bytes_be_t{ 0x00, 0x00 };
+        auto bytes_be = BigEndianBytes{ 0x00, 0x00 };
         bytes_be_view_t bytes_be_view{ bytes_be };
 
         auto u64 = bytes_be_view.to<std::uint64_t>();
@@ -235,7 +235,7 @@ TEST(bytes_view, to_int)
     }
 
     {
-        auto bytes_be = bytes_be_t{ 0x01 };
+        auto bytes_be = BigEndianBytes{ 0x01 };
         bytes_be_view_t bytes_be_view{ bytes_be };
 
         auto u64 = bytes_be_view.to<std::uint64_t>();
@@ -249,7 +249,7 @@ TEST(bytes_view, to_int)
     }
 
     {
-        auto bytes_be = bytes_be_t{ 0x00 };
+        auto bytes_be = BigEndianBytes{ 0x00 };
         bytes_be_view_t bytes_be_view{ bytes_be };
 
         auto u64 = bytes_be_view.to<std::uint64_t>();
@@ -263,7 +263,7 @@ TEST(bytes_view, to_int)
     }
 
     {
-        bytes_le_t bytes_le{ 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07 };
+        LittleEndianBytes bytes_le{ 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07 };
         bytes_le_view_t bytes_le_view{ bytes_le };
 
         auto u64 = bytes_le_view.to<std::uint64_t>();
@@ -271,7 +271,7 @@ TEST(bytes_view, to_int)
     }
 
     {
-        bytes_le_t bytes_le{ 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x00 };
+        LittleEndianBytes bytes_le{ 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x00 };
         bytes_le_view_t bytes_le_view{ bytes_le };
 
         auto u64 = bytes_le_view.to<std::uint64_t>();
@@ -279,7 +279,7 @@ TEST(bytes_view, to_int)
     }
 
     {
-        bytes_le_t bytes_le{ 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06 };
+        LittleEndianBytes bytes_le{ 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06 };
         bytes_le_view_t bytes_le_view{ bytes_le };
 
         auto u64 = bytes_le_view.to<std::uint64_t>();
@@ -287,7 +287,7 @@ TEST(bytes_view, to_int)
     }
 
     {
-        auto bytes_le = bytes_le_t{ 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x00 };
+        auto bytes_le = LittleEndianBytes{ 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x00 };
         bytes_le_view_t bytes_le_view{ bytes_le };
 
         auto u64 = bytes_le_view.to<std::uint64_t>();
@@ -295,7 +295,7 @@ TEST(bytes_view, to_int)
     }
 
     {
-        bytes_le_t bytes_le{ 0x00, 0x01, 0x02, 0x03, 0x04, 0x05 };
+        LittleEndianBytes bytes_le{ 0x00, 0x01, 0x02, 0x03, 0x04, 0x05 };
         bytes_le_view_t bytes_le_view{ bytes_le };
 
         auto u64 = bytes_le_view.to<std::uint64_t>();
@@ -303,7 +303,7 @@ TEST(bytes_view, to_int)
     }
 
     {
-        auto bytes_le = bytes_le_t{ 0x00, 0x01, 0x02, 0x03, 0x04, 0x00 };
+        auto bytes_le = LittleEndianBytes{ 0x00, 0x01, 0x02, 0x03, 0x04, 0x00 };
         bytes_le_view_t bytes_le_view{ bytes_le };
 
         auto u64 = bytes_le_view.to<std::uint64_t>();
@@ -311,7 +311,7 @@ TEST(bytes_view, to_int)
     }
 
     {
-        bytes_le_t bytes_le{ 0x00, 0x01, 0x02, 0x03, 0x04 };
+        LittleEndianBytes bytes_le{ 0x00, 0x01, 0x02, 0x03, 0x04 };
         bytes_le_view_t bytes_le_view{ bytes_le };
 
         auto u64 = bytes_le_view.to<std::uint64_t>();
@@ -319,7 +319,7 @@ TEST(bytes_view, to_int)
     }
 
     {
-        auto bytes_le = bytes_le_t{ 0x00, 0x01, 0x02, 0x03, 0x00 };
+        auto bytes_le = LittleEndianBytes{ 0x00, 0x01, 0x02, 0x03, 0x00 };
         bytes_le_view_t bytes_le_view{ bytes_le };
 
         auto u64 = bytes_le_view.to<std::uint64_t>();
@@ -327,7 +327,7 @@ TEST(bytes_view, to_int)
     }
 
     {
-        bytes_le_t bytes_le{ 0x00, 0x01, 0x02, 0x03 };
+        LittleEndianBytes bytes_le{ 0x00, 0x01, 0x02, 0x03 };
         bytes_le_view_t bytes_le_view{ bytes_le };
 
         auto u64 = bytes_le_view.to<std::uint64_t>();
@@ -337,7 +337,7 @@ TEST(bytes_view, to_int)
     }
 
     {
-        auto bytes_le = bytes_le_t{ 0x00, 0x01, 0x02, 0x00 };
+        auto bytes_le = LittleEndianBytes{ 0x00, 0x01, 0x02, 0x00 };
         bytes_le_view_t bytes_le_view{ bytes_le };
 
         auto u64 = bytes_le_view.to<std::uint64_t>();
@@ -347,7 +347,7 @@ TEST(bytes_view, to_int)
     }
 
     {
-        bytes_le_t bytes_le{ 0x00, 0x01, 0x02 };
+        LittleEndianBytes bytes_le{ 0x00, 0x01, 0x02 };
         bytes_le_view_t bytes_le_view{ bytes_le };
 
         auto u64 = bytes_le_view.to<std::uint64_t>();
@@ -357,7 +357,7 @@ TEST(bytes_view, to_int)
     }
 
     {
-        auto bytes_le = bytes_le_t{ 0x00, 0x01, 0x00 };
+        auto bytes_le = LittleEndianBytes{ 0x00, 0x01, 0x00 };
         bytes_le_view_t bytes_le_view{ bytes_le };
 
         auto u64 = bytes_le_view.to<std::uint64_t>();
@@ -367,7 +367,7 @@ TEST(bytes_view, to_int)
     }
 
     {
-        bytes_le_t bytes_le{ 0x00, 0x01 };
+        LittleEndianBytes bytes_le{ 0x00, 0x01 };
         bytes_le_view_t bytes_le_view{ bytes_le };
 
         auto u64 = bytes_le_view.to<std::uint64_t>();
@@ -379,7 +379,7 @@ TEST(bytes_view, to_int)
     }
 
     {
-        auto bytes_le = bytes_le_t{ 0x00, 0x00 };
+        auto bytes_le = LittleEndianBytes{ 0x00, 0x00 };
         bytes_le_view_t bytes_le_view{ bytes_le };
 
         auto u64 = bytes_le_view.to<std::uint64_t>();
@@ -391,7 +391,7 @@ TEST(bytes_view, to_int)
     }
 
     {
-        bytes_le_t bytes_le{ 0x01 };
+        LittleEndianBytes bytes_le{ 0x01 };
         bytes_le_view_t bytes_le_view{ bytes_le };
 
         auto u64 = bytes_le_view.to<std::uint64_t>();
@@ -405,7 +405,7 @@ TEST(bytes_view, to_int)
     }
 
     {
-        auto bytes_le = bytes_le_t{ 0x00 };
+        auto bytes_le = LittleEndianBytes{ 0x00 };
         bytes_le_view_t bytes_le_view{ bytes_le };
 
         auto u64 = bytes_le_view.to<std::uint64_t>();
@@ -424,7 +424,7 @@ TEST(bytes_be_view, operator_equal_equal)
     using namespace abc;
 
     {
-        bytes_be_t bytes_be{ 'a', 'b', 'c', 'd' };
+        BigEndianBytes bytes_be{ 'a', 'b', 'c', 'd' };
         bytes_be_view_t bytes_be_view{ bytes_be };
 
         ASSERT_TRUE(bytes_be_view == bytes_be_view);
@@ -432,7 +432,7 @@ TEST(bytes_be_view, operator_equal_equal)
     }
 
     {
-        bytes_be_t bytes_be{ 'a', 'b', 'c', 'd' };
+        BigEndianBytes bytes_be{ 'a', 'b', 'c', 'd' };
         bytes_be_view_t bytes_be_view{ bytes_be };
 
         ASSERT_TRUE(bytes_be_view == bytes_be);
@@ -440,7 +440,7 @@ TEST(bytes_be_view, operator_equal_equal)
     }
 
     {
-        bytes_be_t bytes_be{ 'a', 'b', 'c', 'd' };
+        BigEndianBytes bytes_be{ 'a', 'b', 'c', 'd' };
         bytes_be_view_t bytes_be_view{ bytes_be };
 
         ASSERT_TRUE(bytes_be == bytes_be_view);
@@ -448,8 +448,8 @@ TEST(bytes_be_view, operator_equal_equal)
     }
 
     {
-        bytes_be_t bytes_be1{ 'a', 'b', 'c', 'd' };
-        bytes_be_t bytes_be2{ 'a', 'b', 'c', 'd' };
+        BigEndianBytes bytes_be1{ 'a', 'b', 'c', 'd' };
+        BigEndianBytes bytes_be2{ 'a', 'b', 'c', 'd' };
         bytes_be_view_t bytes_be_view1{ bytes_be1 };
         bytes_be_view_t bytes_be_view2{ bytes_be2 };
 
@@ -458,8 +458,8 @@ TEST(bytes_be_view, operator_equal_equal)
     }
 
     {
-        bytes_be_t bytes_be1{ 'a', 'b', 'c', 'd' };
-        bytes_be_t bytes_be2{ 'a', 'b', 'c', 'd' };
+        BigEndianBytes bytes_be1{ 'a', 'b', 'c', 'd' };
+        BigEndianBytes bytes_be2{ 'a', 'b', 'c', 'd' };
         bytes_be_view_t bytes_be_view1{ bytes_be1 };
         bytes_be_view_t bytes_be_view2{ bytes_be2 };
 
@@ -470,8 +470,8 @@ TEST(bytes_be_view, operator_equal_equal)
     }
 
     {
-        bytes_be_t bytes_be1{ 'a', 'b', 'c', 'd' };
-        bytes_be_t bytes_be2{ 'a', 'b', 'c', 'd' };
+        BigEndianBytes bytes_be1{ 'a', 'b', 'c', 'd' };
+        BigEndianBytes bytes_be2{ 'a', 'b', 'c', 'd' };
         bytes_be_view_t bytes_be_view1{ bytes_be1 };
         bytes_be_view_t bytes_be_view2{ bytes_be2 };
 
@@ -482,8 +482,8 @@ TEST(bytes_be_view, operator_equal_equal)
     }
 
     {
-        bytes_be_t bytes_be1{ 'a', 'b', 'c', 'd' };
-        bytes_be_t bytes_be2{ 'd', 'c', 'b', 'a' };
+        BigEndianBytes bytes_be1{ 'a', 'b', 'c', 'd' };
+        BigEndianBytes bytes_be2{ 'd', 'c', 'b', 'a' };
         bytes_be_view_t bytes_be_view1{ bytes_be1 };
         bytes_be_view_t bytes_be_view2{ bytes_be2 };
 
@@ -493,8 +493,8 @@ TEST(bytes_be_view, operator_equal_equal)
     }
 
     {
-        bytes_be_t bytes_be1{ 'a', 'b', 'c', 'd' };
-        bytes_be_t bytes_be2{ 'd', 'c', 'b', 'a' };
+        BigEndianBytes bytes_be1{ 'a', 'b', 'c', 'd' };
+        BigEndianBytes bytes_be2{ 'd', 'c', 'b', 'a' };
         bytes_be_view_t bytes_be_view1{ bytes_be1 };
         bytes_be_view_t bytes_be_view2{ bytes_be2 };
 
@@ -510,7 +510,7 @@ TEST(bytes_le_view, operator_equal_equal)
     using namespace abc;
 
     {
-        bytes_le_t bytes_le{ 'a', 'b', 'c', 'd' };
+        LittleEndianBytes bytes_le{ 'a', 'b', 'c', 'd' };
         bytes_le_view_t bytes_le_view{ bytes_le };
 
         ASSERT_TRUE(bytes_le_view == bytes_le_view);
@@ -518,7 +518,7 @@ TEST(bytes_le_view, operator_equal_equal)
     }
 
     {
-        bytes_le_t bytes_le{ 'a', 'b', 'c', 'd' };
+        LittleEndianBytes bytes_le{ 'a', 'b', 'c', 'd' };
         bytes_le_view_t bytes_le_view{ bytes_le };
 
         ASSERT_TRUE(bytes_le_view == bytes_le);
@@ -526,7 +526,7 @@ TEST(bytes_le_view, operator_equal_equal)
     }
 
     {
-        bytes_le_t bytes_le{ 'a', 'b', 'c', 'd' };
+        LittleEndianBytes bytes_le{ 'a', 'b', 'c', 'd' };
         bytes_le_view_t bytes_le_view{ bytes_le };
 
         ASSERT_TRUE(bytes_le == bytes_le_view);
@@ -534,8 +534,8 @@ TEST(bytes_le_view, operator_equal_equal)
     }
 
     {
-        bytes_le_t bytes_le1{ 'a', 'b', 'c', 'd' };
-        bytes_le_t bytes_le2{ 'a', 'b', 'c', 'd' };
+        LittleEndianBytes bytes_le1{ 'a', 'b', 'c', 'd' };
+        LittleEndianBytes bytes_le2{ 'a', 'b', 'c', 'd' };
         bytes_le_view_t bytes_le_view1{ bytes_le1 };
         bytes_le_view_t bytes_le_view2{ bytes_le2 };
 
@@ -544,8 +544,8 @@ TEST(bytes_le_view, operator_equal_equal)
     }
 
     {
-        bytes_le_t bytes_le1{ 'a', 'b', 'c', 'd' };
-        bytes_le_t bytes_le2{ 'a', 'b', 'c', 'd' };
+        LittleEndianBytes bytes_le1{ 'a', 'b', 'c', 'd' };
+        LittleEndianBytes bytes_le2{ 'a', 'b', 'c', 'd' };
         bytes_le_view_t bytes_le_view1{ bytes_le1 };
         bytes_le_view_t bytes_le_view2{ bytes_le2 };
 
@@ -556,8 +556,8 @@ TEST(bytes_le_view, operator_equal_equal)
     }
 
     {
-        bytes_le_t bytes_le1{ 'a', 'b', 'c', 'd' };
-        bytes_le_t bytes_le2{ 'a', 'b', 'c', 'd' };
+        LittleEndianBytes bytes_le1{ 'a', 'b', 'c', 'd' };
+        LittleEndianBytes bytes_le2{ 'a', 'b', 'c', 'd' };
         bytes_le_view_t bytes_le_view1{ bytes_le1 };
         bytes_le_view_t bytes_le_view2{ bytes_le2 };
 
@@ -568,8 +568,8 @@ TEST(bytes_le_view, operator_equal_equal)
     }
 
     {
-        bytes_le_t bytes_le1{ 'a', 'b', 'c', 'd' };
-        bytes_le_t bytes_le2{ 'd', 'c', 'b', 'a' };
+        LittleEndianBytes bytes_le1{ 'a', 'b', 'c', 'd' };
+        LittleEndianBytes bytes_le2{ 'd', 'c', 'b', 'a' };
         bytes_le_view_t bytes_le_view1{ bytes_le1 };
         bytes_le_view_t bytes_le_view2{ bytes_le2 };
 
@@ -579,8 +579,8 @@ TEST(bytes_le_view, operator_equal_equal)
     }
 
     {
-        bytes_le_t bytes_le1{ 'a', 'b', 'c', 'd' };
-        bytes_le_t bytes_le2{ 'd', 'c', 'b', 'a' };
+        LittleEndianBytes bytes_le1{ 'a', 'b', 'c', 'd' };
+        LittleEndianBytes bytes_le2{ 'd', 'c', 'b', 'a' };
         bytes_le_view_t bytes_le_view1{ bytes_le1 };
         bytes_le_view_t bytes_le_view2{ bytes_le2 };
 

@@ -20,7 +20,7 @@ TEST(converters, hex_string_to_fixed_bytes)
 TEST(converters, uint128_to_bytes)
 {
     abc::uint128_t value = abc::hex_string::from("0x1234567890abcdef1234567890abcdef").transform([](auto && hex_string) { return abc::uint128_t::from(hex_string); }).value();
-    abc::bytes_be_t bytes = value.export_bits<abc::ByteNumbering::Msb0>();
+    abc::BigEndianBytes bytes = value.export_bits<abc::ByteNumbering::Msb0>();
     ASSERT_EQ(16, bytes.size());
 
     EXPECT_EQ(0x12, bytes[0]);

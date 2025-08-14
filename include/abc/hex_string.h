@@ -67,7 +67,7 @@ hex_string::reference::operator=(char const value) -> reference &
     return *this;
 }
 
-constexpr hex_string::hex_string(bytes_le_t && input) noexcept : binary_data_{ std::move(input) }
+constexpr hex_string::hex_string(LittleEndianBytes && input) noexcept : binary_data_{ std::move(input) }
 {
 }
 
@@ -82,7 +82,7 @@ hex_string::from(bytes_view<ByteNumbering> const input) -> hex_string
 {
     if constexpr (ByteNumbering == ByteNumbering::Msb0)
     {
-        return hex_string{ bytes_le_t{ input } };
+        return hex_string{ LittleEndianBytes{ input } };
     }
     else if constexpr (ByteNumbering == ByteNumbering::Lsb0)
     {
@@ -166,7 +166,7 @@ hex_string::swap(hex_string & rhs) noexcept -> void
 template <ByteNumbering ByteNumberingV>
     requires(ByteNumberingV == ByteNumbering::Lsb0)
 constexpr auto
-hex_string::bytes() const -> abc::Bytes<ByteNumberingV> const &
+hex_string::bytes() const -> abc::BasicBytes<ByteNumberingV> const &
 {
     return binary_data_;
 }
@@ -175,9 +175,9 @@ hex_string::bytes() const -> abc::Bytes<ByteNumberingV> const &
 template <ByteNumbering ByteNumberingV>
     requires(ByteNumberingV == ByteNumbering::Msb0)
 constexpr auto
-hex_string::bytes() const -> abc::Bytes<ByteNumberingV>
+hex_string::bytes() const -> abc::BasicBytes<ByteNumberingV>
 {
-    return abc::Bytes<ByteNumberingV>{ static_cast<bytes_le_view_t>(binary_data_) };
+    return abc::BasicBytes<ByteNumberingV>{ static_cast<bytes_le_view_t>(binary_data_) };
 }
 
 constexpr auto
@@ -193,25 +193,25 @@ hex_string::operator[](size_t const index) const noexcept -> const_reference
 }
 
 constexpr auto
-hex_string::least_significant_byte() const noexcept -> byte
+hex_string::least_significant_byte() const noexcept -> byte_t
 {
     return binary_data_.front();
 }
 
 constexpr auto
-hex_string::least_significant_byte() noexcept -> byte &
+hex_string::least_significant_byte() noexcept -> byte_t &
 {
     return binary_data_.front();
 }
 
 constexpr auto
-hex_string::most_significant_byte() const noexcept -> byte
+hex_string::most_significant_byte() const noexcept -> byte_t
 {
     return binary_data_.back();
 }
 
 constexpr auto
-hex_string::most_significant_byte() noexcept -> byte &
+hex_string::most_significant_byte() noexcept -> byte_t &
 {
     return binary_data_.back();
 }

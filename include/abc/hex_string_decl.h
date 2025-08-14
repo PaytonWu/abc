@@ -36,12 +36,12 @@ public:
     constexpr static auto upper_case = hex_string_format::upper_case;
 
 private:
-    bytes_le_t binary_data_;
+    LittleEndianBytes binary_data_;
 
 public:
     hex_string() = default;
 
-    constexpr explicit hex_string(bytes_le_t && input) noexcept;
+    constexpr explicit hex_string(LittleEndianBytes && input) noexcept;
 
     constexpr explicit hex_string(bytes_le_view_t input) noexcept;
 
@@ -81,7 +81,7 @@ public:
     static auto from(std::string_view input) -> expected<hex_string, std::error_code>;
 
     /// @brief construct hex_string object from a byte buffer view.
-    /// @tparam ByteNumbering specify the byte numbering of the input Bytes.
+    /// @tparam ByteNumbering specify the byte numbering of the input BasicBytes.
     /// @param input input byte buffer.
     /// @return the constructed hex_string object.
     template <ByteNumbering ByteNumbering>
@@ -101,7 +101,7 @@ public:
     /// @return true if the hex string is empty, otherwise false.
     [[nodiscard]] constexpr auto empty() const noexcept -> bool;
 
-    /// @brief get the size of the hex string in Bytes.
+    /// @brief get the size of the hex string in BasicBytes.
     /// @return the byte size of the hex string.
     [[nodiscard]] constexpr auto bytes_size() const noexcept -> size_t;
 
@@ -119,12 +119,12 @@ public:
     /// @brief get the byte buffer of the hex string in little endian format.
     template <ByteNumbering ByteNumbering>
         requires(ByteNumbering == ByteNumbering::Lsb0)
-    [[nodiscard]] constexpr auto bytes() const -> abc::Bytes<ByteNumbering> const &;
+    [[nodiscard]] constexpr auto bytes() const -> abc::BasicBytes<ByteNumbering> const &;
 
     /// @brief get the byte buffer of the hex string in big endian format.
     template <ByteNumbering ByteNumbering>
         requires(ByteNumbering == ByteNumbering::Msb0)
-    constexpr auto bytes() const -> abc::Bytes<ByteNumbering>;
+    constexpr auto bytes() const -> abc::BasicBytes<ByteNumbering>;
 
     /// @brief get the modifiable nibble at the specified index.
     /// @param index the nibble index.
@@ -138,19 +138,19 @@ public:
 
     /// @brief get the least significant byte.
     /// @return the byte value of the least significant byte.
-    [[nodiscard]] constexpr auto least_significant_byte() const noexcept -> byte;
+    [[nodiscard]] constexpr auto least_significant_byte() const noexcept -> byte_t;
 
     /// @brief get the least significant byte.
     /// @return the byte reference of the least significant byte.
-    [[nodiscard]] constexpr auto least_significant_byte() noexcept -> byte &;
+    [[nodiscard]] constexpr auto least_significant_byte() noexcept -> byte_t &;
 
     /// @brief get the most significant byte.
     /// @return the byte value of the most significant byte.
-    [[nodiscard]] constexpr auto most_significant_byte() const noexcept -> byte;
+    [[nodiscard]] constexpr auto most_significant_byte() const noexcept -> byte_t;
 
     /// @brief get the most significant byte.
     /// @return the byte reference of the most significant byte.
-    [[nodiscard]] constexpr auto most_significant_byte() noexcept -> byte &;
+    [[nodiscard]] constexpr auto most_significant_byte() noexcept -> byte_t &;
 };
 
 } // namespace abc

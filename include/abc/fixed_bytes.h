@@ -31,14 +31,14 @@ namespace abc
 template <std::size_t N, ByteNumbering ByteNumberingV>
 template <ByteNumbering SrcByteNumberingV>
     requires(SrcByteNumberingV == ByteNumberingV)
-constexpr fixed_bytes<N, ByteNumberingV>::fixed_bytes(std::array<byte, N> const & src, ByteNumberingType<SrcByteNumberingV>) : data_{ src }
+constexpr fixed_bytes<N, ByteNumberingV>::fixed_bytes(std::array<byte_t, N> const & src, ByteNumberingType<SrcByteNumberingV>) : data_{ src }
 {
 }
 
 template <std::size_t N, ByteNumbering ByteNumberingV>
 template <ByteNumbering SrcByteNumberingV>
     requires(SrcByteNumberingV != ByteNumberingV && SrcByteNumberingV != ByteNumbering::None && ByteNumberingV != ByteNumbering::None)
-constexpr fixed_bytes<N, ByteNumberingV>::fixed_bytes(std::array<byte, N> const & src, ByteNumberingType<SrcByteNumberingV>)
+constexpr fixed_bytes<N, ByteNumberingV>::fixed_bytes(std::array<byte_t, N> const & src, ByteNumberingType<SrcByteNumberingV>)
 {
     ranges::copy(src | ranges::views::reverse, std::begin(data_));
 }
@@ -48,7 +48,7 @@ template <ByteNumbering SrcByteNumberingV>
     requires(SrcByteNumberingV == ByteNumberingV)
 constexpr fixed_bytes<N, ByteNumberingV>::fixed_bytes(std::array<std::byte, N> const & src, ByteNumberingType<SrcByteNumberingV>)
 {
-    ranges::copy(src | ranges::views::transform([](auto const byte) { return std::to_integer<byte>(byte); }), data_.begin());
+    ranges::copy(src | ranges::views::transform([](auto const byte) { return std::to_integer<byte_t>(byte); }), data_.begin());
 }
 
 template <std::size_t N, ByteNumbering ByteNumberingV>
@@ -56,7 +56,7 @@ template <ByteNumbering SrcByteNumberingV>
     requires(SrcByteNumberingV != ByteNumberingV && SrcByteNumberingV != ByteNumbering::None && ByteNumberingV != ByteNumbering::None)
 constexpr fixed_bytes<N, ByteNumberingV>::fixed_bytes(std::array<std::byte, N> const & src, ByteNumberingType<SrcByteNumberingV>)
 {
-    ranges::copy(src | ranges::views::reverse | ranges::views::transform([](auto const b) { return std::to_integer<byte>(b); }), data_.begin());
+    ranges::copy(src | ranges::views::reverse | ranges::views::transform([](auto const b) { return std::to_integer<byte_t>(b); }), data_.begin());
 }
 
 template <std::size_t N, ByteNumbering ByteNumberingV>
@@ -151,7 +151,7 @@ constexpr fixed_bytes<N, ByteNumberingV>::fixed_bytes(fixed_bytes<N, ByteNumberi
 template <std::size_t N, ByteNumbering ByteNumberingV>
 template <ByteNumbering DataByteNumberingV>
 auto
-fixed_bytes<N, ByteNumberingV>::from(std::array<byte, N> const & data) -> expected<fixed_bytes, std::error_code>
+fixed_bytes<N, ByteNumberingV>::from(std::array<byte_t, N> const & data) -> expected<fixed_bytes, std::error_code>
 {
     if constexpr (DataByteNumberingV == ByteNumberingV || (DataByteNumberingV != ByteNumbering::None && ByteNumberingV != ByteNumbering::None))
     {
@@ -187,14 +187,14 @@ fixed_bytes<N, ByteNumberingV>::from(bytes_view<DataByteNumberingV> const data) 
 
 template <std::size_t N, ByteNumbering ByteNumberingV>
 constexpr auto
-fixed_bytes<N, ByteNumberingV>::operator[](size_t const index) const noexcept -> byte
+fixed_bytes<N, ByteNumberingV>::operator[](size_t const index) const noexcept -> byte_t
 {
     return data_[index];
 }
 
 template <std::size_t N, ByteNumbering ByteNumberingV>
 constexpr auto
-fixed_bytes<N, ByteNumberingV>::operator[](size_t const index) noexcept -> byte &
+fixed_bytes<N, ByteNumberingV>::operator[](size_t const index) noexcept -> byte_t &
 {
     return data_[index];
 }
@@ -347,7 +347,7 @@ fixed_bytes<N, ByteNumberingV>::size() const noexcept -> size_type
 
 template <std::size_t N, ByteNumbering ByteNumberingV>
 constexpr auto
-fixed_bytes<N, ByteNumberingV>::fill(byte const value) noexcept -> void
+fixed_bytes<N, ByteNumberingV>::fill(byte_t const value) noexcept -> void
 {
     data_.fill(value);
 }
@@ -486,7 +486,7 @@ fixed_bytes<N, ByteNumberingV>::clear() -> void
 
 template <std::size_t N, ByteNumbering ByteNumberingV>
 auto
-fixed_bytes<N, ByteNumberingV>::subbytes(size_type pos, size_type n) const -> expected<Bytes<ByteNumberingV>, std::error_code>
+fixed_bytes<N, ByteNumberingV>::subbytes(size_type pos, size_type n) const -> expected<BasicBytes<ByteNumberingV>, std::error_code>
 {
     if (pos >= size())
     {
@@ -498,7 +498,7 @@ fixed_bytes<N, ByteNumberingV>::subbytes(size_type pos, size_type n) const -> ex
     auto start = std::next(std::begin(data_), pos);
     auto end = std::next(start, offset);
 
-    return abc::Bytes<ByteNumberingV>::template from<ByteNumberingV>(start, end);
+    return abc::BasicBytes<ByteNumberingV>::template from<ByteNumberingV>(start, end);
 }
 
 template <std::size_t N, ByteNumbering ByteNumberingV>
@@ -527,7 +527,7 @@ fixed_bytes<N, ByteNumberingV>::subview(size_type, size_type) const && -> expect
 
 template <std::size_t N, ByteNumbering ByteNumberingV>
 auto
-fixed_bytes<N, ByteNumberingV>::subspan(size_type pos, size_type n) & -> expected<std::span<byte>, std::error_code>
+fixed_bytes<N, ByteNumberingV>::subspan(size_type pos, size_type n) & -> expected<std::span<byte_t>, std::error_code>
 {
     if (pos >= size())
     {
@@ -542,14 +542,14 @@ fixed_bytes<N, ByteNumberingV>::subspan(size_type pos, size_type n) & -> expecte
 
 template <std::size_t N, ByteNumbering ByteNumberingV>
 inline auto
-fixed_bytes<N, ByteNumberingV>::subspan(size_type, size_type) && -> expected<std::span<byte>, std::error_code>
+fixed_bytes<N, ByteNumberingV>::subspan(size_type, size_type) && -> expected<std::span<byte_t>, std::error_code>
 {
     return make_unexpected(make_error_code(errc::span_built_from_rvalue));
 }
 
 template <std::size_t N, ByteNumbering ByteNumberingV>
 auto
-fixed_bytes<N, ByteNumberingV>::subspan(size_type pos, size_type n) const & -> expected<std::span<byte const>, std::error_code>
+fixed_bytes<N, ByteNumberingV>::subspan(size_type pos, size_type n) const & -> expected<std::span<byte_t const>, std::error_code>
 {
     if (pos >= size())
     {
@@ -564,7 +564,7 @@ fixed_bytes<N, ByteNumberingV>::subspan(size_type pos, size_type n) const & -> e
 
 template <std::size_t N, ByteNumbering ByteNumberingV>
 auto
-fixed_bytes<N, ByteNumberingV>::subspan(size_type, size_type) const && -> expected<std::span<byte const>, std::error_code>
+fixed_bytes<N, ByteNumberingV>::subspan(size_type, size_type) const && -> expected<std::span<byte_t const>, std::error_code>
 {
     return make_unexpected(make_error_code(errc::span_built_from_rvalue));
 }
