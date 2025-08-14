@@ -22,8 +22,7 @@
 namespace abc
 {
 
-constexpr hex_string::const_reference::
-const_reference(hex_string const * str, size_t const nibble_index) noexcept
+constexpr hex_string::const_reference::const_reference(hex_string const * str, size_t const nibble_index) noexcept
     : str_{ str }
     , byte_index_{ nibble_index / 2 }
     , high_{ static_cast<bool>(nibble_index % 2) }
@@ -38,8 +37,7 @@ constexpr hex_string::const_reference::operator char() const noexcept
     return hex_utility::lower_case_hex_digits[(str_->binary_data_[byte_index_] >> (static_cast<size_t>(high_) * 4)) & 0x0f];
 }
 
-constexpr hex_string::reference::reference(hex_string * str, size_t const nibble_index) noexcept
-    : const_reference{ str, nibble_index }
+constexpr hex_string::reference::reference(hex_string * str, size_t const nibble_index) noexcept : const_reference{ str, nibble_index }
 {
 }
 
@@ -69,27 +67,24 @@ hex_string::reference::operator=(char const value) -> reference &
     return *this;
 }
 
-constexpr
-hex_string::hex_string(bytes_le_t && input) noexcept
-    : binary_data_{ std::move(input) }
+constexpr hex_string::hex_string(bytes_le_t && input) noexcept : binary_data_{ std::move(input) }
 {
 }
 
-constexpr
-hex_string::hex_string(bytes_le_view_t const input) noexcept
-    : binary_data_{ input }
+constexpr hex_string::hex_string(bytes_le_view_t const input) noexcept : binary_data_{ input }
 {
 }
 
-template <byte_numbering ByteNumbering> requires(ByteNumbering == byte_numbering::lsb0 || ByteNumbering == byte_numbering::msb0)
+template <ByteNumbering ByteNumbering>
+    requires(ByteNumbering == ByteNumbering::Lsb0 || ByteNumbering == ByteNumbering::Msb0)
 constexpr auto
 hex_string::from(bytes_view<ByteNumbering> const input) -> hex_string
 {
-    if constexpr (ByteNumbering == byte_numbering::msb0)
+    if constexpr (ByteNumbering == ByteNumbering::Msb0)
     {
         return hex_string{ bytes_le_t{ input } };
     }
-    else if constexpr (ByteNumbering == byte_numbering::lsb0)
+    else if constexpr (ByteNumbering == ByteNumbering::Lsb0)
     {
         return hex_string{ input };
     }
@@ -109,19 +104,21 @@ hex_string::to_string(hex_string_format const fmt) const -> std::string
     {
         r.append(hex_utility::prefix_0x);
         std::ranges::for_each(data_span | ranges::views::reverse | ranges::views::transform([&hex](auto const byte) {
-            assert(hex[2] == 0);
-            hex[0] = hex_utility::lower_case_hex_digits[byte >> 4], hex[1] = hex_utility::lower_case_hex_digits[byte & 0x0f];
-            return hex.data();
-        }), [&r](auto const * c_str) { r.append(c_str); });
+                                  assert(hex[2] == 0);
+                                  hex[0] = hex_utility::lower_case_hex_digits[byte >> 4], hex[1] = hex_utility::lower_case_hex_digits[byte & 0x0f];
+                                  return hex.data();
+                              }),
+                              [&r](auto const * c_str) { r.append(c_str); });
     }
     else if (abc::upper_case(fmt))
     {
         r.append(hex_utility::prefix_0X);
         std::ranges::for_each(data_span | ranges::views::reverse | ranges::views::transform([&hex](auto const byte) mutable {
-            assert(hex[2] == 0);
-            hex[0] = hex_utility::upper_case_hex_digits[byte >> 4], hex[1] = hex_utility::upper_case_hex_digits[byte & 0x0f];
-            return hex.data();
-        }), [&r](auto const * c_str) { r.append(c_str); });
+                                  assert(hex[2] == 0);
+                                  hex[0] = hex_utility::upper_case_hex_digits[byte >> 4], hex[1] = hex_utility::upper_case_hex_digits[byte & 0x0f];
+                                  return hex.data();
+                              }),
+                              [&r](auto const * c_str) { r.append(c_str); });
     }
     else
     {
@@ -166,28 +163,28 @@ hex_string::swap(hex_string & rhs) noexcept -> void
     binary_data_.swap(rhs.binary_data_);
 }
 
-template <byte_numbering ByteNumbering>
-    requires(ByteNumbering == byte_numbering::lsb0)
+template <ByteNumbering ByteNumberingV>
+    requires(ByteNumberingV == ByteNumbering::Lsb0)
 constexpr auto
-hex_string::bytes() const -> abc::bytes<ByteNumbering> const &
+hex_string::bytes() const -> abc::Bytes<ByteNumberingV> const &
 {
     return binary_data_;
 }
 
 /// @brief get the byte buffer of the hex string in big endian format.
-template <byte_numbering ByteNumbering>
-requires(ByteNumbering == byte_numbering::msb0)
+template <ByteNumbering ByteNumberingV>
+    requires(ByteNumberingV == ByteNumbering::Msb0)
 constexpr auto
-hex_string::bytes() const -> abc::bytes<ByteNumbering>
+hex_string::bytes() const -> abc::Bytes<ByteNumberingV>
 {
-    return abc::bytes<ByteNumbering>{ static_cast<bytes_le_view_t>(binary_data_) };
+    return abc::Bytes<ByteNumberingV>{ static_cast<bytes_le_view_t>(binary_data_) };
 }
 
 constexpr auto
 hex_string::operator[](size_t const index) noexcept -> reference
-    {
-        return reference{ this, index };
-    }
+{
+    return reference{ this, index };
+}
 
 constexpr auto
 hex_string::operator[](size_t const index) const noexcept -> const_reference

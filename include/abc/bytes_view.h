@@ -19,82 +19,82 @@
 namespace abc
 {
 
-template <byte_numbering ByteNumbering>
-template <byte_numbering BufferByteNumbering>
-    requires(BufferByteNumbering == ByteNumbering)
-constexpr bytes_view<ByteNumbering>::bytes_view(byte const * first, size_type count, byte_numbering_type<BufferByteNumbering>) noexcept : view_{ first, count }
+template <ByteNumbering ByteNumberingV>
+template <ByteNumbering BufferByteNumberingV>
+    requires(BufferByteNumberingV == ByteNumberingV)
+constexpr bytes_view<ByteNumberingV>::bytes_view(byte const * first, size_type count, ByteNumberingType<BufferByteNumberingV>) noexcept : view_{ first, count }
 {
 }
 
-template <byte_numbering ByteNumbering>
-template <std::contiguous_iterator It, std::sized_sentinel_for<It> End, byte_numbering BufferByteNumbering>
-    requires(std::same_as<std::iter_value_t<It>, abc::byte> && (!std::convertible_to<End, typename bytes_view<ByteNumbering>::size_type>) && BufferByteNumbering == ByteNumbering)
-constexpr bytes_view<ByteNumbering>::bytes_view(It first, End last, byte_numbering_type<BufferByteNumbering>) noexcept(noexcept(last - first)) : view_{ first, last }
+template <ByteNumbering ByteNumberingV>
+template <std::contiguous_iterator It, std::sized_sentinel_for<It> End, ByteNumbering BufferByteNumberingV>
+    requires(std::same_as<std::iter_value_t<It>, abc::byte> && (!std::convertible_to<End, typename bytes_view<ByteNumberingV>::size_type>) && BufferByteNumberingV == ByteNumberingV)
+constexpr bytes_view<ByteNumberingV>::bytes_view(It first, End last, ByteNumberingType<BufferByteNumberingV>) noexcept(noexcept(last - first)) : view_{ first, last }
 {
 }
 
-template <byte_numbering ByteNumbering>
-template <byte_numbering BufferByteNumbering>
-    requires(BufferByteNumbering == ByteNumbering)
+template <ByteNumbering ByteNumberingV>
+template <ByteNumbering BufferByteNumberingV>
+    requires(BufferByteNumberingV == ByteNumberingV)
 constexpr auto
-bytes_view<ByteNumbering>::from(abc::byte const * data, size_type size, byte_numbering_type<BufferByteNumbering>) noexcept -> bytes_view
+bytes_view<ByteNumberingV>::from(abc::byte const * data, size_type size, ByteNumberingType<BufferByteNumberingV>) noexcept -> bytes_view
 {
-    return bytes_view{ data, size, byte_numbering_type<BufferByteNumbering>{} };
+    return bytes_view{ data, size, ByteNumberingType<BufferByteNumberingV>{} };
 }
 
-template <byte_numbering ByteNumbering>
-template <std::contiguous_iterator It, std::sized_sentinel_for<It> End, byte_numbering BufferByteNumbering>
-    requires(std::same_as<std::iter_value_t<It>, abc::byte> && (!std::convertible_to<End, typename bytes_view<ByteNumbering>::size_type>) && BufferByteNumbering == ByteNumbering)
+template <ByteNumbering ByteNumberingV>
+template <std::contiguous_iterator It, std::sized_sentinel_for<It> End, ByteNumbering BufferByteNumberingV>
+    requires(std::same_as<std::iter_value_t<It>, abc::byte> && (!std::convertible_to<End, typename bytes_view<ByteNumberingV>::size_type>) && BufferByteNumberingV == ByteNumberingV)
 constexpr auto
-bytes_view<ByteNumbering>::from(It first, End last, byte_numbering_type<BufferByteNumbering>) noexcept(noexcept(last - first)) -> bytes_view
+bytes_view<ByteNumberingV>::from(It first, End last, ByteNumberingType<BufferByteNumberingV>) noexcept(noexcept(last - first)) -> bytes_view
 {
-    return bytes_view{ first, last, byte_numbering_type<BufferByteNumbering>{} };
+    return bytes_view{ first, last, ByteNumberingType<BufferByteNumberingV>{} };
 }
 
-template <byte_numbering ByteNumbering>
+template <ByteNumbering ByteNumberingV>
 constexpr auto
-bytes_view<ByteNumbering>::from(std::span<abc::byte const> bytes) noexcept -> bytes_view
-    requires(ByteNumbering == byte_numbering::none)
+bytes_view<ByteNumberingV>::from(std::span<abc::byte const> bytes) noexcept -> bytes_view
+    requires(ByteNumberingV == ByteNumbering::None)
 {
-    return bytes_view{ std::begin(bytes), std::end(bytes), byte_numbering_type<ByteNumbering>{} };
+    return bytes_view{ std::begin(bytes), std::end(bytes), ByteNumberingType<ByteNumberingV>{} };
 }
 
-template <byte_numbering ByteNumbering>
-template <byte_numbering BufferByteNumbering>
-    requires(BufferByteNumbering == ByteNumbering)
+template <ByteNumbering ByteNumberingV>
+template <ByteNumbering BufferByteNumberingV>
+    requires(BufferByteNumberingV == ByteNumberingV)
 constexpr auto
-bytes_view<ByteNumbering>::from(std::span<abc::byte const> bytes_span, byte_numbering_type<BufferByteNumbering> bnt) noexcept -> bytes_view
+bytes_view<ByteNumberingV>::from(std::span<abc::byte const> bytes_span, ByteNumberingType<BufferByteNumberingV> bnt) noexcept -> bytes_view
 {
     return bytes_view{ std::begin(bytes_span), std::end(bytes_span), bnt };
 }
 
-template <byte_numbering ByteNumbering>
+template <ByteNumbering ByteNumberingV>
 constexpr auto
-bytes_view<ByteNumbering>::from(std::basic_string_view<abc::byte> sv) noexcept -> bytes_view
-    requires(ByteNumbering == byte_numbering::none)
+bytes_view<ByteNumberingV>::from(std::basic_string_view<abc::byte> sv) noexcept -> bytes_view
+    requires(ByteNumberingV == ByteNumbering::None)
 {
-    return bytes_view{ std::begin(sv), std::end(sv), byte_numbering_type<ByteNumbering>{} };
+    return bytes_view{ std::begin(sv), std::end(sv), ByteNumberingType<ByteNumberingV>{} };
 }
 
-template <byte_numbering ByteNumbering>
-template <byte_numbering BufferByteNumbering>
-    requires(BufferByteNumbering == ByteNumbering)
+template <ByteNumbering ByteNumberingV>
+template <ByteNumbering BufferByteNumberingV>
+    requires(BufferByteNumberingV == ByteNumberingV)
 constexpr auto
-bytes_view<ByteNumbering>::from(std::basic_string_view<abc::byte> sv, byte_numbering_type<BufferByteNumbering> bnt) noexcept -> bytes_view
+bytes_view<ByteNumberingV>::from(std::basic_string_view<abc::byte> sv, ByteNumberingType<BufferByteNumberingV> bnt) noexcept -> bytes_view
 {
     return bytes_view{ std::begin(sv), std::end(sv), bnt };
 }
 
-template <byte_numbering ByteNumbering>
+template <ByteNumbering ByteNumberingV>
 template <std::integral T>
-    requires(ByteNumbering != byte_numbering::none)
+    requires(ByteNumberingV != ByteNumbering::None)
 constexpr auto
-bytes_view<ByteNumbering>::to() const noexcept -> T
+bytes_view<ByteNumberingV>::to() const noexcept -> T
 {
     assert(view_.size() <= sizeof(T));
 
     T value{ 0 };
-    if constexpr (ByteNumbering == byte_numbering::msb0)
+    if constexpr (ByteNumberingV == ByteNumbering::Msb0)
     {
         for (auto const byte : view_)
         {
@@ -114,152 +114,152 @@ bytes_view<ByteNumbering>::to() const noexcept -> T
     return value;
 }
 
-template <byte_numbering ByteNumbering>
+template <ByteNumbering ByteNumberingV>
 constexpr auto
-bytes_view<ByteNumbering>::begin() const noexcept -> const_iterator
+bytes_view<ByteNumberingV>::begin() const noexcept -> const_iterator
 {
     return view_.begin();
 }
 
-template <byte_numbering ByteNumbering>
+template <ByteNumbering ByteNumberingV>
 constexpr auto
-bytes_view<ByteNumbering>::cbegin() const noexcept -> const_iterator
+bytes_view<ByteNumberingV>::cbegin() const noexcept -> const_iterator
 {
     return view_.cbegin();
 }
 
-template <byte_numbering ByteNumbering>
+template <ByteNumbering ByteNumberingV>
 constexpr auto
-bytes_view<ByteNumbering>::end() const noexcept -> const_iterator
+bytes_view<ByteNumberingV>::end() const noexcept -> const_iterator
 {
     return view_.end();
 }
 
-template <byte_numbering ByteNumbering>
+template <ByteNumbering ByteNumberingV>
 constexpr auto
-bytes_view<ByteNumbering>::cend() const noexcept -> const_iterator
+bytes_view<ByteNumberingV>::cend() const noexcept -> const_iterator
 {
     return view_.cend();
 }
 
-template <byte_numbering ByteNumbering>
+template <ByteNumbering ByteNumberingV>
 constexpr auto
-bytes_view<ByteNumbering>::rbegin() const noexcept -> const_reverse_iterator
+bytes_view<ByteNumberingV>::rbegin() const noexcept -> const_reverse_iterator
 {
     return view_.rbegin();
 }
 
-template <byte_numbering ByteNumbering>
+template <ByteNumbering ByteNumberingV>
 constexpr auto
-bytes_view<ByteNumbering>::crbegin() const noexcept -> const_reverse_iterator
+bytes_view<ByteNumberingV>::crbegin() const noexcept -> const_reverse_iterator
 {
     return view_.crbegin();
 }
 
-template <byte_numbering ByteNumbering>
+template <ByteNumbering ByteNumberingV>
 constexpr auto
-bytes_view<ByteNumbering>::rend() const noexcept -> const_reverse_iterator
+bytes_view<ByteNumberingV>::rend() const noexcept -> const_reverse_iterator
 {
     return view_.rend();
 }
 
-template <byte_numbering ByteNumbering>
+template <ByteNumbering ByteNumberingV>
 constexpr auto
-bytes_view<ByteNumbering>::crend() const noexcept -> const_reverse_iterator
+bytes_view<ByteNumberingV>::crend() const noexcept -> const_reverse_iterator
 {
     return view_.crend();
 }
 
-template <byte_numbering ByteNumbering>
+template <ByteNumbering ByteNumberingV>
 constexpr auto
-bytes_view<ByteNumbering>::front() const -> const_reference
+bytes_view<ByteNumberingV>::front() const -> const_reference
 {
     return view_.front();
 }
 
-template <byte_numbering ByteNumbering>
+template <ByteNumbering ByteNumberingV>
 constexpr auto
-bytes_view<ByteNumbering>::back() const -> const_reference
+bytes_view<ByteNumberingV>::back() const -> const_reference
 {
     return view_.back();
 }
 
-template <byte_numbering ByteNumbering>
+template <ByteNumbering ByteNumberingV>
 constexpr auto
-bytes_view<ByteNumbering>::operator[](size_type idx) const -> const_reference
+bytes_view<ByteNumberingV>::operator[](size_type idx) const -> const_reference
 {
     return view_[idx];
 }
 
-template <byte_numbering ByteNumbering>
+template <ByteNumbering ByteNumberingV>
 constexpr auto
-bytes_view<ByteNumbering>::at(size_type pos) const -> const_reference
+bytes_view<ByteNumberingV>::at(size_type pos) const -> const_reference
 {
     return view_.at(pos);
 }
 
-template <byte_numbering ByteNumbering>
+template <ByteNumbering ByteNumberingV>
 constexpr auto
-bytes_view<ByteNumbering>::data() const noexcept -> const_pointer
+bytes_view<ByteNumberingV>::data() const noexcept -> const_pointer
 {
     return view_.data();
 }
 
-template <byte_numbering ByteNumbering>
+template <ByteNumbering ByteNumberingV>
 constexpr auto
-bytes_view<ByteNumbering>::size() const noexcept -> size_type
+bytes_view<ByteNumberingV>::size() const noexcept -> size_type
 {
     return view_.size();
 }
 
-template <byte_numbering ByteNumbering>
+template <ByteNumbering ByteNumberingV>
 constexpr auto
-bytes_view<ByteNumbering>::empty() const noexcept -> bool
+bytes_view<ByteNumberingV>::empty() const noexcept -> bool
 {
     return view_.empty();
 }
 
-template <byte_numbering ByteNumbering>
+template <ByteNumbering ByteNumberingV>
 template <std::size_t Count>
 constexpr auto
-bytes_view<ByteNumbering>::first() const -> bytes_view
+bytes_view<ByteNumberingV>::first() const -> bytes_view
 {
-    return bytes_view<ByteNumbering>{ view_.substr(0, Count) };
+    return bytes_view<ByteNumberingV>{ view_.substr(0, Count) };
 }
 
-template <byte_numbering ByteNumbering>
+template <ByteNumbering ByteNumberingV>
 constexpr auto
-bytes_view<ByteNumbering>::first(size_type count) const -> bytes_view
+bytes_view<ByteNumberingV>::first(size_type count) const -> bytes_view
 {
-    return bytes_view<ByteNumbering>{ view_.substr(0, count) };
+    return bytes_view<ByteNumberingV>{ view_.substr(0, count) };
 }
 
-template <byte_numbering ByteNumbering>
+template <ByteNumbering ByteNumberingV>
 template <std::size_t Count>
 constexpr auto
-bytes_view<ByteNumbering>::last() const -> bytes_view
+bytes_view<ByteNumberingV>::last() const -> bytes_view
 {
-    return bytes_view<ByteNumbering>{ view_.substr(view_.size() - Count) };
+    return bytes_view<ByteNumberingV>{ view_.substr(view_.size() - Count) };
 }
 
-template <byte_numbering ByteNumbering>
+template <ByteNumbering ByteNumberingV>
 constexpr auto
-bytes_view<ByteNumbering>::last(size_type count) const -> bytes_view
+bytes_view<ByteNumberingV>::last(size_type count) const -> bytes_view
 {
-    return bytes_view<ByteNumbering>{ view_.substr(view_.size() - count) };
+    return bytes_view<ByteNumberingV>{ view_.substr(view_.size() - count) };
 }
 
-template <byte_numbering ByteNumbering>
+template <ByteNumbering ByteNumberingV>
 template <std::size_t Offset, std::size_t Count>
 constexpr auto
-bytes_view<ByteNumbering>::subview() const -> bytes_view
+bytes_view<ByteNumberingV>::subview() const -> bytes_view
 {
     return { view_.substr(Offset, Count) };
 }
 
-template <byte_numbering ByteNumbering>
+template <ByteNumbering ByteNumberingV>
 constexpr auto
-bytes_view<ByteNumbering>::subview(size_type offset, size_type count) const -> bytes_view
+bytes_view<ByteNumberingV>::subview(size_type offset, size_type count) const -> bytes_view
 {
     return { view_.substr(offset, count) };
 }

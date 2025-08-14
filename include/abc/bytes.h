@@ -21,139 +21,139 @@
 namespace abc
 {
 
-template <byte_numbering ByteNumbering>
-template <byte_numbering RhsByteNumbering>
-    requires(RhsByteNumbering != ByteNumbering && RhsByteNumbering != byte_numbering::none && ByteNumbering != byte_numbering::none)
-constexpr bytes<ByteNumbering>::bytes(bytes<RhsByteNumbering> && rhs) : data_{ std::move(rhs.data_) }
+template <ByteNumbering ByteNumberingV>
+template <ByteNumbering RhsByteNumberingV>
+    requires(RhsByteNumberingV != ByteNumberingV && RhsByteNumberingV != ByteNumbering::None && ByteNumberingV != ByteNumbering::None)
+constexpr Bytes<ByteNumberingV>::Bytes(Bytes<RhsByteNumberingV> && rhs) : data_{ std::move(rhs.data_) }
 {
     ranges::reverse(data_);
 }
 
-template <byte_numbering ByteNumbering>
-template <byte_numbering RhsByteNumbering>
-    requires(RhsByteNumbering != ByteNumbering && (RhsByteNumbering == byte_numbering::none || ByteNumbering == byte_numbering::none))
-constexpr bytes<ByteNumbering>::bytes(bytes<RhsByteNumbering> && rhs) noexcept : data_{ std::move(rhs.data_) }
+template <ByteNumbering ByteNumberingV>
+template <ByteNumbering RhsByteNumberingV>
+    requires(RhsByteNumberingV != ByteNumberingV && (RhsByteNumberingV == ByteNumbering::None || ByteNumberingV == ByteNumbering::None))
+constexpr Bytes<ByteNumberingV>::Bytes(Bytes<RhsByteNumberingV> && rhs) noexcept : data_{ std::move(rhs.data_) }
 {
 }
 
-template <byte_numbering ByteNumbering>
-constexpr bytes<ByteNumbering>::bytes(bytes_view<ByteNumbering> const view) : data_{ std::begin(view), std::end(view) }
+template <ByteNumbering ByteNumberingV>
+constexpr Bytes<ByteNumberingV>::Bytes(bytes_view<ByteNumberingV> const view) : data_{ std::begin(view), std::end(view) }
 {
 }
 
-template <byte_numbering ByteNumbering>
-template <byte_numbering RhsByteNumbering>
-    requires(RhsByteNumbering != ByteNumbering && RhsByteNumbering != byte_numbering::none && ByteNumbering != byte_numbering::none)
-constexpr bytes<ByteNumbering>::bytes(bytes_view<RhsByteNumbering> const view) : data_{ std::begin(view), std::end(view) }
-{
-    ranges::reverse(data_);
-}
-
-template <byte_numbering ByteNumbering>
-template <byte_numbering ViewByteNumbering>
-    requires(ViewByteNumbering != ByteNumbering && (ViewByteNumbering == byte_numbering::none || ByteNumbering == byte_numbering::none))
-constexpr bytes<ByteNumbering>::bytes(bytes_view<ViewByteNumbering> const view) : data_{ std::begin(view), std::end(view) }
-{
-}
-
-template <byte_numbering ByteNumbering>
-constexpr bytes<ByteNumbering>::bytes(std::initializer_list<value_type> const il) : data_{ il }
-{
-}
-
-template <byte_numbering ByteNumbering>
-template <std::input_iterator Iterator, byte_numbering SrcByteNumbering>
-    requires(SrcByteNumbering == ByteNumbering || SrcByteNumbering == byte_numbering::none || ByteNumbering == byte_numbering::none)
-constexpr bytes<ByteNumbering>::bytes(Iterator begin, Iterator end, byte_numbering_type<SrcByteNumbering>) : data_{ begin, end }
-{
-}
-
-template <byte_numbering ByteNumbering>
-template <std::input_iterator Iterator, byte_numbering SrcByteNumbering>
-    requires(SrcByteNumbering != ByteNumbering && SrcByteNumbering != byte_numbering::none && ByteNumbering != byte_numbering::none)
-constexpr bytes<ByteNumbering>::bytes(Iterator begin, Iterator end, byte_numbering_type<SrcByteNumbering>) : data_{ begin, end }
-{
-}
-
-template <byte_numbering ByteNumbering>
-template <byte_numbering SrcByteNumbering>
-    requires(SrcByteNumbering == ByteNumbering || SrcByteNumbering == byte_numbering::none || ByteNumbering == byte_numbering::none)
-constexpr bytes<ByteNumbering>::bytes(std::initializer_list<value_type> const il, byte_numbering_type<SrcByteNumbering>) : data_{ il }
-{
-}
-
-template <byte_numbering ByteNumbering>
-template <byte_numbering SrcByteNumbering>
-    requires(SrcByteNumbering != ByteNumbering && SrcByteNumbering != byte_numbering::none && ByteNumbering != byte_numbering::none)
-constexpr bytes<ByteNumbering>::bytes(std::initializer_list<value_type> const il, byte_numbering_type<SrcByteNumbering>) : data_{ il }
+template <ByteNumbering ByteNumberingV>
+template <ByteNumbering RhsByteNumberingV>
+    requires(RhsByteNumberingV != ByteNumberingV && RhsByteNumberingV != ByteNumbering::None && ByteNumberingV != ByteNumbering::None)
+constexpr Bytes<ByteNumberingV>::Bytes(bytes_view<RhsByteNumberingV> const view) : data_{ std::begin(view), std::end(view) }
 {
     ranges::reverse(data_);
 }
 
-template <byte_numbering ByteNumbering>
-template <byte_numbering RhsByteNumbering>
-    requires(RhsByteNumbering != ByteNumbering && RhsByteNumbering != byte_numbering::none && ByteNumbering != byte_numbering::none)
+template <ByteNumbering ByteNumberingV>
+template <ByteNumbering ViewByteNumberingV>
+    requires(ViewByteNumberingV != ByteNumberingV && (ViewByteNumberingV == ByteNumbering::None || ByteNumberingV == ByteNumbering::None))
+constexpr Bytes<ByteNumberingV>::Bytes(bytes_view<ViewByteNumberingV> const view) : data_{ std::begin(view), std::end(view) }
+{
+}
+
+template <ByteNumbering ByteNumberingV>
+constexpr Bytes<ByteNumberingV>::Bytes(std::initializer_list<value_type> const il) : data_{ il }
+{
+}
+
+template <ByteNumbering ByteNumberingV>
+template <std::input_iterator Iterator, ByteNumbering SrcByteNumberingV>
+    requires(SrcByteNumberingV == ByteNumberingV || SrcByteNumberingV == ByteNumbering::None || ByteNumberingV == ByteNumbering::None)
+constexpr Bytes<ByteNumberingV>::Bytes(Iterator begin, Iterator end, ByteNumberingType<SrcByteNumberingV>) : data_{ begin, end }
+{
+}
+
+template <ByteNumbering ByteNumberingV>
+template <std::input_iterator Iterator, ByteNumbering SrcByteNumberingV>
+    requires(SrcByteNumberingV != ByteNumberingV && SrcByteNumberingV != ByteNumbering::None && ByteNumberingV != ByteNumbering::None)
+constexpr Bytes<ByteNumberingV>::Bytes(Iterator begin, Iterator end, ByteNumberingType<SrcByteNumberingV>) : data_{ begin, end }
+{
+}
+
+template <ByteNumbering ByteNumberingV>
+template <ByteNumbering SrcByteNumberingV>
+    requires(SrcByteNumberingV == ByteNumberingV || SrcByteNumberingV == ByteNumbering::None || ByteNumberingV == ByteNumbering::None)
+constexpr Bytes<ByteNumberingV>::Bytes(std::initializer_list<value_type> const il, ByteNumberingType<SrcByteNumberingV>) : data_{ il }
+{
+}
+
+template <ByteNumbering ByteNumberingV>
+template <ByteNumbering SrcByteNumberingV>
+    requires(SrcByteNumberingV != ByteNumberingV && SrcByteNumberingV != ByteNumbering::None && ByteNumberingV != ByteNumbering::None)
+constexpr Bytes<ByteNumberingV>::Bytes(std::initializer_list<value_type> const il, ByteNumberingType<SrcByteNumberingV>) : data_{ il }
+{
+    ranges::reverse(data_);
+}
+
+template <ByteNumbering ByteNumberingV>
+template <ByteNumbering RhsByteNumberingV>
+    requires(RhsByteNumberingV != ByteNumberingV && RhsByteNumberingV != ByteNumbering::None && ByteNumberingV != ByteNumbering::None)
 constexpr auto
-bytes<ByteNumbering>::operator=(bytes<RhsByteNumbering> && rhs) -> bytes &
+Bytes<ByteNumberingV>::operator=(Bytes<RhsByteNumberingV> && rhs) -> Bytes &
 {
     data_ = std::move(rhs.data_);
     ranges::reverse(data_);
     return *this;
 }
 
-template <byte_numbering ByteNumbering>
-template <byte_numbering RhsByteNumber>
-    requires(RhsByteNumber != ByteNumbering && (RhsByteNumber == byte_numbering::none || ByteNumbering == byte_numbering::none))
+template <ByteNumbering ByteNumberingV>
+template <ByteNumbering RhsByteNumberV>
+    requires(RhsByteNumberV != ByteNumberingV && (RhsByteNumberV == ByteNumbering::None || ByteNumberingV == ByteNumbering::None))
 constexpr auto
-bytes<ByteNumbering>::operator=(bytes<RhsByteNumber> && rhs) noexcept -> bytes &
+Bytes<ByteNumberingV>::operator=(Bytes<RhsByteNumberV> && rhs) noexcept -> Bytes &
 {
     data_ = std::move(rhs.data_);
     return *this;
 }
 
-template <byte_numbering ByteNumbering>
+template <ByteNumbering ByteNumberingV>
 constexpr auto
-bytes<ByteNumbering>::operator=(bytes_view<ByteNumbering> view) -> bytes &
+Bytes<ByteNumberingV>::operator=(bytes_view<ByteNumberingV> view) -> Bytes &
 {
     data_.assign(std::begin(view), std::end(view));
     return *this;
 }
 
-template <byte_numbering ByteNumbering>
-template <byte_numbering ViewByteNumbering>
-    requires(ViewByteNumbering != ByteNumbering && ViewByteNumbering != byte_numbering::none && ByteNumbering != byte_numbering::none)
+template <ByteNumbering ByteNumberingV>
+template <ByteNumbering ViewByteNumberingV>
+    requires(ViewByteNumberingV != ByteNumberingV && ViewByteNumberingV != ByteNumbering::None && ByteNumberingV != ByteNumbering::None)
 constexpr auto
-bytes<ByteNumbering>::operator=(bytes_view<ViewByteNumbering> view) -> bytes &
+Bytes<ByteNumberingV>::operator=(bytes_view<ViewByteNumberingV> view) -> Bytes &
 {
     data_.assign(std::begin(view), std::end(view));
     ranges::reverse(data_);
     return *this;
 }
 
-template <byte_numbering ByteNumbering>
-template <byte_numbering ViewByteNumbering>
-    requires(ViewByteNumbering != ByteNumbering && (ViewByteNumbering == byte_numbering::none || ByteNumbering == byte_numbering::none))
+template <ByteNumbering ByteNumberingV>
+template <ByteNumbering ViewByteNumberingV>
+    requires(ViewByteNumberingV != ByteNumberingV && (ViewByteNumberingV == ByteNumbering::None || ByteNumberingV == ByteNumbering::None))
 constexpr auto
-bytes<ByteNumbering>::operator=(bytes_view<ViewByteNumbering> view) -> bytes &
+Bytes<ByteNumberingV>::operator=(bytes_view<ViewByteNumberingV> view) -> Bytes &
 {
     data_.assign(std::begin(view), std::end(view));
     return *this;
 }
 
-template <byte_numbering ByteNumbering>
+template <ByteNumbering ByteNumberingV>
 constexpr auto
-bytes<ByteNumbering>::operator=(std::initializer_list<value_type> const il) -> bytes &
+Bytes<ByteNumberingV>::operator=(std::initializer_list<value_type> const il) -> Bytes &
 {
     data_ = il;
     return *this;
 }
 
-template <byte_numbering ByteNumbering>
+template <ByteNumbering ByteNumberingV>
 template <std::integral T>
 constexpr auto
-bytes<ByteNumbering>::from(T i) -> bytes
+Bytes<ByteNumberingV>::from(T i) -> Bytes
 {
-    bytes bs;
+    Bytes bs;
     bs.reserve(sizeof(i));
 
     for (std::size_t j = 0; j < sizeof(T) && i != 0; ++j)
@@ -163,7 +163,7 @@ bytes<ByteNumbering>::from(T i) -> bytes
         i >>= 8;
     }
 
-    if constexpr (ByteNumbering == byte_numbering::msb0)
+    if constexpr (ByteNumberingV == ByteNumbering::Msb0)
     {
         ranges::reverse(bs);
     }
@@ -171,48 +171,48 @@ bytes<ByteNumbering>::from(T i) -> bytes
     return bs;
 }
 
-template <byte_numbering ByteNumbering>
-template <byte_numbering DataByteNumbering, std::input_iterator InputIterator>
+template <ByteNumbering ByteNumberingV>
+template <ByteNumbering DataByteNumberingV, std::input_iterator InputIterator>
 constexpr auto
-bytes<ByteNumbering>::from(InputIterator begin, InputIterator end) -> bytes
+Bytes<ByteNumberingV>::from(InputIterator begin, InputIterator end) -> Bytes
 {
-    return bytes{ begin, end, byte_numbering_type<DataByteNumbering>{} };
+    return Bytes{ begin, end, ByteNumberingType<DataByteNumberingV>{} };
 }
 
-template <byte_numbering ByteNumbering>
-template <byte_numbering ViewByteNumbering>
+template <ByteNumbering ByteNumberingV>
+template <ByteNumbering ViewByteNumberingV>
 constexpr auto
-bytes<ByteNumbering>::from(bytes_view<ViewByteNumbering> const view) -> bytes
+Bytes<ByteNumberingV>::from(bytes_view<ViewByteNumberingV> const view) -> Bytes
 {
-    return bytes{ view };
+    return Bytes{ view };
 }
 
-template <byte_numbering ByteNumbering>
-template <byte_numbering DataByteNumbering>
+template <ByteNumbering ByteNumberingV>
+template <ByteNumbering DataByteNumberingV>
 constexpr auto
-bytes<ByteNumbering>::from(std::initializer_list<byte> il) -> bytes
+Bytes<ByteNumberingV>::from(std::initializer_list<byte> il) -> Bytes
 {
-    return bytes{ il, byte_numbering_type<DataByteNumbering>{} };
+    return Bytes{ il, ByteNumberingType<DataByteNumberingV>{} };
 }
 
-template <byte_numbering ByteNumbering>
-template <byte_numbering RhsByteNumbering>
+template <ByteNumbering ByteNumberingV>
+template <ByteNumbering RhsByteNumberingV>
 constexpr auto
-bytes<ByteNumbering>::from(bytes<RhsByteNumbering> && rhs) -> bytes
+Bytes<ByteNumberingV>::from(Bytes<RhsByteNumberingV> && rhs) -> Bytes
 {
-    return bytes{ std::move(rhs) };
+    return Bytes{ std::move(rhs) };
 }
 
-template <byte_numbering ByteNumbering>
+template <ByteNumbering ByteNumberingV>
 template <std::integral T>
-    requires(ByteNumbering != byte_numbering::none)
+    requires(ByteNumberingV != ByteNumbering::None)
 constexpr auto
-bytes<ByteNumbering>::to() const noexcept -> T
+Bytes<ByteNumberingV>::to() const noexcept -> T
 {
     assert(data_.size() <= sizeof(T));
 
     T value{ 0 };
-    if constexpr (ByteNumbering == byte_numbering::msb0)
+    if constexpr (ByteNumberingV == ByteNumbering::Msb0)
     {
         for (auto const byte : data_)
         {
@@ -232,224 +232,224 @@ bytes<ByteNumbering>::to() const noexcept -> T
     return value;
 }
 
-template <byte_numbering ByteNumbering>
-template <byte_numbering ToByteNumbering>
-    requires(ByteNumbering != ToByteNumbering)
+template <ByteNumbering ByteNumberingV>
+template <ByteNumbering ToByteNumberingV>
+    requires(ByteNumberingV != ToByteNumberingV)
 constexpr auto
-bytes<ByteNumbering>::to() const & -> bytes<ToByteNumbering>
+Bytes<ByteNumberingV>::to() const & -> Bytes<ToByteNumberingV>
 {
-    return bytes<ToByteNumbering>{ static_cast<bytes_view<ByteNumbering>>(*this) };
+    return Bytes<ToByteNumberingV>{ static_cast<bytes_view<ByteNumberingV>>(*this) };
 }
 
-template <byte_numbering ByteNumbering>
-template <byte_numbering ToByteNumbering>
-    requires(ByteNumbering != ToByteNumbering)
+template <ByteNumbering ByteNumberingV>
+template <ByteNumbering ToByteNumberingV>
+    requires(ByteNumberingV != ToByteNumberingV)
 constexpr auto
-bytes<ByteNumbering>::to() && -> bytes<ToByteNumbering>
+Bytes<ByteNumberingV>::to() && -> Bytes<ToByteNumberingV>
 {
-    return bytes<ToByteNumbering>{ std::move(*this) };
+    return Bytes<ToByteNumberingV>{ std::move(*this) };
 }
 
-template <byte_numbering ByteNumbering>
+template <ByteNumbering ByteNumberingV>
 constexpr auto
-bytes<ByteNumbering>::assign(size_type const count, byte const & value) -> void
+Bytes<ByteNumberingV>::assign(size_type const count, byte const & value) -> void
 {
     data_.assign(count, value);
 }
 
-template <byte_numbering ByteNumbering>
+template <ByteNumbering ByteNumberingV>
 constexpr auto
-bytes<ByteNumbering>::at(size_type const pos) -> reference
+Bytes<ByteNumberingV>::at(size_type const pos) -> reference
 {
     return data_.at(pos);
 }
 
-template <byte_numbering ByteNumbering>
+template <ByteNumbering ByteNumberingV>
 constexpr auto
-bytes<ByteNumbering>::at(size_type const pos) const -> const_reference
+Bytes<ByteNumberingV>::at(size_type const pos) const -> const_reference
 {
     return data_.at(pos);
 }
 
-template <byte_numbering ByteNumbering>
+template <ByteNumbering ByteNumberingV>
 constexpr auto
-bytes<ByteNumbering>::operator[](size_type const pos) -> reference
+Bytes<ByteNumberingV>::operator[](size_type const pos) -> reference
 {
     return data_[pos];
 }
 
-template <byte_numbering ByteNumbering>
+template <ByteNumbering ByteNumberingV>
 constexpr auto
-bytes<ByteNumbering>::operator[](size_type const pos) const -> const_reference
+Bytes<ByteNumberingV>::operator[](size_type const pos) const -> const_reference
 {
     return data_[pos];
 }
 
-template <byte_numbering ByteNumbering>
+template <ByteNumbering ByteNumberingV>
 constexpr auto
-bytes<ByteNumbering>::front() -> reference
+Bytes<ByteNumberingV>::front() -> reference
 {
     return data_.front();
 }
 
-template <byte_numbering ByteNumbering>
+template <ByteNumbering ByteNumberingV>
 constexpr auto
-bytes<ByteNumbering>::front() const -> const_reference
+Bytes<ByteNumberingV>::front() const -> const_reference
 {
     return data_.front();
 }
 
-template <byte_numbering ByteNumbering>
+template <ByteNumbering ByteNumberingV>
 constexpr auto
-bytes<ByteNumbering>::back() -> reference
+Bytes<ByteNumberingV>::back() -> reference
 {
     return data_.back();
 }
 
-template <byte_numbering ByteNumbering>
+template <ByteNumbering ByteNumberingV>
 constexpr auto
-bytes<ByteNumbering>::back() const -> const_reference
+Bytes<ByteNumberingV>::back() const -> const_reference
 {
     return data_.back();
 }
 
-template <byte_numbering ByteNumbering>
+template <ByteNumbering ByteNumberingV>
 constexpr auto
-bytes<ByteNumbering>::data() noexcept -> value_type *
+Bytes<ByteNumberingV>::data() noexcept -> value_type *
 {
     return data_.data();
 }
 
-template <byte_numbering ByteNumbering>
+template <ByteNumbering ByteNumberingV>
 constexpr auto
-bytes<ByteNumbering>::data() const noexcept -> value_type const *
+Bytes<ByteNumberingV>::data() const noexcept -> value_type const *
 {
     return data_.data();
 }
 
-template <byte_numbering ByteNumbering>
+template <ByteNumbering ByteNumberingV>
 constexpr auto
-bytes<ByteNumbering>::begin() noexcept -> iterator
+Bytes<ByteNumberingV>::begin() noexcept -> iterator
 {
     return data_.begin();
 }
 
-template <byte_numbering ByteNumbering>
+template <ByteNumbering ByteNumberingV>
 constexpr auto
-bytes<ByteNumbering>::begin() const noexcept -> const_iterator
+Bytes<ByteNumberingV>::begin() const noexcept -> const_iterator
 {
     return data_.begin();
 }
 
-template <byte_numbering ByteNumbering>
+template <ByteNumbering ByteNumberingV>
 constexpr auto
-bytes<ByteNumbering>::cbegin() const noexcept -> const_iterator
+Bytes<ByteNumberingV>::cbegin() const noexcept -> const_iterator
 {
     return data_.cbegin();
 }
 
-template <byte_numbering ByteNumbering>
+template <ByteNumbering ByteNumberingV>
 constexpr auto
-bytes<ByteNumbering>::end() noexcept -> iterator
+Bytes<ByteNumberingV>::end() noexcept -> iterator
 {
     return data_.end();
 }
 
-template <byte_numbering ByteNumbering>
+template <ByteNumbering ByteNumberingV>
 constexpr auto
-bytes<ByteNumbering>::end() const noexcept -> const_iterator
+Bytes<ByteNumberingV>::end() const noexcept -> const_iterator
 {
     return data_.end();
 }
 
-template <byte_numbering ByteNumbering>
+template <ByteNumbering ByteNumberingV>
 constexpr auto
-bytes<ByteNumbering>::cend() const noexcept -> const_iterator
+Bytes<ByteNumberingV>::cend() const noexcept -> const_iterator
 {
     return data_.cend();
 }
 
-template <byte_numbering ByteNumbering>
+template <ByteNumbering ByteNumberingV>
 constexpr auto
-bytes<ByteNumbering>::empty() const noexcept -> bool
+Bytes<ByteNumberingV>::empty() const noexcept -> bool
 {
     return data_.empty();
 }
 
-template <byte_numbering ByteNumbering>
+template <ByteNumbering ByteNumberingV>
 constexpr auto
-bytes<ByteNumbering>::size() const noexcept -> size_type
+Bytes<ByteNumberingV>::size() const noexcept -> size_type
 {
     return data_.size();
 }
 
-template <byte_numbering ByteNumbering>
+template <ByteNumbering ByteNumberingV>
 constexpr auto
-bytes<ByteNumbering>::resize(size_type new_size) -> void
+Bytes<ByteNumberingV>::resize(size_type new_size) -> void
 {
     data_.resize(new_size);
 }
 
-template <byte_numbering ByteNumbering>
+template <ByteNumbering ByteNumberingV>
 constexpr auto
-bytes<ByteNumbering>::reserve(size_type const new_cap) -> void
+Bytes<ByteNumberingV>::reserve(size_type const new_cap) -> void
 {
     data_.reserve(new_cap);
 }
 
-template <byte_numbering ByteNumbering>
+template <ByteNumbering ByteNumberingV>
 constexpr void
-bytes<ByteNumbering>::clear() noexcept
+Bytes<ByteNumberingV>::clear() noexcept
 {
     data_.clear();
 }
 
-template <byte_numbering ByteNumbering>
+template <ByteNumbering ByteNumberingV>
 constexpr void
-bytes<ByteNumbering>::push_back(value_type const value)
+Bytes<ByteNumberingV>::push_back(value_type const value)
 {
     data_.push_back(value);
 }
 
-template <byte_numbering ByteNumbering>
+template <ByteNumbering ByteNumberingV>
 constexpr void
-bytes<ByteNumbering>::pop_back()
+Bytes<ByteNumberingV>::pop_back()
 {
     data_.pop_back();
 }
 
-template <byte_numbering ByteNumbering>
+template <ByteNumbering ByteNumberingV>
 constexpr void
-bytes<ByteNumbering>::swap(bytes & other) noexcept
+Bytes<ByteNumberingV>::swap(Bytes & other) noexcept
 {
     data_.swap(other.data_);
 }
 
-template <byte_numbering ByteNumbering>
-constexpr bytes<ByteNumbering>::operator std::vector<byte> const &() const noexcept
-    requires(ByteNumbering == byte_numbering::none)
+template <ByteNumbering ByteNumberingV>
+constexpr Bytes<ByteNumberingV>::operator std::vector<byte> const &() const noexcept
+    requires(ByteNumberingV == ByteNumbering::None)
 {
     return data_;
 }
 
-template <byte_numbering ByteNumbering>
-constexpr bytes<ByteNumbering>::operator std::vector<byte> &() noexcept
-    requires(ByteNumbering == byte_numbering::none)
+template <ByteNumbering ByteNumberingV>
+constexpr Bytes<ByteNumberingV>::operator std::vector<byte> &() noexcept
+    requires(ByteNumberingV == ByteNumbering::None)
 {
     return data_;
 }
 
-template <byte_numbering ByteNumbering>
+template <ByteNumbering ByteNumberingV>
 constexpr auto
-bytes<ByteNumbering>::least_significant_byte() const -> const_reference
-    requires(ByteNumbering != byte_numbering::none)
+Bytes<ByteNumberingV>::least_significant_byte() const -> const_reference
+    requires(ByteNumberingV != ByteNumbering::None)
 {
-    if constexpr (ByteNumbering == byte_numbering::msb0)
+    if constexpr (ByteNumberingV == ByteNumbering::Msb0)
     {
         return data_.back();
     }
 
-    if constexpr (ByteNumbering == byte_numbering::lsb0)
+    if constexpr (ByteNumberingV == ByteNumbering::Lsb0)
     {
         return data_.front();
     }
@@ -457,17 +457,17 @@ bytes<ByteNumbering>::least_significant_byte() const -> const_reference
     unreachable();
 }
 
-template <byte_numbering ByteNumbering>
+template <ByteNumbering ByteNumberingV>
 constexpr auto
-bytes<ByteNumbering>::least_significant_byte() -> reference
-    requires(ByteNumbering != byte_numbering::none)
+Bytes<ByteNumberingV>::least_significant_byte() -> reference
+    requires(ByteNumberingV != ByteNumbering::None)
 {
-    if constexpr (ByteNumbering == byte_numbering::msb0)
+    if constexpr (ByteNumberingV == ByteNumbering::Msb0)
     {
         return data_.back();
     }
 
-    if constexpr (ByteNumbering == byte_numbering::lsb0)
+    if constexpr (ByteNumberingV == ByteNumbering::Lsb0)
     {
         return data_.front();
     }
@@ -475,17 +475,17 @@ bytes<ByteNumbering>::least_significant_byte() -> reference
     unreachable();
 }
 
-template <byte_numbering ByteNumbering>
+template <ByteNumbering ByteNumberingV>
 constexpr auto
-bytes<ByteNumbering>::most_significant_byte() const -> const_reference
-    requires(ByteNumbering != byte_numbering::none)
+Bytes<ByteNumberingV>::most_significant_byte() const -> const_reference
+    requires(ByteNumberingV != ByteNumbering::None)
 {
-    if constexpr (ByteNumbering == byte_numbering::msb0)
+    if constexpr (ByteNumberingV == ByteNumbering::Msb0)
     {
         return data_.front();
     }
 
-    if constexpr (ByteNumbering == byte_numbering::lsb0)
+    if constexpr (ByteNumberingV == ByteNumbering::Lsb0)
     {
         return data_.back();
     }
@@ -493,17 +493,17 @@ bytes<ByteNumbering>::most_significant_byte() const -> const_reference
     unreachable();
 }
 
-template <byte_numbering ByteNumbering>
+template <ByteNumbering ByteNumberingV>
 constexpr auto
-bytes<ByteNumbering>::most_significant_byte() -> reference
-    requires(ByteNumbering != byte_numbering::none)
+Bytes<ByteNumberingV>::most_significant_byte() -> reference
+    requires(ByteNumberingV != ByteNumbering::None)
 {
-    if constexpr (ByteNumbering == byte_numbering::msb0)
+    if constexpr (ByteNumberingV == ByteNumbering::Msb0)
     {
         return data_.front();
     }
 
-    if constexpr (ByteNumbering == byte_numbering::lsb0)
+    if constexpr (ByteNumberingV == ByteNumbering::Lsb0)
     {
         return data_.back();
     }
@@ -511,116 +511,116 @@ bytes<ByteNumbering>::most_significant_byte() -> reference
     unreachable();
 }
 
-template <byte_numbering ByteNumbering>
+template <ByteNumbering ByteNumberingV>
 constexpr auto
-bytes<ByteNumbering>::first(size_t const count) const noexcept -> bytes_view<ByteNumbering>
+Bytes<ByteNumberingV>::first(size_t const count) const noexcept -> bytes_view<ByteNumberingV>
 {
     assert(count <= data_.size());
-    return bytes_view<ByteNumbering>{ std::addressof(data_[0]), count };
+    return bytes_view<ByteNumberingV>{ std::addressof(data_[0]), count };
 }
 
-template <byte_numbering ByteNumbering>
+template <ByteNumbering ByteNumberingV>
 constexpr auto
-bytes<ByteNumbering>::last(size_t const count) const noexcept -> bytes_view<ByteNumbering>
+Bytes<ByteNumberingV>::last(size_t const count) const noexcept -> bytes_view<ByteNumberingV>
 {
     assert(count <= data_.size());
-    return bytes_view<ByteNumbering>::from(std::addressof(data_[size() - count]), count, byte_numbering_type<ByteNumbering>{});
+    return bytes_view<ByteNumberingV>::from(std::addressof(data_[size() - count]), count, ByteNumberingType<ByteNumberingV>{});
 }
 
-template <byte_numbering ByteNumbering>
+template <ByteNumbering ByteNumberingV>
 auto
-bytes<ByteNumbering>::subview(size_type const pos, size_type const n) const -> expected<bytes_view<ByteNumbering>, std::error_code>
+Bytes<ByteNumberingV>::subview(size_type const pos, size_type const n) const -> expected<bytes_view<ByteNumberingV>, std::error_code>
 {
     if (pos >= data_.size())
     {
         return make_unexpected(make_error_code(std::errc::result_out_of_range));
     }
 
-    return bytes_view<ByteNumbering>{ std::addressof(data_[pos]), std::min(n, size() - pos) };
+    return bytes_view<ByteNumberingV>{ std::addressof(data_[pos]), std::min(n, size() - pos) };
 }
 
-template <byte_numbering ByteNumbering>
+template <ByteNumbering ByteNumberingV>
 constexpr auto
-bytes<ByteNumbering>::view() const noexcept -> bytes_view<ByteNumbering>
+Bytes<ByteNumberingV>::view() const noexcept -> bytes_view<ByteNumberingV>
 {
-    return static_cast<bytes_view<ByteNumbering>>(*this);
+    return static_cast<bytes_view<ByteNumberingV>>(*this);
 }
 
-template <byte_numbering ByteNumbering>
+template <ByteNumbering ByteNumberingV>
 constexpr auto
-bytes<ByteNumbering>::operator+(byte const other) const -> bytes
+Bytes<ByteNumberingV>::operator+(byte const other) const -> Bytes
 {
     auto result = *this;
     return result += other;
 }
 
-template <byte_numbering ByteNumbering>
+template <ByteNumbering ByteNumberingV>
 constexpr auto
-bytes<ByteNumbering>::operator+=(byte const other) -> bytes &
+Bytes<ByteNumberingV>::operator+=(byte const other) -> Bytes &
 {
     data_.reserve(size() + 1);
     data_.push_back(other);
     return *this;
 }
 
-template <byte_numbering ByteNumbering>
+template <ByteNumbering ByteNumberingV>
 constexpr auto
-bytes<ByteNumbering>::operator+(bytes_view<ByteNumbering> const other) const -> bytes
+Bytes<ByteNumberingV>::operator+(bytes_view<ByteNumberingV> const other) const -> Bytes
 {
     auto data = *this;
     return data += other;
 }
 
-template <byte_numbering ByteNumbering>
+template <ByteNumbering ByteNumberingV>
 constexpr auto
-bytes<ByteNumbering>::operator+=(bytes_view<ByteNumbering> const other) -> bytes &
+Bytes<ByteNumberingV>::operator+=(bytes_view<ByteNumberingV> const other) -> Bytes &
 {
     data_.reserve(size() + other.size());
     ranges::copy(other, std::back_inserter(data_));
     return *this;
 }
 
-template <byte_numbering ByteNumbering>
-constexpr bytes<ByteNumbering>::operator bytes_view<ByteNumbering>() const noexcept
+template <ByteNumbering ByteNumberingV>
+constexpr Bytes<ByteNumberingV>::operator bytes_view<ByteNumberingV>() const noexcept
 {
-    return bytes_view<ByteNumbering>::from(data(), size(), byte_numbering_type<ByteNumbering>{});
+    return bytes_view<ByteNumberingV>::from(data(), size(), ByteNumberingType<ByteNumberingV>{});
 }
 
 [[nodiscard]] constexpr auto
-operator<=>(bytes<byte_numbering::none> const & lhs, std::vector<byte> const & rhs) -> std::strong_ordering
+operator<=>(Bytes<ByteNumbering::None> const & lhs, std::vector<byte> const & rhs) -> std::strong_ordering
 {
     return static_cast<std::vector<byte>>(lhs) <=> rhs;
 }
 
 [[nodiscard]] constexpr auto
-operator==(bytes<byte_numbering::none> const & lhs, std::vector<byte> const & rhs) -> bool
+operator==(Bytes<ByteNumbering::None> const & lhs, std::vector<byte> const & rhs) -> bool
 {
     return static_cast<std::vector<byte>>(lhs) == rhs;
 }
 
-template <byte_numbering ByteNumbering>
+template <ByteNumbering ByteNumberingV>
 constexpr auto
-operator+(byte const lhs, bytes_view<ByteNumbering> const & rhs) -> bytes<ByteNumbering>
+operator+(byte const lhs, bytes_view<ByteNumberingV> const & rhs) -> Bytes<ByteNumberingV>
 {
-    return bytes<ByteNumbering>{ lhs } + rhs;
+    return Bytes<ByteNumberingV>{ lhs } + rhs;
 }
 
-template <byte_numbering ByteNumbering>
+template <ByteNumbering ByteNumberingV>
 constexpr void
-swap(bytes<ByteNumbering> & lhs, bytes<ByteNumbering> & rhs) noexcept
+swap(Bytes<ByteNumberingV> & lhs, Bytes<ByteNumberingV> & rhs) noexcept
 {
     lhs.swap(rhs);
 }
 
 constexpr auto
-erase(bytes<byte_numbering::none> & c, bytes<byte_numbering::none>::value_type const value) -> bytes<byte_numbering::none>::size_type
+erase(Bytes<ByteNumbering::None> & c, Bytes<ByteNumbering::None>::value_type const value) -> Bytes<ByteNumbering::None>::size_type
 {
     return std::erase(static_cast<std::vector<byte> &>(c), value);
 }
 
 template <typename Predictor>
 constexpr auto
-erase_if(bytes<byte_numbering::none> & c, Predictor predictor) -> bytes<byte_numbering::none>::size_type
+erase_if(Bytes<ByteNumbering::None> & c, Predictor predictor) -> Bytes<ByteNumbering::None>::size_type
 {
     return std::erase_if(static_cast<std::vector<byte> &>(c), std::move(predictor));
 }

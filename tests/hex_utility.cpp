@@ -8,7 +8,8 @@
 
 #include <random>
 
-TEST(hex_utility, hex_string_without_prefix) {
+TEST(hex_utility, hex_string_without_prefix)
+{
     EXPECT_TRUE(abc::hex_utility::is_hex("0"));
     EXPECT_TRUE(abc::hex_utility::is_hex("1"));
     EXPECT_TRUE(abc::hex_utility::is_hex("2"));
@@ -38,7 +39,8 @@ TEST(hex_utility, hex_string_without_prefix) {
     EXPECT_FALSE(abc::hex_utility::is_hex("0123456789abcdefABCDEFG"));
 }
 
-TEST(hex_utility, hex_string_with_prefix) {
+TEST(hex_utility, hex_string_with_prefix)
+{
     EXPECT_TRUE(abc::hex_utility::is_hex("0x0"));
     EXPECT_TRUE(abc::hex_utility::is_hex("0x1"));
     EXPECT_TRUE(abc::hex_utility::is_hex("0x2"));
@@ -96,37 +98,47 @@ TEST(hex_utility, hex_string_with_prefix) {
     EXPECT_FALSE(abc::hex_utility::is_hex("0X0123456789abcdefABCDEFG"));
 }
 
-TEST(hex_utility, hex_binary) {
-    for (auto i = 0u; i <= 0x0f; ++i) {
+TEST(hex_utility, hex_binary)
+{
+    for (auto i = 0u; i <= 0x0f; ++i)
+    {
         EXPECT_TRUE(abc::hex_utility::is_hex(i));
     }
 
-    for (size_t i = 16u; i <= 0xfffffff; ++i) {
+    for (size_t i = 16u; i <= 0xfffffff; ++i)
+    {
         EXPECT_FALSE(abc::hex_utility::is_hex(i));
     }
 }
 
-TEST(hex_utility, hex_char) {
-    for (int i = 0; i < 256; ++i) {
-        if (auto const ch = static_cast<char>(i); ('0' <= ch && ch <= '9') || ('a' <= ch && ch <= 'f') || ('A' <= ch && ch <= 'F')) {
+TEST(hex_utility, hex_char)
+{
+    for (int i = 0; i < 256; ++i)
+    {
+        if (auto const ch = static_cast<char>(i); ('0' <= ch && ch <= '9') || ('a' <= ch && ch <= 'f') || ('A' <= ch && ch <= 'F'))
+        {
             EXPECT_TRUE(abc::hex_utility::is_hex(ch));
-        } else {
+        }
+        else
+        {
             EXPECT_FALSE(abc::hex_utility::is_hex(ch));
         }
     }
 }
 
-TEST(hex_utility, hex_string_to_binary) {
+TEST(hex_utility, hex_string_to_binary)
+{
     std::random_device rd;
     std::uniform_int_distribution distribution{ 0, 255 };
     abc::bytes_le_t bytes;
 
-    bytes.resize(std::uniform_int_distribution<size_t>{0u, 5000u}(rd));
-    for (auto & byte : bytes) {
+    bytes.resize(std::uniform_int_distribution<size_t>{ 0u, 5000u }(rd));
+    for (auto & byte : bytes)
+    {
         byte = static_cast<abc::byte>(distribution(rd));
     }
 
-    auto const hex_string = abc::hex_string::from<abc::byte_numbering::lsb0>(bytes);
-    EXPECT_EQ(hex_string.bytes<abc::byte_numbering::lsb0>(), bytes);
-    EXPECT_EQ(abc::hex_string::from(hex_string.to_string().substr(2)).value().bytes<abc::byte_numbering::lsb0>(), bytes);
+    auto const hex_string = abc::hex_string::from<abc::ByteNumbering::Lsb0>(bytes);
+    EXPECT_EQ(hex_string.bytes<abc::ByteNumbering::Lsb0>(), bytes);
+    EXPECT_EQ(abc::hex_string::from(hex_string.to_string().substr(2)).value().bytes<abc::ByteNumbering::Lsb0>(), bytes);
 }

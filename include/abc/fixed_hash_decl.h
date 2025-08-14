@@ -8,10 +8,11 @@
 
 #include "fixed_bytes.h"
 
-namespace abc {
+namespace abc
+{
 
-using h256_t = abc::fixed_bytes<32, abc::byte_numbering::msb0>;
+using h256_t = abc::fixed_bytes<32, abc::ByteNumbering::msb0>;
 
 }
 
-#endif //ABC_INCLUDE_ABC_FIXED_HASH_DECL
+#endif // ABC_INCLUDE_ABC_FIXED_HASH_DECL

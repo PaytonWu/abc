@@ -5,8 +5,10 @@
 
 #include <gtest/gtest.h>
 
-TEST(converters, hex_string_to_fixed_bytes) {
-    abc::bytes32_be_t key_data = abc::convert_to<abc::bytes32_be_t>::from(abc::hex_string::from("c67a31aca1e2bad8469003930c6d08f80f5087720d2276d3c85ad74d3297adec").value()).value();
+TEST(converters, hex_string_to_fixed_bytes)
+{
+    abc::bytes32_be_t key_data =
+        abc::convert_to<abc::bytes32_be_t>::from(abc::hex_string::from("c67a31aca1e2bad8469003930c6d08f80f5087720d2276d3c85ad74d3297adec").value()).value();
     EXPECT_EQ(0xc6, key_data[0]);
     EXPECT_EQ(0x7a, key_data[1]);
     EXPECT_EQ(0x31, key_data[2]);
@@ -15,9 +17,10 @@ TEST(converters, hex_string_to_fixed_bytes) {
     EXPECT_EQ(0x97, key_data[29]);
 }
 
-TEST(converters, uint128_to_bytes) {
+TEST(converters, uint128_to_bytes)
+{
     abc::uint128_t value = abc::hex_string::from("0x1234567890abcdef1234567890abcdef").transform([](auto && hex_string) { return abc::uint128_t::from(hex_string); }).value();
-    abc::bytes_be_t bytes = value.export_bits<abc::byte_numbering::msb0>();
+    abc::bytes_be_t bytes = value.export_bits<abc::ByteNumbering::Msb0>();
     ASSERT_EQ(16, bytes.size());
 
     EXPECT_EQ(0x12, bytes[0]);

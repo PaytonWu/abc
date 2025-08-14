@@ -10,11 +10,12 @@
 
 #include <cstddef>
 
-namespace abc {
+namespace abc
+{
 
-template <std::size_t N, byte_numbering ByteNumbering>
+template <std::size_t N, ByteNumbering ByteNumbering>
 class [[nodiscard]] fixed_bytes;
 
 }
 
-#endif //ABC_INCLUDE_ABC_FIXED_BYTES_FWD_DECL
+#endif // ABC_INCLUDE_ABC_FIXED_BYTES_FWD_DECL

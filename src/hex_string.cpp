@@ -10,11 +10,11 @@ namespace abc
 /// @tparam ByteNumbering specify the byte numbering of the output bytes.
 /// @param string_slice input hex string slice.
 /// @return bytes object or an error code object.
-template <byte_numbering ByteNumbering>
+template <ByteNumbering ByteNumberingV>
 static auto
-to_bytes(std::string_view string_slice) -> expected<bytes<ByteNumbering>, std::error_code>
+to_bytes(std::string_view string_slice) -> expected<Bytes<ByteNumberingV>, std::error_code>
 {
-    static_assert(ByteNumbering == abc::byte_numbering::lsb0 || ByteNumbering == abc::byte_numbering::msb0);
+    static_assert(ByteNumberingV == abc::ByteNumbering::Lsb0 || ByteNumberingV == abc::ByteNumbering::Msb0);
 
     if (hex_utility::has_hex_prefix(string_slice))
     {
@@ -26,9 +26,9 @@ to_bytes(std::string_view string_slice) -> expected<bytes<ByteNumbering>, std::e
         return make_unexpected(make_error_code(std::errc::invalid_argument));
     }
 
-    abc::bytes<ByteNumbering> binary_data;
+    abc::Bytes<ByteNumberingV> binary_data;
     binary_data.reserve((string_slice.size() + 1) / 2);
-    if constexpr (ByteNumbering == byte_numbering::msb0)
+    if constexpr (ByteNumberingV == ByteNumbering::Msb0)
     {
         if (string_slice.size() & 1)
         {
@@ -52,7 +52,7 @@ to_bytes(std::string_view string_slice) -> expected<bytes<ByteNumbering>, std::e
         return binary_data;
     }
 
-    if constexpr (ByteNumbering == byte_numbering::lsb0)
+    if constexpr (ByteNumberingV == ByteNumbering::Lsb0)
     {
         if (string_slice.size() & 1)
         {
@@ -82,7 +82,7 @@ to_bytes(std::string_view string_slice) -> expected<bytes<ByteNumbering>, std::e
 auto
 hex_string::from(std::string_view input) -> expected<hex_string, std::error_code>
 {
-    return to_bytes<byte_numbering::lsb0>(input).transform([](auto && bytes) { return hex_string{ std::forward<decltype(bytes)>(bytes) }; });
+    return to_bytes<ByteNumbering::Lsb0>(input).transform([](auto && bytes) { return hex_string{ std::forward<decltype(bytes)>(bytes) }; });
 }
 
 } // namespace abc

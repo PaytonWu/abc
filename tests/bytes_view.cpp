@@ -45,7 +45,7 @@ TEST(bytes_view, bytes)
 
     {
         bytes_be_t bytes_be{ 'a', 'b', 'c', 'd' };
-        bytes_be_view_t bytes_be_view = bytes_be_view_t::from(bytes_be.data(), bytes_be.size(), byte_numbering_type<bytes_be_t::byte_numbering_value>{});
+        bytes_be_view_t bytes_be_view = bytes_be_view_t::from(bytes_be.data(), bytes_be.size(), ByteNumberingType<bytes_be_t::byte_numbering_value>{});
 
         ASSERT_EQ(bytes_be.size(), bytes_be_view.size());
         ASSERT_EQ('a', bytes_be_view[0]);
@@ -56,7 +56,7 @@ TEST(bytes_view, bytes)
 
     {
         bytes_be_t bytes_be{ 'a', 'b', 'c', 'd' };
-        bytes_be_view_t bytes_be_view = bytes_be_view_t::from(bytes_be.data(), 2, byte_numbering_type_v<byte_numbering::msb0>);
+        bytes_be_view_t bytes_be_view = bytes_be_view_t::from(bytes_be.data(), 2, ByteNumberingType<ByteNumbering::Msb0>{});
 
         ASSERT_EQ(2, bytes_be_view.size());
         ASSERT_EQ('a', bytes_be_view[0]);
@@ -78,7 +78,7 @@ TEST(bytes_view, fixed_bytes)
     using namespace abc;
 
     {
-        bytes4_be_t bytes_be = bytes4_be_t::from<byte_numbering::msb0>({ 'a', 'b', 'c', 'd' }).value();
+        bytes4_be_t bytes_be = bytes4_be_t::from<ByteNumbering::Msb0>({ 'a', 'b', 'c', 'd' }).value();
         bytes_be_view_t bytes_be_view{ bytes_be };
 
         ASSERT_EQ(bytes_be.size(), bytes_be_view.size());
@@ -93,7 +93,7 @@ TEST(bytes_view, span)
 {
     using namespace abc;
 
-    bytes4_t bytes4 = bytes4_t::from<byte_numbering::none>({ 'a', 'b', 'c', 'd' }).value();
+    bytes4_t bytes4 = bytes4_t::from<ByteNumbering::None>({ 'a', 'b', 'c', 'd' }).value();
     bytes_view_t bytes_view{ bytes4 };
 
     ASSERT_EQ(bytes4.size(), bytes_view.size());
