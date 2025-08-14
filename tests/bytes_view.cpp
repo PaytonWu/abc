@@ -45,7 +45,7 @@ TEST(bytes_view, bytes)
 
     {
         bytes_be_t bytes_be{ 'a', 'b', 'c', 'd' };
-        bytes_be_view_t bytes_be_view = bytes_be_view_t::from(bytes_be.data(), bytes_be.size(), ByteNumberingType<bytes_be_t::byte_numbering_value>{});
+        bytes_be_view_t bytes_be_view = bytes_be_view_t::from(bytes_be.data(), bytes_be.size(), ByteNumberingType<bytes_be_t::byte_numbering_v>{});
 
         ASSERT_EQ(bytes_be.size(), bytes_be_view.size());
         ASSERT_EQ('a', bytes_be_view[0]);

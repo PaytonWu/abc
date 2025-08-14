@@ -57,6 +57,11 @@ constexpr Bytes<ByteNumberingV>::Bytes(bytes_view<ViewByteNumberingV> const view
 }
 
 template <ByteNumbering ByteNumberingV>
+constexpr Bytes<ByteNumberingV>::Bytes(std::string_view str) requires(ByteNumberingV == ByteNumbering::None) : data_{ str.begin(), str.end() }
+{
+}
+
+template <ByteNumbering ByteNumberingV>
 constexpr Bytes<ByteNumberingV>::Bytes(std::initializer_list<value_type> const il) : data_{ il }
 {
 }
@@ -201,6 +206,14 @@ constexpr auto
 Bytes<ByteNumberingV>::from(Bytes<RhsByteNumberingV> && rhs) -> Bytes
 {
     return Bytes{ std::move(rhs) };
+}
+
+template <ByteNumbering ByteNumberingV>
+constexpr auto
+Bytes<ByteNumberingV>::from(std::string_view str) -> Bytes
+    requires(ByteNumberingV == ByteNumbering::None)
+{
+    return Bytes{ str };
 }
 
 template <ByteNumbering ByteNumberingV>

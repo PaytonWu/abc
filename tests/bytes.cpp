@@ -619,3 +619,21 @@ TEST(bytes, assign_from_view)
         ASSERT_EQ(bytes_expected, bytes);
     }
 }
+
+TEST(bytes, from_string_view)
+{
+    {
+        auto bytes = bytes_t::from("01020304");
+        
+        ASSERT_EQ(bytes.size(), 8);
+
+        ASSERT_EQ(bytes[0], '0');
+        ASSERT_EQ(bytes[1], '1');
+        ASSERT_EQ(bytes[2], '0');
+        ASSERT_EQ(bytes[3], '2');
+        ASSERT_EQ(bytes[4], '0');
+        ASSERT_EQ(bytes[5], '3');
+        ASSERT_EQ(bytes[6], '0');
+        ASSERT_EQ(bytes[7], '4');
+    }
+}

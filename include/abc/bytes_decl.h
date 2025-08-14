@@ -40,7 +40,7 @@ public:
     using reverse_iterator = internal_type::reverse_iterator;
     using const_reverse_iterator = internal_type::const_reverse_iterator;
 
-    constexpr static ByteNumbering byte_numbering_value{ ByteNumberingV };
+    constexpr static ByteNumbering byte_numbering_v{ ByteNumberingV };
 
     // public constructors
 
@@ -63,6 +63,9 @@ public:
     template <ByteNumbering ViewByteNumberingV>
         requires(ViewByteNumberingV != ByteNumberingV && (ViewByteNumberingV == ByteNumbering::None || ByteNumberingV == ByteNumbering::None))
     constexpr explicit Bytes(bytes_view<ViewByteNumberingV> view);
+
+    constexpr explicit Bytes(std::string_view str)
+        requires(ByteNumberingV == ByteNumbering::None);
 
     constexpr Bytes(std::initializer_list<value_type> il);
 
@@ -121,6 +124,9 @@ public:
 
     template <ByteNumbering RhsByteNumberingV>
     constexpr static auto from(Bytes<RhsByteNumberingV> && rhs) -> Bytes;
+
+    constexpr static auto from(std::string_view str) -> Bytes
+        requires(ByteNumberingV == ByteNumbering::None);
 
     template <std::integral T>
         requires(ByteNumberingV != ByteNumbering::None)

@@ -21,20 +21,20 @@ enum class ByteNumbering
 template <>
 struct ByteNumberingType<ByteNumbering::None>
 {
-    constexpr static ByteNumbering byte_numbering_value = ByteNumbering::None;
+    constexpr static ByteNumbering byte_numbering_v = ByteNumbering::None;
 };
 
 template <>
 struct ByteNumberingType<ByteNumbering::Msb0>
 {
-    constexpr static ByteNumbering byte_numbering_value = ByteNumbering::Msb0;
+    constexpr static ByteNumbering byte_numbering_v = ByteNumbering::Msb0;
     constexpr static std::endian endian_value = std::endian::big;
 };
 
 template <>
 struct ByteNumberingType<ByteNumbering::Lsb0>
 {
-    constexpr static ByteNumbering byte_numbering_value = ByteNumbering::Lsb0;
+    constexpr static ByteNumbering byte_numbering_v = ByteNumbering::Lsb0;
     constexpr static std::endian endian_value = std::endian::little;
 };
 
@@ -42,14 +42,14 @@ template <>
 struct EndianType<std::endian::big>
 {
     constexpr static std::endian endian_value = std::endian::big;
-    constexpr static ByteNumbering byte_numbering_value = ByteNumbering::Msb0;
+    constexpr static ByteNumbering byte_numbering_v = ByteNumbering::Msb0;
 };
 
 template <>
 struct EndianType<std::endian::little>
 {
     constexpr static std::endian endian_value = std::endian::little;
-    constexpr static ByteNumbering byte_numbering_value = ByteNumbering::Lsb0;
+    constexpr static ByteNumbering byte_numbering_v = ByteNumbering::Lsb0;
 };
 
 } // namespace abc::details
