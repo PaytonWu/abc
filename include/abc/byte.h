@@ -1,8 +1,8 @@
 // Copyright(c) 2023 - present, Payton Wu (payton.wu@outlook.com) & abc contributors.
 // Distributed under the MIT License (http://opensource.org/licenses/MIT)
 
-#if !defined(ABC_BYTE)
-#define ABC_BYTE
+#ifndef ABC_INCLUDE_ABC_BYTE
+#define ABC_INCLUDE_ABC_BYTE
 
 #pragma once
 
@@ -12,8 +12,8 @@
 
 namespace abc {
 
-using byte = std::uint8_t;
+using byte_t = std::uint8_t;
 
 }
 
-#endif
+#endif // ABC_INCLUDE_ABC_BYTE

@@ -1,8 +1,8 @@
 // Copyright(c) 2023 - present, Payton Wu (payton.wu@outlook.com) & the contributors.
 // Distributed under the MIT License (http://opensource.org/licenses/MIT)
 
-#ifndef ABC_INCLUDE_ABC_BYTES_FWD_DECL
-#define ABC_INCLUDE_ABC_BYTES_FWD_DECL
+#ifndef ABC_INCLUDE_ABC_BASIC_BYTES_FWD_DECL
+#define ABC_INCLUDE_ABC_BASIC_BYTES_FWD_DECL
 
 #pragma once
 
@@ -12,13 +12,14 @@ namespace abc
 {
 
 template <ByteNumbering ByteNumberingV>
-class [[nodiscard]] Bytes;
+class [[nodiscard]] BasicBytes;
 
-using bytes_t = Bytes<ByteNumbering::None>;
-using bytes_msb0_t = Bytes<ByteNumbering::Msb0>;
-using bytes_lsb0_t = Bytes<ByteNumbering::Lsb0>;
-using bytes_be_t = bytes_msb0_t;
-using bytes_le_t = bytes_lsb0_t;
-}
+using Bytes = BasicBytes<ByteNumbering::None>;
+using Msb0Bytes = BasicBytes<ByteNumbering::Msb0>;
+using Lsb0Bytes = BasicBytes<ByteNumbering::Lsb0>;
+using BigEndianBytes = Msb0Bytes;
+using LittleEndianBytes = Lsb0Bytes;
 
-#endif //ABC_INCLUDE_ABC_BYTES_FWD_DECL
+} // namespace abc
+
+#endif // ABC_INCLUDE_ABC_BASIC_BYTES_FWD_DECL

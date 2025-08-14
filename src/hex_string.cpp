@@ -12,7 +12,7 @@ namespace abc
 /// @return bytes object or an error code object.
 template <ByteNumbering ByteNumberingV>
 static auto
-to_bytes(std::string_view string_slice) -> expected<Bytes<ByteNumberingV>, std::error_code>
+to_bytes(std::string_view string_slice) -> expected<BasicBytes<ByteNumberingV>, std::error_code>
 {
     static_assert(ByteNumberingV == abc::ByteNumbering::Lsb0 || ByteNumberingV == abc::ByteNumbering::Msb0);
 
@@ -26,7 +26,7 @@ to_bytes(std::string_view string_slice) -> expected<Bytes<ByteNumberingV>, std::
         return make_unexpected(make_error_code(std::errc::invalid_argument));
     }
 
-    abc::Bytes<ByteNumberingV> binary_data;
+    abc::BasicBytes<ByteNumberingV> binary_data;
     binary_data.reserve((string_slice.size() + 1) / 2);
     if constexpr (ByteNumberingV == ByteNumbering::Msb0)
     {
@@ -41,7 +41,7 @@ to_bytes(std::string_view string_slice) -> expected<Bytes<ByteNumberingV>, std::
 
         auto const & chunks = string_slice | ranges::views::chunk(2);
         ranges::for_each(chunks, [&binary_data](ranges::viewable_range auto && compound_byte) mutable {
-            byte byte{};
+            byte_t byte{};
             for (auto const [i, nibble_byte] : compound_byte | ranges::views::reverse | ranges::views::enumerate)
             {
                 byte |= hex_char_to_binary(nibble_byte).value() << (4 * i);
@@ -65,7 +65,7 @@ to_bytes(std::string_view string_slice) -> expected<Bytes<ByteNumberingV>, std::
 
         auto const & chunks = string_slice | ranges::views::chunk(2);
         ranges::for_each(chunks, [&binary_data](ranges::viewable_range auto && compound_byte) mutable {
-            byte byte{};
+            byte_t byte{};
             for (auto const [i, nibble_byte] : compound_byte | ranges::views::reverse | ranges::views::enumerate)
             {
                 byte |= hex_utility::hex_char_to_binary(nibble_byte).value() << (4 * i);

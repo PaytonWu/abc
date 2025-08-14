@@ -17,7 +17,7 @@ class fixed_bytes
     static_assert(N > 0);
 
 private:
-    using internal_type = std::array<byte, N>;
+    using internal_type = std::array<byte_t, N>;
     internal_type data_;
 
 public:
@@ -36,11 +36,11 @@ public:
 private:
     template <ByteNumbering SrcByteNumberingV>
         requires(SrcByteNumberingV == ByteNumberingV)
-    constexpr explicit fixed_bytes(std::array<byte, N> const & src, ByteNumberingType<SrcByteNumberingV>);
+    constexpr explicit fixed_bytes(std::array<byte_t, N> const & src, ByteNumberingType<SrcByteNumberingV>);
 
     template <ByteNumbering SrcByteNumberingV>
         requires(SrcByteNumberingV != ByteNumberingV && SrcByteNumberingV != ByteNumbering::None && ByteNumberingV != ByteNumbering::None)
-    constexpr explicit fixed_bytes(std::array<byte, N> const & src, ByteNumberingType<SrcByteNumberingV>);
+    constexpr explicit fixed_bytes(std::array<byte_t, N> const & src, ByteNumberingType<SrcByteNumberingV>);
 
     template <ByteNumbering SrcByteNumberingV>
         requires(SrcByteNumberingV == ByteNumberingV)
@@ -73,10 +73,11 @@ public:
     constexpr explicit fixed_bytes(fixed_bytes<N, ByteNumberingRhsV> const & rhs);
 
     template <ByteNumbering DataByteNumberingV>
-    static auto from(std::array<byte, N> const & data) -> expected<fixed_bytes, std::error_code>;
+    static auto from(std::array<byte_t, N> const & data) -> expected<fixed_bytes, std::error_code>;
 
     template <ByteNumbering DataByteNumberingV>
-        requires(DataByteNumberingV == ByteNumberingV) || (DataByteNumberingV != ByteNumberingV && DataByteNumberingV != ByteNumbering::None && ByteNumberingV != ByteNumbering::None)
+        requires(DataByteNumberingV == ByteNumberingV) ||
+                (DataByteNumberingV != ByteNumberingV && DataByteNumberingV != ByteNumbering::None && ByteNumberingV != ByteNumbering::None)
     static auto from(bytes_view<DataByteNumberingV> data) -> expected<fixed_bytes, std::error_code>;
 
     template <ByteNumbering DataByteNumberingV>
@@ -87,9 +88,9 @@ public:
 
     friend auto operator<=>(fixed_bytes const &, fixed_bytes const &) noexcept -> std::strong_ordering = default;
 
-    constexpr auto operator[](size_t index) const noexcept -> byte;
+    constexpr auto operator[](size_t index) const noexcept -> byte_t;
 
-    constexpr auto operator[](size_t index) noexcept -> byte &;
+    constexpr auto operator[](size_t index) noexcept -> byte_t &;
 
     constexpr operator bytes_view<ByteNumberingV>() const noexcept;
 
@@ -133,7 +134,7 @@ public:
 
     [[nodiscard]] constexpr auto size() const noexcept -> size_type;
 
-    constexpr auto fill(byte value) noexcept -> void;
+    constexpr auto fill(byte_t value) noexcept -> void;
 
     [[nodiscard]] constexpr static auto byte_numbering() noexcept -> abc::ByteNumbering;
 
@@ -160,23 +161,23 @@ public:
 
     constexpr auto clear() -> void;
 
-    auto subbytes(size_type pos, size_type n = static_cast<size_t>(-1)) const -> expected<Bytes<ByteNumberingV>, std::error_code>;
+    auto subbytes(size_type pos, size_type n = static_cast<size_t>(-1)) const -> expected<BasicBytes<ByteNumberingV>, std::error_code>;
 
     auto subview(size_type pos, size_type n = static_cast<size_type>(-1)) const & -> expected<bytes_view<ByteNumberingV>, std::error_code>;
 
     auto subview(size_type, size_type = static_cast<size_type>(-1)) const && -> expected<bytes_view<ByteNumberingV>, std::error_code>;
 
-    inline auto subspan(size_type pos, size_type n = static_cast<size_t>(-1)) & -> expected<std::span<byte>, std::error_code>;
+    inline auto subspan(size_type pos, size_type n = static_cast<size_t>(-1)) & -> expected<std::span<byte_t>, std::error_code>;
 
     /// @brief make span from rvalue fixed_bytes. not allowed.
     /// @return an std::error_code with errc::span_built_from_rvalue.
-    auto subspan(size_type, size_type = static_cast<size_t>(-1)) && -> expected<std::span<byte>, std::error_code>;
+    auto subspan(size_type, size_type = static_cast<size_t>(-1)) && -> expected<std::span<byte_t>, std::error_code>;
 
-    inline auto subspan(size_type pos, size_type n = static_cast<size_t>(-1)) const & -> expected<std::span<byte const>, std::error_code>;
+    inline auto subspan(size_type pos, size_type n = static_cast<size_t>(-1)) const & -> expected<std::span<byte_t const>, std::error_code>;
 
     /// @brief make span from rvalue fixed_bytes. not allowed.
     /// @return an std::error_code with errc::span_built_from_rvalue.
-    inline auto subspan(size_type, size_type = static_cast<size_t>(-1)) const && -> expected<std::span<byte const>, std::error_code>;
+    inline auto subspan(size_type, size_type = static_cast<size_t>(-1)) const && -> expected<std::span<byte_t const>, std::error_code>;
 
 private:
     template <std::unsigned_integral T>

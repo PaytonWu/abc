@@ -50,9 +50,9 @@ TEST(Function, export_bits)
 
     EXPECT_EQ(value, u64);
 
-    abc::bytes_be_t const full{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef };
+    abc::BigEndianBytes const full{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef };
 
-    abc::bytes_be_t bits;
+    abc::BigEndianBytes bits;
     value.export_bits(bits);
     EXPECT_EQ(bits, full);
 
@@ -67,9 +67,9 @@ TEST(Function, export_bits_compact)
 
     EXPECT_EQ(value, u64);
 
-    abc::bytes_be_t const compact{ 0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef };
+    abc::BigEndianBytes const compact{ 0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef };
 
-    abc::bytes_be_t bits;
+    abc::BigEndianBytes bits;
     value.export_bits_compact(bits);
     EXPECT_EQ(bits, compact);
 
@@ -84,7 +84,7 @@ TEST(Function, export_bits_compact_zero)
 
     EXPECT_EQ(value, u64);
 
-    abc::bytes_be_t const compact{};
+    abc::BigEndianBytes const compact{};
 
     auto const bits = value.export_bits_compact<abc::ByteNumbering::Msb0>();
     EXPECT_EQ(bits, compact);
@@ -97,12 +97,12 @@ TEST(Function, export_bits_compact_little)
 
     EXPECT_EQ(value, u64);
 
-    abc::bytes_le_t const compact{ 0xef, 0xcd, 0xab, 0x89, 0x67, 0x45, 0x23, 0x01 };
+    abc::LittleEndianBytes const compact{ 0xef, 0xcd, 0xab, 0x89, 0x67, 0x45, 0x23, 0x01 };
 
     auto const bits = value.export_bits_compact<abc::ByteNumbering::Lsb0>();
     EXPECT_EQ(bits, compact);
 
-    abc::bytes_le_t bits3;
+    abc::LittleEndianBytes bits3;
     bits3.reserve(32);
     value.export_bits_compact(bits3);
     EXPECT_EQ(bits3, compact);
@@ -115,12 +115,12 @@ TEST(Function, export_bits_compact_zero_little)
 
     EXPECT_EQ(value, u64);
 
-    abc::bytes_le_t const compact{};
+    abc::LittleEndianBytes const compact{};
 
     auto const bits = value.export_bits_compact<abc::ByteNumbering::Lsb0>();
     EXPECT_EQ(bits, compact);
 
-    abc::bytes_le_t bits3;
+    abc::LittleEndianBytes bits3;
     bits3.reserve(32);
     value.export_bits_compact(bits3);
     EXPECT_EQ(bits3, compact);

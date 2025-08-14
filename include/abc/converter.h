@@ -61,27 +61,27 @@ struct converter<fixed_bytes<N, ByteNumberingV>, hex_string>
             return abc::make_unexpected(make_error_code(std::errc::invalid_argument));
         }
 
-        std::array<byte, N> bytes{};
+        std::array<byte_t, N> bytes{};
         ranges::copy(hex_str.bytes<ByteNumberingV>(), std::begin(bytes));
         return fixed_bytes<N, ByteNumberingV>::template from<ByteNumberingV>(bytes);
     }
 };
 
 template <ByteNumbering ByteNumberingV, std::integral T>
-struct converter<Bytes<ByteNumberingV>, T>
+struct converter<BasicBytes<ByteNumberingV>, T>
 {
     inline static auto
-    from(T const & num) -> abc::expected<Bytes<ByteNumberingV>, std::error_code>
+    from(T const & num) -> abc::expected<BasicBytes<ByteNumberingV>, std::error_code>
     {
-        return Bytes<ByteNumberingV>::from(num);
+        return BasicBytes<ByteNumberingV>::from(num);
     }
 };
 
 template <std::integral T, ByteNumbering ByteNumberingV>
-struct converter<T, Bytes<ByteNumberingV>>
+struct converter<T, BasicBytes<ByteNumberingV>>
 {
     inline static auto
-    from(Bytes<ByteNumberingV> const & number_bytes) -> abc::expected<T, std::error_code>
+    from(BasicBytes<ByteNumberingV> const & number_bytes) -> abc::expected<T, std::error_code>
     {
         return number_bytes.template to<T>();
     }

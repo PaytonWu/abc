@@ -122,7 +122,7 @@ public:
             }
             else
             {
-                byte * dst = reinterpret_cast<byte *>(&ret);
+                auto * dst = reinterpret_cast<byte_t *>(&ret);
                 dst += (sizeof(uint128_t) - bytes.size());
                 std::memcpy(dst, bytes.data(), bytes.size());
             }
@@ -151,7 +151,7 @@ public:
             if constexpr (ByteNumberingV == ByteNumbering::Msb0)
             {
                 uint128_t ret;
-                byte * dst = reinterpret_cast<byte *>(&ret);
+                auto * dst = reinterpret_cast<byte_t *>(&ret);
 
                 ranges::copy(bytes | ranges::views::reverse, dst);
                 return ret;
@@ -165,7 +165,7 @@ public:
             if constexpr (ByteNumberingV == ByteNumbering::Lsb0)
             {
                 uint128_t ret;
-                byte * dst = reinterpret_cast<byte *>(&ret);
+                auto * dst = reinterpret_cast<byte_t *>(&ret);
                 dst += sizeof(uint128_t);
 
                 ranges::copy_backward(bytes | ranges::views::reverse, dst);
@@ -175,7 +175,7 @@ public:
             if constexpr (ByteNumberingV == ByteNumbering::Msb0)
             {
                 uint128_t ret;
-                byte * dst = reinterpret_cast<byte *>(&ret);
+                auto * dst = reinterpret_cast<byte_t *>(&ret);
                 dst += (sizeof(uint128_t) - bytes.size());
                 std::memcpy(dst, bytes.data(), bytes.size());
                 return ret;
@@ -342,7 +342,7 @@ public:
 
     template <abc::ByteNumbering ByteNumberingV>
     constexpr void
-    export_bits(Bytes<ByteNumberingV> & ret) const
+    export_bits(BasicBytes<ByteNumberingV> & ret) const
     {
         if constexpr (ByteNumberingV == ByteNumbering::Msb0)
         {
@@ -372,9 +372,9 @@ public:
 
     template <abc::ByteNumbering ByteNumberingV>
     [[nodiscard]] constexpr auto
-    export_bits() const noexcept -> Bytes<ByteNumberingV>
+    export_bits() const noexcept -> BasicBytes<ByteNumberingV>
     {
-        Bytes<ByteNumberingV> ret;
+        BasicBytes<ByteNumberingV> ret;
         ret.reserve(16);
         export_bits(ret);
         return ret;
@@ -389,7 +389,7 @@ public:
 
     template <abc::ByteNumbering ByteNumberingV>
     void
-    export_bits_compact(Bytes<ByteNumberingV> & ret) const noexcept
+    export_bits_compact(BasicBytes<ByteNumberingV> & ret) const noexcept
     {
         auto leading_zeros_bits_count = std::countl_zero(this->upper_);
         if (leading_zeros_bits_count == 64)
@@ -413,9 +413,9 @@ public:
 
     template <abc::ByteNumbering ByteNumberingV>
     [[nodiscard]] constexpr auto
-    export_bits_compact() const -> Bytes<ByteNumberingV>
+    export_bits_compact() const -> BasicBytes<ByteNumberingV>
     {
-        Bytes<ByteNumberingV> ret;
+        BasicBytes<ByteNumberingV> ret;
         ret.reserve(16);
         export_bits_compact(ret);
 
@@ -902,7 +902,7 @@ private:
 
     template <abc::ByteNumbering ByteNumberingV>
     constexpr static void
-    convert_to_bytes(uint64_t const val, Bytes<ByteNumberingV> & ret)
+    convert_to_bytes(uint64_t const val, BasicBytes<ByteNumberingV> & ret)
     {
         static_assert(ByteNumberingV == abc::ByteNumbering::Lsb0 || ByteNumberingV == abc::ByteNumbering::Msb0);
 
@@ -937,7 +937,7 @@ private:
 
     template <abc::ByteNumbering ByteNumberingV>
     constexpr static void
-    convert_to_bytes(uint64_t const value, std::size_t leading_zero_bytes_count, Bytes<ByteNumberingV> & ret)
+    convert_to_bytes(uint64_t const value, std::size_t leading_zero_bytes_count, BasicBytes<ByteNumberingV> & ret)
     {
         static_assert(ByteNumberingV == abc::ByteNumbering::Lsb0 || ByteNumberingV == abc::ByteNumbering::Msb0);
 
