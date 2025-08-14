@@ -13,7 +13,7 @@ using namespace abc;
 TEST(xbytes_endian_t, constructor_il)
 {
     {
-        bytes_msb0_t bytes = bytes_be_t::from<byte_numbering::msb0>({ 0x01, 0x02, 0x03, 0x04 });
+        bytes_msb0_t bytes = bytes_be_t::from<ByteNumbering::Msb0>({ 0x01, 0x02, 0x03, 0x04 });
         EXPECT_EQ(bytes[0], 0x01);
         EXPECT_EQ(bytes[1], 0x02);
         EXPECT_EQ(bytes[2], 0x03);
@@ -156,7 +156,8 @@ TEST(bytes, operator_plus_bytes)
         bytes_be_t rhs = bytes_be_t::from(0x0987654321);
 
         lhs = lhs + rhs;
-        ASSERT_EQ(abc::hex_string::from("0x12345678900987654321").transform([](auto const & hex_string) { return hex_string.template bytes<abc::byte_numbering::msb0>(); }).value(), lhs);
+        ASSERT_EQ(abc::hex_string::from("0x12345678900987654321").transform([](auto const & hex_string) { return hex_string.template bytes<abc::ByteNumbering::Msb0>(); }).value(),
+                  lhs);
     }
 
     {
@@ -165,7 +166,8 @@ TEST(bytes, operator_plus_bytes)
 
         void const * lhs_ptr = std::addressof(lhs);
         lhs += rhs;
-        ASSERT_EQ(abc::hex_string::from("0x12345678900987654321").transform([](auto const & hex_string) { return hex_string.template bytes<abc::byte_numbering::msb0>(); }).value(), lhs);
+        ASSERT_EQ(abc::hex_string::from("0x12345678900987654321").transform([](auto const & hex_string) { return hex_string.template bytes<abc::ByteNumbering::Msb0>(); }).value(),
+                  lhs);
         ASSERT_EQ(lhs_ptr, std::addressof(lhs));
     }
 }
@@ -176,7 +178,7 @@ TEST(bytes, operator_plus_byte_after)
         bytes_be_t lhs = bytes_be_t::from(0x1234567890);
 
         lhs = lhs + static_cast<abc::byte>(0);
-        ASSERT_EQ(abc::hex_string::from("0x123456789000").transform([](auto const & hex_string) { return hex_string.template bytes<abc::byte_numbering::msb0>(); }).value(), lhs);
+        ASSERT_EQ(abc::hex_string::from("0x123456789000").transform([](auto const & hex_string) { return hex_string.template bytes<abc::ByteNumbering::Msb0>(); }).value(), lhs);
     }
 
     {
@@ -184,7 +186,7 @@ TEST(bytes, operator_plus_byte_after)
 
         void const * lhs_ptr = std::addressof(lhs);
         lhs += static_cast<abc::byte>(0);
-        ASSERT_EQ(abc::hex_string::from("0x123456789000").transform([](auto const & hex_string) { return hex_string.template bytes<abc::byte_numbering::msb0>(); }).value(), lhs);
+        ASSERT_EQ(abc::hex_string::from("0x123456789000").transform([](auto const & hex_string) { return hex_string.template bytes<abc::ByteNumbering::Msb0>(); }).value(), lhs);
         ASSERT_EQ(lhs_ptr, std::addressof(lhs));
     }
 }
@@ -194,7 +196,7 @@ TEST(bytes, operator_plus_byte_before)
     bytes_be_t lhs = bytes_be_t::from(0x1234567890);
 
     lhs = static_cast<abc::byte>(1) + lhs.view();
-    ASSERT_EQ(abc::hex_string::from("0x11234567890").transform([](auto const & hex_string) { return hex_string.template bytes<abc::byte_numbering::msb0>(); }).value(), lhs);
+    ASSERT_EQ(abc::hex_string::from("0x11234567890").transform([](auto const & hex_string) { return hex_string.template bytes<abc::ByteNumbering::Msb0>(); }).value(), lhs);
 }
 
 TEST(bytes, operator_plus_view)
@@ -214,7 +216,7 @@ TEST(bytes, to)
 {
     {
         bytes_be_t bytes_be{ 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07 };
-        auto bytes_le = bytes_be.to<byte_numbering::lsb0>();
+        auto bytes_le = bytes_be.to<ByteNumbering::Lsb0>();
         for (uint8_t i = 0u; i < static_cast<uint8_t>(bytes_be.size()); ++i)
         {
             ASSERT_EQ(i, bytes_le[bytes_be.size() - i - 1]);
@@ -222,7 +224,7 @@ TEST(bytes, to)
     }
 
     {
-        auto bytes_le = bytes_be_t{ 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07 }.to<byte_numbering::lsb0>();
+        auto bytes_le = bytes_be_t{ 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07 }.to<ByteNumbering::Lsb0>();
         for (uint8_t i = 0u; i < static_cast<uint8_t>(8); ++i)
         {
             ASSERT_EQ(i, bytes_le[8 - i - 1]);
@@ -231,7 +233,7 @@ TEST(bytes, to)
 
     {
         bytes_be_t bytes_be{ 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07 };
-        auto bytes = bytes_be.to<byte_numbering::none>();
+        auto bytes = bytes_be.to<ByteNumbering::None>();
         for (uint8_t i = 0u; i < static_cast<uint8_t>(bytes_be.size()); ++i)
         {
             ASSERT_EQ(i, bytes[i]);
@@ -239,7 +241,7 @@ TEST(bytes, to)
     }
 
     {
-        auto bytes = bytes_be_t{ 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07 }.to<byte_numbering::none>();
+        auto bytes = bytes_be_t{ 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07 }.to<ByteNumbering::None>();
         for (uint8_t i = 0u; i < static_cast<uint8_t>(8); ++i)
         {
             ASSERT_EQ(i, bytes[i]);
@@ -248,7 +250,7 @@ TEST(bytes, to)
 
     {
         bytes_le_t bytes_le{ 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07 };
-        auto bytes_be = bytes_le.to<byte_numbering::msb0>();
+        auto bytes_be = bytes_le.to<ByteNumbering::Msb0>();
         for (uint8_t i = 0u; i < static_cast<uint8_t>(bytes_le.size()); ++i)
         {
             ASSERT_EQ(i, bytes_be[bytes_be.size() - i - 1]);
@@ -256,7 +258,7 @@ TEST(bytes, to)
     }
 
     {
-        auto bytes_be = bytes_le_t{ 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07 }.to<byte_numbering::msb0>();
+        auto bytes_be = bytes_le_t{ 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07 }.to<ByteNumbering::Msb0>();
         for (uint8_t i = 0u; i < static_cast<uint8_t>(8); ++i)
         {
             ASSERT_EQ(i, bytes_be[8 - i - 1]);
@@ -265,7 +267,7 @@ TEST(bytes, to)
 
     {
         bytes_le_t bytes_le{ 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07 };
-        auto bytes = bytes_le.to<byte_numbering::none>();
+        auto bytes = bytes_le.to<ByteNumbering::None>();
         for (uint8_t i = 0u; i < static_cast<uint8_t>(bytes_le.size()); ++i)
         {
             ASSERT_EQ(i, bytes[i]);
@@ -273,7 +275,7 @@ TEST(bytes, to)
     }
 
     {
-        auto bytes = bytes_le_t{ 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07 }.to<byte_numbering::none>();
+        auto bytes = bytes_le_t{ 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07 }.to<ByteNumbering::None>();
         for (uint8_t i = 0u; i < static_cast<uint8_t>(8); ++i)
         {
             ASSERT_EQ(i, bytes[i]);
@@ -282,7 +284,7 @@ TEST(bytes, to)
 
     {
         bytes_t bytes{ 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07 };
-        auto bytes_be = bytes.to<byte_numbering::msb0>();
+        auto bytes_be = bytes.to<ByteNumbering::Msb0>();
         for (uint8_t i = 0u; i < static_cast<uint8_t>(bytes.size()); ++i)
         {
             ASSERT_EQ(i, bytes_be[i]);
@@ -290,7 +292,7 @@ TEST(bytes, to)
     }
 
     {
-        auto bytes_be = bytes_t{ 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07 }.to<byte_numbering::msb0>();
+        auto bytes_be = bytes_t{ 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07 }.to<ByteNumbering::Msb0>();
         for (uint8_t i = 0u; i < static_cast<uint8_t>(8); ++i)
         {
             ASSERT_EQ(i, bytes_be[i]);
@@ -299,7 +301,7 @@ TEST(bytes, to)
 
     {
         bytes_t bytes{ 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07 };
-        auto bytes_le = bytes.to<byte_numbering::lsb0>();
+        auto bytes_le = bytes.to<ByteNumbering::Lsb0>();
         for (uint8_t i = 0u; i < static_cast<uint8_t>(bytes.size()); ++i)
         {
             ASSERT_EQ(i, bytes_le[i]);
@@ -307,7 +309,7 @@ TEST(bytes, to)
     }
 
     {
-        auto bytes_le = bytes_t{ 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07 }.to<byte_numbering::lsb0>();
+        auto bytes_le = bytes_t{ 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07 }.to<ByteNumbering::Lsb0>();
         for (uint8_t i = 0u; i < static_cast<uint8_t>(8); ++i)
         {
             ASSERT_EQ(i, bytes_le[i]);
@@ -528,7 +530,7 @@ TEST(bytes, to_int)
     }
 
     {
-        bytes_le_t bytes_le{ 0x00, 0x01, 0x02};
+        bytes_le_t bytes_le{ 0x00, 0x01, 0x02 };
         auto u64 = bytes_le.to<std::uint64_t>();
         ASSERT_EQ(u64, 0x020100);
         auto u32 = bytes_le.to<std::uint32_t>();
@@ -544,7 +546,7 @@ TEST(bytes, to_int)
     }
 
     {
-        bytes_le_t bytes_le{ 0x00, 0x01};
+        bytes_le_t bytes_le{ 0x00, 0x01 };
         auto u64 = bytes_le.to<std::uint64_t>();
         ASSERT_EQ(u64, 0x0100);
         auto u32 = bytes_le.to<std::uint32_t>();
@@ -564,7 +566,7 @@ TEST(bytes, to_int)
     }
 
     {
-        bytes_le_t bytes_le{ 0x01};
+        bytes_le_t bytes_le{ 0x01 };
         auto u64 = bytes_le.to<std::uint64_t>();
         ASSERT_EQ(u64, 0x01);
         auto u32 = bytes_le.to<std::uint32_t>();
@@ -615,5 +617,23 @@ TEST(bytes, assign_from_view)
 
         bytes = bytes_view;
         ASSERT_EQ(bytes_expected, bytes);
+    }
+}
+
+TEST(bytes, from_string_view)
+{
+    {
+        auto bytes = bytes_t::from("01020304");
+        
+        ASSERT_EQ(bytes.size(), 8);
+
+        ASSERT_EQ(bytes[0], '0');
+        ASSERT_EQ(bytes[1], '1');
+        ASSERT_EQ(bytes[2], '0');
+        ASSERT_EQ(bytes[3], '2');
+        ASSERT_EQ(bytes[4], '0');
+        ASSERT_EQ(bytes[5], '3');
+        ASSERT_EQ(bytes[6], '0');
+        ASSERT_EQ(bytes[7], '4');
     }
 }

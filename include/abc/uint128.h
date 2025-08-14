@@ -38,7 +38,7 @@
 #pragma once
 
 #if !defined(__cplusplus) || __cplusplus < 202002L
-#   error "C++20 or above is required"
+#error "C++20 or above is required"
 #endif
 
 #include "bytes.h"
@@ -70,13 +70,12 @@ class uint128_t;
 // https://en.cppreference.com/w/cpp/types/is_integral
 // remove is_integral<T>, is_unsigned<T>, is_arithmetic<T> specializations.
 
-class [[nodiscard]] uint128_t
-    : private details::uint128_storage
+class [[nodiscard]] uint128_t : private details::uint128_storage
 {
 public:
-    using details::uint128_storage::uint128_storage;
-    using details::uint128_storage::endian;
     using details::uint128_storage::byte_numbering;
+    using details::uint128_storage::endian;
+    using details::uint128_storage::uint128_storage;
 
     uint128_t() = default;
 
@@ -101,19 +100,20 @@ public:
     {
     }
 
-    static auto from(hex_string const & hex_string) -> uint128_t
+    static auto
+    from(hex_string const & hex_string) -> uint128_t
     {
-        static_assert(uint128_t::byte_numbering() == abc::byte_numbering::lsb0 || uint128_t::byte_numbering() == abc::byte_numbering::msb0);
+        static_assert(uint128_t::byte_numbering() == abc::ByteNumbering::Lsb0 || uint128_t::byte_numbering() == abc::ByteNumbering::Msb0);
 
         auto && bytes = hex_string.bytes<uint128_t::byte_numbering()>();
-        if constexpr (byte_numbering::lsb0 == uint128_t::byte_numbering())
+        if constexpr (ByteNumbering::Lsb0 == uint128_t::byte_numbering())
         {
             uint128_t ret;
             std::memcpy(&ret, bytes.data(), std::min(bytes.size(), sizeof(ret)));
             return ret;
         }
 
-        if constexpr (byte_numbering::msb0 == uint128_t::byte_numbering())
+        if constexpr (ByteNumbering::Msb0 == uint128_t::byte_numbering())
         {
             uint128_t ret;
             if (bytes.size() >= sizeof(uint128_t))
@@ -130,24 +130,25 @@ public:
         }
     }
 
-    template <abc::byte_numbering ByteNumbering>
-    static auto from(bytes_view<ByteNumbering> const bytes) -> expected<uint128_t, std::error_code>
+    template <abc::ByteNumbering ByteNumberingV>
+    static auto
+    from(bytes_view<ByteNumberingV> const bytes) -> expected<uint128_t, std::error_code>
     {
         if (bytes.size() > sizeof(uint128_t))
         {
             return make_unexpected(std::make_error_code(std::errc::invalid_argument));
         }
 
-        if constexpr (uint128_t::byte_numbering() == abc::byte_numbering::lsb0)
+        if constexpr (uint128_t::byte_numbering() == abc::ByteNumbering::Lsb0)
         {
-            if constexpr (ByteNumbering == byte_numbering::lsb0)
+            if constexpr (ByteNumberingV == ByteNumbering::Lsb0)
             {
                 uint128_t ret;
                 std::memcpy(&ret, bytes.data(), bytes.size());
                 return ret;
             }
 
-            if constexpr (ByteNumbering == byte_numbering::msb0)
+            if constexpr (ByteNumberingV == ByteNumbering::Msb0)
             {
                 uint128_t ret;
                 byte * dst = reinterpret_cast<byte *>(&ret);
@@ -159,9 +160,9 @@ public:
             unreachable();
         }
 
-        if constexpr (uint128_t::byte_numbering() == abc::byte_numbering::msb0)
+        if constexpr (uint128_t::byte_numbering() == abc::ByteNumbering::Msb0)
         {
-            if constexpr (ByteNumbering == byte_numbering::lsb0)
+            if constexpr (ByteNumberingV == ByteNumbering::Lsb0)
             {
                 uint128_t ret;
                 byte * dst = reinterpret_cast<byte *>(&ret);
@@ -171,7 +172,7 @@ public:
                 return ret;
             }
 
-            if constexpr (ByteNumbering == byte_numbering::msb0)
+            if constexpr (ByteNumberingV == ByteNumbering::Msb0)
             {
                 uint128_t ret;
                 byte * dst = reinterpret_cast<byte *>(&ret);
@@ -213,27 +214,32 @@ public:
     }
 
     // Typecast Operators
-    constexpr explicit operator bool() const noexcept
+    constexpr explicit
+    operator bool() const noexcept
     {
         return static_cast<bool>(this->upper_ | this->lower_);
     }
 
-    constexpr explicit operator uint8_t() const noexcept
+    constexpr explicit
+    operator uint8_t() const noexcept
     {
         return static_cast<uint8_t>(this->lower_);
     }
 
-    constexpr explicit operator uint16_t() const noexcept
+    constexpr explicit
+    operator uint16_t() const noexcept
     {
         return static_cast<uint16_t>(this->lower_);
     }
 
-    constexpr explicit operator uint32_t() const noexcept
+    constexpr explicit
+    operator uint32_t() const noexcept
     {
         return static_cast<uint32_t>(this->lower_);
     }
 
-    constexpr explicit operator uint64_t() const noexcept
+    constexpr explicit
+    operator uint64_t() const noexcept
     {
         return this->lower_;
     }
@@ -327,28 +333,28 @@ public:
         return { ~this->upper_, ~this->lower_ };
     }
 
-//    constexpr void export_bits(std::span<uint8_t> const ret) const noexcept {
-//        assert(ret.size() >= 16);
-//
-//        convert_to_span_big_endian(this->upper_, ret);
-//        convert_to_span_big_endian(this->lower_, ret.subspan(8));
-//    }
+    //    constexpr void export_bits(std::span<uint8_t> const ret) const noexcept {
+    //        assert(ret.size() >= 16);
+    //
+    //        convert_to_span_big_endian(this->upper_, ret);
+    //        convert_to_span_big_endian(this->lower_, ret.subspan(8));
+    //    }
 
-    template <abc::byte_numbering ByteNumbering>
+    template <abc::ByteNumbering ByteNumberingV>
     constexpr void
-    export_bits(bytes<ByteNumbering> & ret) const
+    export_bits(Bytes<ByteNumberingV> & ret) const
     {
-        if constexpr (ByteNumbering == byte_numbering::msb0)
+        if constexpr (ByteNumberingV == ByteNumbering::Msb0)
         {
 #if !defined(NDEBUG)
             auto const size_before_export = ret.size();
 #endif
-            convert_to_bytes<ByteNumbering>(this->upper_, ret);
-            convert_to_bytes<ByteNumbering>(this->lower_, ret);
+            convert_to_bytes<ByteNumberingV>(this->upper_, ret);
+            convert_to_bytes<ByteNumberingV>(this->lower_, ret);
 
             assert(ret.size() - size_before_export == 16);
         }
-        else if constexpr (ByteNumbering == byte_numbering::lsb0)
+        else if constexpr (ByteNumberingV == ByteNumbering::Lsb0)
         {
 #if !defined(NDEBUG)
             auto const size_before_export = ret.size();
@@ -364,26 +370,26 @@ public:
         }
     }
 
-    template <abc::byte_numbering ByteNumbering>
+    template <abc::ByteNumbering ByteNumberingV>
     [[nodiscard]] constexpr auto
-    export_bits() const noexcept -> bytes<ByteNumbering>
+    export_bits() const noexcept -> Bytes<ByteNumberingV>
     {
-        bytes<ByteNumbering> ret;
+        Bytes<ByteNumberingV> ret;
         ret.reserve(16);
         export_bits(ret);
         return ret;
     }
 
-//    constexpr auto export_bits_compact(std::span<uint8_t> const ret) const noexcept -> size_t {
-//        assert(ret.size() >= 16);
-//        auto tmp = export_bits_compact();
-//        std::ranges::copy(tmp, std::begin(ret));
-//        return tmp.size();
-//    }
+    //    constexpr auto export_bits_compact(std::span<uint8_t> const ret) const noexcept -> size_t {
+    //        assert(ret.size() >= 16);
+    //        auto tmp = export_bits_compact();
+    //        std::ranges::copy(tmp, std::begin(ret));
+    //        return tmp.size();
+    //    }
 
-    template <abc::byte_numbering ByteNumbering>
+    template <abc::ByteNumbering ByteNumberingV>
     void
-    export_bits_compact(bytes<ByteNumbering> & ret) const noexcept
+    export_bits_compact(Bytes<ByteNumberingV> & ret) const noexcept
     {
         auto leading_zeros_bits_count = std::countl_zero(this->upper_);
         if (leading_zeros_bits_count == 64)
@@ -393,23 +399,23 @@ public:
 
             ret.reserve(leading_zero_bytes_count);
 
-            convert_to_bytes<ByteNumbering>(this->lower_, leading_zero_bytes_count, ret);
+            convert_to_bytes<ByteNumberingV>(this->lower_, leading_zero_bytes_count, ret);
         }
         else
         {
             std::size_t const leading_zero_bytes_count = (leading_zeros_bits_count / 8);
             ret.reserve(leading_zero_bytes_count + 8);
 
-            convert_to_bytes<ByteNumbering>(this->upper_, leading_zero_bytes_count, ret);
-            convert_to_bytes<ByteNumbering>(this->lower_, ret);
+            convert_to_bytes<ByteNumberingV>(this->upper_, leading_zero_bytes_count, ret);
+            convert_to_bytes<ByteNumberingV>(this->lower_, ret);
         }
     }
 
-    template <abc::byte_numbering ByteNumbering>
+    template <abc::ByteNumbering ByteNumberingV>
     [[nodiscard]] constexpr auto
-    export_bits_compact() const -> bytes<ByteNumbering>
+    export_bits_compact() const -> Bytes<ByteNumberingV>
     {
-        bytes<ByteNumbering> ret;
+        Bytes<ByteNumberingV> ret;
         ret.reserve(16);
         export_bits_compact(ret);
 
@@ -551,11 +557,9 @@ public:
     }
 
     // Comparison Operators
-    constexpr auto
-    operator==(uint128_t const & rhs) const noexcept -> bool = default;
+    constexpr auto operator==(uint128_t const & rhs) const noexcept -> bool = default;
 
-    constexpr auto
-    operator<=>(uint128_t const & rhs) const -> std::strong_ordering = default;
+    constexpr auto operator<=>(uint128_t const & rhs) const -> std::strong_ordering = default;
 
     constexpr bool
     operator==(std::integral auto const rhs) const noexcept
@@ -707,12 +711,12 @@ private:
 
         if (rhs == uint128_t{ 1 })
         {
-            return { lhs, uint128_t{ 0 }};
+            return { lhs, uint128_t{ 0 } };
         }
 
         if (lhs == rhs)
         {
-            return { uint128_t{ 1 }, uint128_t{ 0 }};
+            return { uint128_t{ 1 }, uint128_t{ 0 } };
         }
 
         if ((lhs == uint128_t{ 0 }) || (lhs < rhs))
@@ -720,7 +724,7 @@ private:
             return { uint128_t{ 0 }, lhs };
         }
 
-        std::pair qr{ uint128_t{ 0 }, uint128_t{ 0 }};
+        std::pair qr{ uint128_t{ 0 }, uint128_t{ 0 } };
         for (uint8_t x = lhs.bits(); x > 0; x--)
         {
             qr.first <<= uint128_t{ 1 };
@@ -883,26 +887,26 @@ private:
         }
     }
 
-//    constexpr static void
-//    convert_to_span_big_endian(uint64_t const val, std::span<uint8_t> ret)
-//    {
-//        ret[0] = static_cast<uint8_t>(val >> 56);
-//        ret[1] = static_cast<uint8_t>(val >> 48);
-//        ret[2] = static_cast<uint8_t>(val >> 40);
-//        ret[3] = static_cast<uint8_t>(val >> 32);
-//        ret[4] = static_cast<uint8_t>(val >> 24);
-//        ret[5] = static_cast<uint8_t>(val >> 16);
-//        ret[6] = static_cast<uint8_t>(val >> 8);
-//        ret[7] = static_cast<uint8_t>(val);
-//    }
+    //    constexpr static void
+    //    convert_to_span_big_endian(uint64_t const val, std::span<uint8_t> ret)
+    //    {
+    //        ret[0] = static_cast<uint8_t>(val >> 56);
+    //        ret[1] = static_cast<uint8_t>(val >> 48);
+    //        ret[2] = static_cast<uint8_t>(val >> 40);
+    //        ret[3] = static_cast<uint8_t>(val >> 32);
+    //        ret[4] = static_cast<uint8_t>(val >> 24);
+    //        ret[5] = static_cast<uint8_t>(val >> 16);
+    //        ret[6] = static_cast<uint8_t>(val >> 8);
+    //        ret[7] = static_cast<uint8_t>(val);
+    //    }
 
-    template <abc::byte_numbering ByteNumbering>
+    template <abc::ByteNumbering ByteNumberingV>
     constexpr static void
-    convert_to_bytes(uint64_t const val, bytes<ByteNumbering> & ret)
+    convert_to_bytes(uint64_t const val, Bytes<ByteNumberingV> & ret)
     {
-        static_assert(ByteNumbering == abc::byte_numbering::lsb0 || ByteNumbering == abc::byte_numbering::msb0);
+        static_assert(ByteNumberingV == abc::ByteNumbering::Lsb0 || ByteNumberingV == abc::ByteNumbering::Msb0);
 
-        if constexpr (ByteNumbering == abc::byte_numbering::msb0)
+        if constexpr (ByteNumberingV == abc::ByteNumbering::Msb0)
         {
             ret.push_back(static_cast<uint8_t>(val >> 56));
             ret.push_back(static_cast<uint8_t>(val >> 48));
@@ -916,7 +920,7 @@ private:
             return;
         }
 
-        if constexpr (ByteNumbering == abc::byte_numbering::lsb0)
+        if constexpr (ByteNumberingV == abc::ByteNumbering::Lsb0)
         {
             ret.push_back(static_cast<uint8_t>(val));
             ret.push_back(static_cast<uint8_t>(val >> 8));
@@ -931,13 +935,13 @@ private:
         }
     }
 
-    template <abc::byte_numbering ByteNumbering>
+    template <abc::ByteNumbering ByteNumberingV>
     constexpr static void
-    convert_to_bytes(uint64_t const value, std::size_t leading_zero_bytes_count, bytes<ByteNumbering> & ret)
+    convert_to_bytes(uint64_t const value, std::size_t leading_zero_bytes_count, Bytes<ByteNumberingV> & ret)
     {
-        static_assert(ByteNumbering == abc::byte_numbering::lsb0 || ByteNumbering == abc::byte_numbering::msb0);
+        static_assert(ByteNumberingV == abc::ByteNumbering::Lsb0 || ByteNumberingV == abc::ByteNumbering::Msb0);
 
-        if constexpr (ByteNumbering == abc::byte_numbering::msb0)
+        if constexpr (ByteNumberingV == abc::ByteNumbering::Msb0)
         {
             assert(leading_zero_bytes_count <= 8);
             switch (leading_zero_bytes_count)
@@ -973,7 +977,7 @@ private:
             return;
         }
 
-        if constexpr (ByteNumbering == abc::byte_numbering::lsb0)
+        if constexpr (ByteNumberingV == abc::ByteNumbering::Lsb0)
         {
             assert(leading_zero_bytes_count <= 8);
 
@@ -1181,7 +1185,7 @@ public:
         }
         else
         {
-            std::pair qr{ *this, uint128_t{ 0 }};
+            std::pair qr{ *this, uint128_t{ 0 } };
             do
             {
                 qr = divmod(qr.first, base);
@@ -1355,6 +1359,6 @@ operator<<(std::ostream & stream, uint128_t const rhs)
     return stream;
 }
 
-}
+} // namespace abc
 
-#endif //ABC_INCLUDE_ABC_UINT128
+#endif // ABC_INCLUDE_ABC_UINT128

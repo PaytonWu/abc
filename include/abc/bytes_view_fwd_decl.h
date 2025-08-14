@@ -10,7 +10,7 @@
 
 namespace abc {
 
-template <byte_numbering ByteNumbering>
+template <ByteNumbering ByteNumberingV>
 class [[nodiscard]] bytes_view;
 
 }
